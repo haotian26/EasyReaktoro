@@ -1,0 +1,3400 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "relative-after-override",
+      "config": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "schedule": {
+          "version": 1,
+          "positions": 5,
+          "rounds": 2,
+          "parameters": [
+            {
+              "id": "temperature",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "relative",
+                "along": "path",
+                "start": 100,
+                "step": 10,
+                "other_step": 100
+              }
+            },
+            {
+              "id": "pressure",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 1
+              }
+            }
+          ],
+          "overrides": [
+            {
+              "id": "change",
+              "rounds": {
+                "start": 1,
+                "end": 1
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "change-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 300
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 100.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 300.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 300.0,
+              "setting_id": "change-temperature",
+              "override_id": "change"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 310.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 310.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 320.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 320.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 5,
+          "point": {
+            "id": "loop-5",
+            "label": "路径位置 5",
+            "temperature_c": 330.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 330.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 200.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 200.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 210.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 210.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 220.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 220.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 230.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 230.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 5,
+          "point": {
+            "id": "loop-5",
+            "label": "路径位置 5",
+            "temperature_c": 240.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 240.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "linear-after-override",
+      "config": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "schedule": {
+          "version": 1,
+          "positions": 5,
+          "rounds": 2,
+          "parameters": [
+            {
+              "id": "temperature",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "linear",
+                "start": 100,
+                "path_step": 10,
+                "round_step": 100
+              }
+            },
+            {
+              "id": "pressure",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 1
+              }
+            }
+          ],
+          "overrides": [
+            {
+              "id": "change",
+              "rounds": {
+                "start": 1,
+                "end": 1
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "change-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 300
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 100.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 300.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 300.0,
+              "setting_id": "change-temperature",
+              "override_id": "change"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 120.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 120.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 130.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 130.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 5,
+          "point": {
+            "id": "loop-5",
+            "label": "路径位置 5",
+            "temperature_c": 140.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 140.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 200.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 200.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 210.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 210.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 220.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 220.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 230.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 230.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 5,
+          "point": {
+            "id": "loop-5",
+            "label": "路径位置 5",
+            "temperature_c": 240.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 240.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "list-after-override",
+      "config": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "schedule": {
+          "version": 1,
+          "positions": 5,
+          "rounds": 2,
+          "parameters": [
+            {
+              "id": "temperature",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "list",
+                "along": "path",
+                "values": [
+                  100,
+                  110,
+                  120,
+                  130,
+                  140
+                ]
+              }
+            },
+            {
+              "id": "pressure",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 1
+              }
+            }
+          ],
+          "overrides": [
+            {
+              "id": "change",
+              "rounds": {
+                "start": 1,
+                "end": 1
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "change-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 300
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 100.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 300.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 300.0,
+              "setting_id": "change-temperature",
+              "override_id": "change"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 120.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 120.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 130.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 130.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 5,
+          "point": {
+            "id": "loop-5",
+            "label": "路径位置 5",
+            "temperature_c": 140.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 140.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 100.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 110.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 110.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 120.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 120.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 130.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 130.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 5,
+          "point": {
+            "id": "loop-5",
+            "label": "路径位置 5",
+            "temperature_c": 140.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 140.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "previous-round-final-value",
+      "config": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "schedule": {
+          "version": 1,
+          "positions": 3,
+          "rounds": 3,
+          "parameters": [
+            {
+              "id": "temperature",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "relative",
+                "along": "round",
+                "start": 25,
+                "step": 10,
+                "other_step": 2
+              }
+            },
+            {
+              "id": "pressure",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 1
+              }
+            }
+          ],
+          "overrides": [
+            {
+              "id": "middle",
+              "rounds": {
+                "start": 2,
+                "end": 2
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "middle-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 100
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 27.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 27.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 29.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 29.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 35.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 35.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 100.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "middle-temperature",
+              "override_id": "middle"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 39.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 39.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 3,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 45.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 45.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 3,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 110.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 110.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 3,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 49.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 49.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "relative-global-neighbour",
+      "config": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "schedule": {
+          "version": 1,
+          "positions": 5,
+          "rounds": 1,
+          "parameters": [
+            {
+              "id": "temperature",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 25
+              }
+            },
+            {
+              "id": "pressure",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 1
+              }
+            }
+          ],
+          "overrides": [
+            {
+              "id": "sparse",
+              "rounds": {
+                "start": 1
+              },
+              "positions": {
+                "start": 3,
+                "step": 2
+              },
+              "parameters": [
+                {
+                  "id": "sparse-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "relative",
+                    "along": "path",
+                    "start": 999,
+                    "step": 2,
+                    "other_step": 0
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 27.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 27.0,
+              "setting_id": "sparse-temperature",
+              "override_id": "sparse"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 5,
+          "point": {
+            "id": "loop-5",
+            "label": "路径位置 5",
+            "temperature_c": 27.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 27.0,
+              "setting_id": "sparse-temperature",
+              "override_id": "sparse"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "decimal-zero-dose",
+      "config": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "schedule": {
+          "version": 1,
+          "positions": 4,
+          "rounds": 1,
+          "parameters": [
+            {
+              "id": "temperature",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 25
+              }
+            },
+            {
+              "id": "pressure",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 1
+              }
+            },
+            {
+              "id": "salt",
+              "target": {
+                "kind": "material_amount",
+                "material_id": "initial",
+                "species": "NaCl(aq)"
+              },
+              "value": {
+                "mode": "linear",
+                "start": 0.3,
+                "path_step": -0.1,
+                "round_step": 0
+              }
+            }
+          ],
+          "overrides": []
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "material_amount",
+                "material_id": "initial",
+                "species": "NaCl(aq)"
+              },
+              "value": 0.3,
+              "setting_id": "salt",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "material_amount",
+                "material_id": "initial",
+                "species": "NaCl(aq)"
+              },
+              "value": 0.2,
+              "setting_id": "salt",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "material_amount",
+                "material_id": "initial",
+                "species": "NaCl(aq)"
+              },
+              "value": 0.1,
+              "setting_id": "salt",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 25.0,
+            "pressure_bar": 1.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "material_amount",
+                "material_id": "initial",
+                "species": "NaCl(aq)"
+              },
+              "value": 0.0,
+              "setting_id": "salt",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 25.0,
+              "setting_id": "temperature",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0,
+              "setting_id": "pressure",
+              "override_id": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mixed-saturation-fixed-8-points",
+      "config": {
+        "name": "Mixed round pressure validation",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Ca+2",
+          "HCO3-",
+          "CO3-2",
+          "CO2(aq)",
+          "Calcite"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "Calcite",
+                "amount": 0.002,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "reaction_stages": {
+          "first_start": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "first_start"
+            }
+          ],
+          "first_following": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "first_following"
+            }
+          ],
+          "later_start": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "later_start"
+            }
+          ],
+          "later_following": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "later_following"
+            }
+          ]
+        },
+        "schedule": {
+          "version": 1,
+          "positions": 4,
+          "rounds": 2,
+          "parameters": [
+            {
+              "id": "legacy-parameter-1",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "list",
+                "along": "path",
+                "values": [
+                  250.0,
+                  200.0,
+                  150.0,
+                  100.0
+                ]
+              }
+            },
+            {
+              "id": "legacy-parameter-2",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "water_saturation"
+              }
+            }
+          ],
+          "overrides": [
+            {
+              "id": "legacy-round-2",
+              "rounds": {
+                "start": 2,
+                "end": 2
+              },
+              "positions": {
+                "start": 1
+              },
+              "parameters": [
+                {
+                  "id": "legacy-round-pressure-2",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 700
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 250.0,
+            "pressure_bar": 39.76204322580225,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 250.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 39.76204322580225,
+              "setting_id": "legacy-parameter-2",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 200.0,
+            "pressure_bar": 15.54939222049764,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 200.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 15.54939222049764,
+              "setting_id": "legacy-parameter-2",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 150.0,
+            "pressure_bar": 4.761587241491415,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 150.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 4.761587241491415,
+              "setting_id": "legacy-parameter-2",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 100.0,
+            "pressure_bar": 1.0141799381792782,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0141799381792782,
+              "setting_id": "legacy-parameter-2",
+              "override_id": null
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 250.0,
+            "pressure_bar": 700.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 250.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 700.0,
+              "setting_id": "legacy-round-pressure-2",
+              "override_id": "legacy-round-2"
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 200.0,
+            "pressure_bar": 700.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 200.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 700.0,
+              "setting_id": "legacy-round-pressure-2",
+              "override_id": "legacy-round-2"
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 3,
+          "point": {
+            "id": "loop-3",
+            "label": "路径位置 3",
+            "temperature_c": 150.0,
+            "pressure_bar": 700.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 150.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 700.0,
+              "setting_id": "legacy-round-pressure-2",
+              "override_id": "legacy-round-2"
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 4,
+          "point": {
+            "id": "loop-4",
+            "label": "路径位置 4",
+            "temperature_c": 100.0,
+            "pressure_bar": 700.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "legacy-parameter-1",
+              "override_id": null
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 700.0,
+              "setting_id": "legacy-round-pressure-2",
+              "override_id": "legacy-round-2"
+            }
+          ]
+        }
+      ],
+      "legacyConfig": {
+        "name": "Mixed round pressure validation",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Ca+2",
+          "HCO3-",
+          "CO3-2",
+          "CO2(aq)",
+          "Calcite"
+        ],
+        "points": [
+          {
+            "label": "P1",
+            "temperature_c": 25,
+            "pressure_bar": 1,
+            "id": "p1"
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "Calcite",
+                "amount": 0.002,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "loops": {
+          "base": {
+            "temperature_c": 25,
+            "pressure_bar": 700,
+            "pressure_mode": "water_saturation"
+          },
+          "inner": {
+            "mode": "list",
+            "target": {
+              "kind": "temperature"
+            },
+            "values": [
+              250,
+              200,
+              150,
+              100
+            ]
+          },
+          "outer": {
+            "mode": "repeat",
+            "count": 2
+          },
+          "round_conditions": [
+            {
+              "round": 2,
+              "pressure_mode": "fixed",
+              "pressure_bar": 700
+            }
+          ]
+        },
+        "reaction_stages": {
+          "first_start": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "first_start"
+            }
+          ],
+          "first_following": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "first_following"
+            }
+          ],
+          "later_start": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "later_start"
+            }
+          ],
+          "later_following": [
+            {
+              "source": "material",
+              "phase": "all",
+              "material_id": "initial",
+              "fraction": 1,
+              "fallback": "material",
+              "fallback_fraction": 1,
+              "when": "always",
+              "id": "later_following"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "legacy-point-future-rounds",
+      "config": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "id": "p1",
+            "temperature_c": 100,
+            "pressure_bar": 10,
+            "temperature_increment_c": 5,
+            "pressure_mode": "water_saturation",
+            "round_conditions": [
+              {
+                "round": 3,
+                "temperature_c": 170,
+                "pressure_bar": 700
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "temperature_c": 150,
+            "pressure_bar": 20,
+            "temperature_increment_c": -2,
+            "pressure_increment_bar": 3,
+            "round_conditions": [
+              {
+                "round": 2,
+                "temperature_c": 180,
+                "pressure_bar": 1,
+                "pressure_mode": "water_saturation"
+              },
+              {
+                "round": 4,
+                "temperature_c": 160,
+                "pressure_bar": 600,
+                "pressure_mode": "fixed"
+              }
+            ]
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2,
+        "schedule": {
+          "version": 1,
+          "positions": 2,
+          "rounds": 5,
+          "parameters": [
+            {
+              "id": "legacy-temperature",
+              "target": {
+                "kind": "temperature"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 100
+              }
+            },
+            {
+              "id": "legacy-pressure",
+              "target": {
+                "kind": "pressure"
+              },
+              "value": {
+                "mode": "fixed",
+                "value": 10
+              }
+            }
+          ],
+          "overrides": [
+            {
+              "id": "legacy-position-1-round-1",
+              "rounds": {
+                "start": 1,
+                "end": 2
+              },
+              "positions": {
+                "start": 1,
+                "end": 1
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-1-round-1-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 100.0,
+                    "path_step": 0,
+                    "round_step": 5
+                  }
+                },
+                {
+                  "id": "legacy-position-1-round-1-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "water_saturation"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "legacy-position-1-round-3",
+              "rounds": {
+                "start": 3,
+                "end": 3
+              },
+              "positions": {
+                "start": 1,
+                "end": 1
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-1-round-3-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 170
+                  }
+                },
+                {
+                  "id": "legacy-position-1-round-3-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 700
+                  }
+                }
+              ]
+            },
+            {
+              "id": "legacy-position-1-round-4",
+              "rounds": {
+                "start": 4
+              },
+              "positions": {
+                "start": 1,
+                "end": 1
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-1-round-4-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 115.0,
+                    "path_step": 0,
+                    "round_step": 5
+                  }
+                },
+                {
+                  "id": "legacy-position-1-round-4-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "water_saturation"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "legacy-position-2-round-1",
+              "rounds": {
+                "start": 1,
+                "end": 1
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-2-round-1-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 150.0,
+                    "path_step": 0,
+                    "round_step": -2
+                  }
+                },
+                {
+                  "id": "legacy-position-2-round-1-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 20.0,
+                    "path_step": 0,
+                    "round_step": 3
+                  }
+                }
+              ]
+            },
+            {
+              "id": "legacy-position-2-round-2",
+              "rounds": {
+                "start": 2,
+                "end": 2
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-2-round-2-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 180
+                  }
+                },
+                {
+                  "id": "legacy-position-2-round-2-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "water_saturation"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "legacy-position-2-round-3",
+              "rounds": {
+                "start": 3,
+                "end": 3
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-2-round-3-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 146.0,
+                    "path_step": 0,
+                    "round_step": -2
+                  }
+                },
+                {
+                  "id": "legacy-position-2-round-3-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 26.0,
+                    "path_step": 0,
+                    "round_step": 3
+                  }
+                }
+              ]
+            },
+            {
+              "id": "legacy-position-2-round-4",
+              "rounds": {
+                "start": 4,
+                "end": 4
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-2-round-4-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 160
+                  }
+                },
+                {
+                  "id": "legacy-position-2-round-4-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "fixed",
+                    "value": 600
+                  }
+                }
+              ]
+            },
+            {
+              "id": "legacy-position-2-round-5",
+              "rounds": {
+                "start": 5
+              },
+              "positions": {
+                "start": 2,
+                "end": 2
+              },
+              "parameters": [
+                {
+                  "id": "legacy-position-2-round-5-temperature",
+                  "target": {
+                    "kind": "temperature"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 142.0,
+                    "path_step": 0,
+                    "round_step": -2
+                  }
+                },
+                {
+                  "id": "legacy-position-2-round-5-pressure",
+                  "target": {
+                    "kind": "pressure"
+                  },
+                  "value": {
+                    "mode": "linear",
+                    "start": 32.0,
+                    "path_step": 0,
+                    "round_step": 3
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "frames": [
+        {
+          "outer_index": 1,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 100.0,
+            "pressure_bar": 1.0141799381792782,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 100.0,
+              "setting_id": "legacy-position-1-round-1-temperature",
+              "override_id": "legacy-position-1-round-1"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.0141799381792782,
+              "setting_id": "legacy-position-1-round-1-pressure",
+              "override_id": "legacy-position-1-round-1"
+            }
+          ]
+        },
+        {
+          "outer_index": 1,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 150.0,
+            "pressure_bar": 20.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 150.0,
+              "setting_id": "legacy-position-2-round-1-temperature",
+              "override_id": "legacy-position-2-round-1"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 20.0,
+              "setting_id": "legacy-position-2-round-1-pressure",
+              "override_id": "legacy-position-2-round-1"
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 105.0,
+            "pressure_bar": 1.2090245057170128,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 105.0,
+              "setting_id": "legacy-position-1-round-1-temperature",
+              "override_id": "legacy-position-1-round-1"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.2090245057170128,
+              "setting_id": "legacy-position-1-round-1-pressure",
+              "override_id": "legacy-position-1-round-1"
+            }
+          ]
+        },
+        {
+          "outer_index": 2,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 180.0,
+            "pressure_bar": 10.028114462788961,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 180.0,
+              "setting_id": "legacy-position-2-round-2-temperature",
+              "override_id": "legacy-position-2-round-2"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 10.028114462788961,
+              "setting_id": "legacy-position-2-round-2-pressure",
+              "override_id": "legacy-position-2-round-2"
+            }
+          ]
+        },
+        {
+          "outer_index": 3,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 170.0,
+            "pressure_bar": 700.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 170.0,
+              "setting_id": "legacy-position-1-round-3-temperature",
+              "override_id": "legacy-position-1-round-3"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 700.0,
+              "setting_id": "legacy-position-1-round-3-pressure",
+              "override_id": "legacy-position-1-round-3"
+            }
+          ]
+        },
+        {
+          "outer_index": 3,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 146.0,
+            "pressure_bar": 26.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 146.0,
+              "setting_id": "legacy-position-2-round-3-temperature",
+              "override_id": "legacy-position-2-round-3"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 26.0,
+              "setting_id": "legacy-position-2-round-3-pressure",
+              "override_id": "legacy-position-2-round-3"
+            }
+          ]
+        },
+        {
+          "outer_index": 4,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 115.0,
+            "pressure_bar": 1.6918020672213863,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 115.0,
+              "setting_id": "legacy-position-1-round-4-temperature",
+              "override_id": "legacy-position-1-round-4"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.6918020672213863,
+              "setting_id": "legacy-position-1-round-4-pressure",
+              "override_id": "legacy-position-1-round-4"
+            }
+          ]
+        },
+        {
+          "outer_index": 4,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 160.0,
+            "pressure_bar": 600.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 160.0,
+              "setting_id": "legacy-position-2-round-4-temperature",
+              "override_id": "legacy-position-2-round-4"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 600.0,
+              "setting_id": "legacy-position-2-round-4-pressure",
+              "override_id": "legacy-position-2-round-4"
+            }
+          ]
+        },
+        {
+          "outer_index": 5,
+          "inner_index": 1,
+          "point": {
+            "id": "loop-1",
+            "label": "路径位置 1",
+            "temperature_c": 120.0,
+            "pressure_bar": 1.9867142478744713,
+            "pressure_mode": "water_saturation"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 120.0,
+              "setting_id": "legacy-position-1-round-4-temperature",
+              "override_id": "legacy-position-1-round-4"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 1.9867142478744713,
+              "setting_id": "legacy-position-1-round-4-pressure",
+              "override_id": "legacy-position-1-round-4"
+            }
+          ]
+        },
+        {
+          "outer_index": 5,
+          "inner_index": 2,
+          "point": {
+            "id": "loop-2",
+            "label": "路径位置 2",
+            "temperature_c": 142.0,
+            "pressure_bar": 32.0,
+            "pressure_mode": "fixed"
+          },
+          "parameters": [
+            {
+              "target": {
+                "kind": "temperature"
+              },
+              "value": 142.0,
+              "setting_id": "legacy-position-2-round-5-temperature",
+              "override_id": "legacy-position-2-round-5"
+            },
+            {
+              "target": {
+                "kind": "pressure"
+              },
+              "value": 32.0,
+              "setting_id": "legacy-position-2-round-5-pressure",
+              "override_id": "legacy-position-2-round-5"
+            }
+          ]
+        }
+      ],
+      "legacyConfig": {
+        "name": "双层循环核对",
+        "activity_model": "ideal",
+        "species": [
+          "H2O(aq)",
+          "H+",
+          "OH-",
+          "Na+",
+          "Cl-",
+          "NaCl(aq)"
+        ],
+        "points": [
+          {
+            "id": "p1",
+            "temperature_c": 100,
+            "pressure_bar": 10,
+            "temperature_increment_c": 5,
+            "pressure_mode": "water_saturation",
+            "round_conditions": [
+              {
+                "round": 3,
+                "temperature_c": 170,
+                "pressure_bar": 700
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "temperature_c": 150,
+            "pressure_bar": 20,
+            "temperature_increment_c": -2,
+            "pressure_increment_bar": 3,
+            "round_conditions": [
+              {
+                "round": 2,
+                "temperature_c": 180,
+                "pressure_bar": 1,
+                "pressure_mode": "water_saturation"
+              },
+              {
+                "round": 4,
+                "temperature_c": 160,
+                "pressure_bar": 600,
+                "pressure_mode": "fixed"
+              }
+            ]
+          }
+        ],
+        "bootstrap": false,
+        "materials": [
+          {
+            "id": "initial",
+            "name": "初始物质",
+            "inputs": [
+              {
+                "species": "H2O(aq)",
+                "amount": 1,
+                "unit": "kg"
+              },
+              {
+                "species": "NaCl(aq)",
+                "amount": 0.1,
+                "unit": "mol"
+              }
+            ]
+          }
+        ],
+        "cycles": 1,
+        "routes": [
+          {
+            "source": "material",
+            "phase": "all",
+            "material_id": "initial",
+            "fraction": 1,
+            "fallback": "material",
+            "fallback_fraction": 1,
+            "when": "always",
+            "id": "route-1"
+          }
+        ],
+        "schema_version": 2
+      }
+    }
+  ]
+}

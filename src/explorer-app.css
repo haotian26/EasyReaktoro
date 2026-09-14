@@ -1,0 +1,81 @@
+/* Shared workstation skin: data and chart semantics stay in the explorer engine. */
+body[data-easyreaktoro]{height:100vh;overflow:hidden;font-size:13px}
+body[data-easyreaktoro] #app{height:100%;display:flex;flex-direction:column}
+body[data-easyreaktoro] .topbar{height:auto;min-height:50px;padding:5px 10px;gap:7px;flex-shrink:0}
+body[data-easyreaktoro] .topbar .brand{display:none}
+body[data-easyreaktoro] .topbar .dataset{border:0;padding:0;min-width:100px;max-width:none;display:block;flex:1}
+body[data-easyreaktoro] .dataset strong{font-size:12px;font-weight:550;max-width:340px}
+body[data-easyreaktoro] .dataset span{font-size:12px}
+body[data-easyreaktoro] .topbar button,body[data-easyreaktoro] .topbar select{font-size:12px;min-height:28px;padding:4px 7px}
+body[data-easyreaktoro] .panel-toggle{display:flex;gap:5px;align-items:center;justify-content:center}
+body[data-easyreaktoro] .panel-toggle[aria-pressed=true]{color:var(--blue);background:var(--pale);border-color:var(--line)}
+body[data-easyreaktoro] .panel-toggle svg{width:15px;height:15px}
+body[data-easyreaktoro] .workspace{position:relative;display:grid!important;grid-template-columns:var(--library-width,230px) var(--library-handle,5px) minmax(0,1fr) var(--inspector-handle,5px) var(--inspector-width,250px);height:auto!important;min-height:0;flex:1;overflow:hidden}
+body[data-easyreaktoro] .library{grid-column:1;grid-row:1;height:100%!important;min-height:0;min-width:0;position:static;border:0}
+body[data-easyreaktoro] .center{grid-column:3;grid-row:1;height:100%!important;min-height:0!important;overflow:hidden}
+body[data-easyreaktoro] .inspector{grid-column:5;grid-row:1;position:static;width:auto;height:100%;border:0;overflow:auto;padding:12px}
+body[data-easyreaktoro] .pane-resizer{width:5px;grid-row:1;background:var(--bg);border-inline:1px solid var(--line);cursor:col-resize;touch-action:none;outline-offset:-1px}
+body[data-easyreaktoro] .pane-resizer:hover,body[data-easyreaktoro] .pane-resizer:focus{background:var(--blue)}
+body[data-easyreaktoro] .pane-resizer[data-side=library]{grid-column:2}body[data-easyreaktoro] .pane-resizer[data-side=inspector]{grid-column:4}
+body[data-easyreaktoro] [hidden]{display:none!important}
+body[data-easyreaktoro] .library-head{padding:10px 10px 5px}
+body[data-easyreaktoro] .library-head select{margin:4px 0 8px}
+body[data-easyreaktoro] .library-options{padding:0 10px 5px}
+body[data-easyreaktoro] .library-actions{padding:0 8px 5px}
+body[data-easyreaktoro] .library-bottom{padding:6px 10px;font-size:12px}
+body[data-easyreaktoro] .library-list{padding:0 5px 8px}
+body[data-easyreaktoro] .choice{padding:6px}.choice-text{overflow-wrap:anywhere}
+body[data-easyreaktoro] .navigation{padding:7px 12px;display:flex;gap:7px 15px;flex-wrap:wrap;align-items:center}
+body[data-easyreaktoro] .navigation .row+.row{margin:0}
+body[data-easyreaktoro] .navigation>.row.between{flex:1;min-width:200px}
+body[data-easyreaktoro] .path-pins:empty{display:none}
+body[data-easyreaktoro] .chart-scroll{padding:10px 12px;scroll-padding-top:8px}
+body[data-easyreaktoro] .chart-toolbar{margin-bottom:8px;position:relative}
+body[data-easyreaktoro] .figure-head{padding:7px 10px}
+body[data-easyreaktoro] .figure-settings summary{padding:5px 10px}
+body[data-easyreaktoro] .axis-controls{padding:7px 10px 2px}
+body[data-easyreaktoro] .figure{border-radius:7px}
+body[data-easyreaktoro] .figures.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+body[data-easyreaktoro] .scrubber{padding:7px 12px;display:grid;grid-template-columns:66px 28px minmax(60px,1fr) 28px minmax(65px,100px) auto;gap:6px 8px;align-items:center;position:relative}
+body[data-easyreaktoro] .browse-line,body[data-easyreaktoro] .point-track{display:contents}
+body[data-easyreaktoro] .scrubber input[type=range]{width:100%;min-width:0;margin:0}
+body[data-easyreaktoro] .scrubber #previous-condition,body[data-easyreaktoro] .scrubber #next-condition,body[data-easyreaktoro] .scrubber #previous-point,body[data-easyreaktoro] .scrubber #next-point{width:28px;min-width:28px;height:28px;padding:0;touch-action:none;user-select:none}
+body[data-easyreaktoro] .browse-controls{display:flex;align-items:center;gap:5px;justify-self:end}
+body[data-easyreaktoro] .browse-controls select{max-width:100px;font-size:12px}
+body[data-easyreaktoro] .browse-controls #play{font-size:12px;padding:4px 6px}
+body[data-easyreaktoro] #browse-position{font-size:12px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-easyreaktoro] .point-value{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+body[data-easyreaktoro] .point-value #position-label{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-easyreaktoro] .point-value #position-index{font-size:12px}
+body[data-easyreaktoro] .playback-options{margin:0;align-self:center;justify-self:end}
+body[data-easyreaktoro] .playback-options summary{font-size:12px;padding:3px;color:var(--muted)}
+body[data-easyreaktoro] .playback-options>div{position:absolute;right:12px;bottom:calc(100% - 2px);max-width:440px;border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:12px;box-shadow:0 -6px 25px #0002;z-index:6}
+body[data-easyreaktoro] .quantity-note{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 10px;padding:8px;background:var(--pale);border-radius:5px}
+body[data-easyreaktoro] .key-hint{max-width:350px;line-height:1.8;margin-top:7px}
+body[data-easyreaktoro] .results-onboarding{display:flex;flex:1;min-height:0;align-items:center;justify-content:center;flex-direction:column;background:var(--bg);padding:28px;gap:12px}
+.results-onboarding h2{font-size:22px;font-weight:550}.results-onboarding p{font-size:12px;color:var(--muted);line-height:1.8;max-width:530px;text-align:center}.results-onboarding .entry-actions{display:flex;gap:12px;margin:10px 0}
+.results-onboarding .entry-actions button{padding:15px 22px;text-align:left;min-width:215px}.results-onboarding button strong{display:block;font-size:13px}.results-onboarding button small{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.results-onboarding .entry-actions{width:min(100%,580px);flex-wrap:wrap}.results-onboarding .entry-actions button{flex:1;min-width:210px}.results-onboarding .entry-actions small{line-height:1.7}
+.results-onboarding .resume-results{width:min(100%,580px);text-align:left;padding:16px 22px;margin-top:8px;border-color:var(--blue);background:var(--pale)}.resume-results>span{font-size:12px;color:var(--blue)}.resume-results>strong{margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-easyreaktoro] #results-home span{display:inline;white-space:nowrap}
+body[data-easyreaktoro] .topbar #theme-select{display:none}
+body[data-easyreaktoro=standalone] .topbar #theme-select{display:block}
+@media(max-width:1150px){body[data-easyreaktoro] .panel-toggle span{display:none}body[data-easyreaktoro] .dataset strong{max-width:250px}}
+@media(max-width:850px){body[data-easyreaktoro] .figures.two{grid-template-columns:minmax(0,1fr)}body[data-easyreaktoro] .topbar{gap:4px}body[data-easyreaktoro] .dataset strong{max-width:150px}body[data-easyreaktoro] .topbar .optional{display:none}}
+.empty-field-actions{display:flex;justify-content:center;gap:10px;margin-top:18px}.empty-field-actions button{padding:8px 13px;border-color:var(--line);color:var(--blue);background:var(--surface);font-size:12px}.empty-field-actions button:hover{border-color:var(--blue);background:var(--pale)}
+
+body[data-easyreaktoro=embedded] #language{display:none}
+body[data-easyreaktoro] .navigation #x-axis{max-width:220px}
+body[data-easyreaktoro] .navigation #x-search{width:104px}
+body[data-easyreaktoro] .navigation #x-measure{max-width:155px}
+
+/* Let the chart keep useful width when a saved workspace has wide side panels. */
+body[data-easyreaktoro] .browse-line{flex-wrap:wrap;row-gap:6px}
+body[data-easyreaktoro] .browse-line>input{flex-basis:80px}
+body[data-easyreaktoro] .navigation>.row:first-child{min-width:0}
+body[data-easyreaktoro] .navigation>.row:first-child>label{max-width:100%;flex-wrap:wrap}
+body[data-easyreaktoro] .figure-head{flex-wrap:wrap;gap:5px}
+body[data-easyreaktoro] .figure-title{min-width:100px}
+@media(max-width:760px){body[data-easyreaktoro] #results-home span{display:none}body[data-easyreaktoro] .dataset strong{max-width:110px}body[data-easyreaktoro] .chart-toolbar>.row{flex-wrap:wrap}body[data-easyreaktoro] .scrubber{grid-template-columns:52px 26px minmax(50px,1fr) 26px minmax(54px,80px);gap:5px}body[data-easyreaktoro] .browse-controls{grid-column:1/-1;grid-row:3;justify-self:start}body[data-easyreaktoro] .playback-options{grid-column:4/-1;grid-row:3}body[data-easyreaktoro] .playback-options{justify-self:end}body[data-easyreaktoro] .playback-options>div{max-width:calc(100vw - 24px)}}
+/* English condition names need more room than the compact Chinese labels. */
+html[lang=en] body[data-easyreaktoro] .browse-controls select{max-width:145px}

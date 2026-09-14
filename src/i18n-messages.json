@@ -1,0 +1,4484 @@
+{
+  "statics": {
+    "Haar, L., Gallagher, J. S. & Kell, G. S. (1984). NBS/NRC Steam Tables. Hemisphere Publishing. 链接为 NIST 书目信息。": "Haar, L., Gallagher, J. S. & Kell, G. S. (1984). NBS/NRC Steam Tables. Hemisphere Publishing. Link to the NIST bibliographic record.",
+    "Reaktoro. 水相与气相活度模型说明；下列模型参数和水活度形式对应 Reaktoro 2.13。": "Reaktoro. Aqueous and gas activity-model documentation. The parameters and water-activity expressions shown here correspond to Reaktoro 2.13.",
+    "Davies, C. W. (1938). The extent of dissociation of salts in water. Part VIII. Journal of the Chemical Society, 2093–2098. 此处 b = 0.3 与中性物种项采用 Reaktoro 的参数约定。": "Davies, C. W. (1938). The extent of dissociation of salts in water. Part VIII. Journal of the Chemical Society, 2093–2098. The b = 0.3 value and neutral-species term here follow Reaktoro's parameter conventions.",
+    "Robinson, D. B. & Peng, D.-Y. (1978). The Characterization of Heptanes and the Heavier Fractions. University of Alberta. 本软件采用此修订的 Peng–Robinson 模型。": "Robinson, D. B. & Peng, D.-Y. (1978). The Characterization of Heptanes and the Heavier Fractions. University of Alberta. This application uses this revision of the Peng–Robinson model.",
+    "浏览器未能打开。可复制链接：": "Could not open the browser. Copy this link: ",
+    "参考文献": "References",
+    "保存 EasyReaktoro 数据库": "Save EasyReaktoro database",
+    "EasyReaktoro 数据库": "EasyReaktoro database",
+    "导出 Reaktoro YAML": "Export Reaktoro YAML",
+    "选择 Reaktoro 或 Conda 环境文件夹": "Choose a Reaktoro or Conda environment folder",
+    "选择已转换的扩展 Reaktoro 数据库文件夹": "Choose a converted extended Reaktoro database folder",
+    "选择默认保存位置": "Choose the default save location",
+    "选择默认导出位置": "Choose the default export location",
+    "选择 Reaktoro 环境中的 Python 可执行文件": "Choose the Python executable in your Reaktoro environment",
+    "选择 Reaktoro YAML 文件": "Choose a Reaktoro YAML file",
+    "从其他 EasyReaktoro 数据库添加": "Add from another EasyReaktoro database",
+    "打开 EasyReaktoro 数据库": "Open EasyReaktoro database",
+    "数据库": "Database",
+    "模拟尚未保存：": "Simulation has not been saved: ",
+    "请先停止模拟或等待完成，再重新连接 Reaktoro 环境。": "Stop the simulation or wait for it to finish before reconnecting Reaktoro.",
+    "设置无法读取，已使用默认设置启动；原设置文件未被覆盖。": "Settings could not be read. The app started with defaults; your settings file has not been overwritten.",
+    "启动时未能打开数据库：": "Could not open the database at startup: ",
+    "模拟正在运行，请先停止计算或等待完成，再退出应用。": "The simulation is running. Stop it or wait for it to finish before quitting.",
+    "操作正在进行，请完成后再退出。": "An operation is in progress. Wait for it to finish before quitting.",
+    "请先停止模拟或等待完成，再检查 Reaktoro 连接。": "Stop the simulation or wait for it to finish before checking the Reaktoro connection.",
+    "已重新连接。请重新打开数据库；连接中断前未保存的数据库修改已无法恢复。": "Reconnected. Reopen your database; database changes not saved before the connection was lost cannot be recovered.",
+    "已重新连接 Reaktoro，请重新打开数据库。": "Reconnected to Reaktoro. Reopen your database to continue.",
+    "尚未连接 Reaktoro，请选择安装位置。": "Reaktoro is not connected. Choose its installation location.",
+    "请先停止模拟或等待完成，再切换 Reaktoro 环境。": "Stop the simulation or wait for it to finish before switching Reaktoro environments.",
+    "上次模拟未能打开：": "Could not open the last simulation: ",
+    "数据库未能打开：": "Could not open the database: ",
+    "默认系统数据库当前不可用，请先连接提供该数据库的 Reaktoro 环境。": "The default system database is unavailable. Connect to a Reaktoro environment that provides it.",
+    "操作正在进行，请稍候": "An operation is in progress. Please wait.",
+    "无法确认文件是否已保存，请检查保存位置后重试。当前修改已保留。": "The save could not be confirmed. Check the destination and try again. Your changes have been retained.",
+    "数据库已保存": "Database saved",
+    "请输入高于 −273.15 °C 的有效温度。": "Enter a valid temperature above −273.15 °C.",
+    "请输入大于 0 K 的有效温度。": "Enter a valid temperature above 0 K.",
+    "该 species 没有可删除的本地记录 ID": "This species has no local record ID to delete.",
+    "species 已删除，保存数据库后生效": "Species deleted. Save the database to keep this change.",
+    "已设为默认数据库": "Set as default database",
+    "收起导航": "Collapse navigation",
+    "展开导航": "Expand navigation",
+    "主页": "Home",
+    "模拟": "Simulation",
+    "结果": "Results",
+    "设置": "Settings",
+    "有未保存的数据库修改": "Unsaved database changes",
+    "切换浅色或深色": "Switch between light and dark",
+    "切换浅色 / 深色；跟随系统可在设置中选择": "Switch between light and dark; follow system appearance in Settings",
+    "关闭导航抽屉": "Close navigation drawer",
+    "连接 Reaktoro 环境": "Connect to Reaktoro",
+    "正在检测": "Detecting",
+    "连接 Reaktoro": "Connect Reaktoro",
+    "验证通过": "Validation passed",
+    "无法确认文件是否已另存，请检查保存位置后重试。": "The new copy could not be confirmed. Check the destination and try again.",
+    "此模拟的数据库未能打开：": "Could not open this simulation's database: ",
+    "按元素筛选 species": "Filter species by element",
+    "选择一个或多个元素，结果必须同时包含全部已选元素。": "Choose one or more elements. Results must contain every selected element.",
+    "清除": "Clear",
+    "取消": "Cancel",
+    "应用筛选": "Apply filter",
+    "模拟尚未保存，确定退出？": "Quit with unsaved simulation changes?",
+    "放弃未保存内容并退出": "Discard changes and quit",
+    "自动保存未完成，退出会丢失最近修改。继续编辑后可重试保存或另存模拟设置。": "Automatic saving has not finished. Quitting will lose recent changes. Continue editing to retry saving or save a copy of the simulation settings.",
+    "所选 species 已添加，请保存数据库文件。": "Selected species added. Save the database file to keep these changes.",
+    "保存未完成的更改？": "Save your changes?",
+    "”包含未保存更改。保存失败时会保留当前数据库。": "” has unsaved changes. If saving fails, the database will remain open.",
+    "放弃更改": "Discard changes",
+    "保存并关闭": "Save and close",
+    "导出结果": "Export results",
+    "数据库验证": "Database validation",
+    "完成": "Complete",
+    "正在处理，请稍候…": "Working, please wait…",
+    "关闭提示": "Dismiss notification",
+    "从热力学数据，到反应与结果": "From thermodynamic data to reactions and results",
+    "定义化学体系，构建平衡计算，观察物质如何变化。": "Define a chemical system, set up equilibrium calculations, and follow its evolution.",
+    " 已连接": " Connected",
+    "计算准备": "Prepare for calculation",
+    "正在检查常见安装位置…": "Checking common installation locations…",
+    "自动检测，或手动指定 Reaktoro 环境中的 Python。": "Detect automatically, or choose the Python executable in your Reaktoro environment.",
+    "正在检测…": "Detecting…",
+    "自动检测": "Detect automatically",
+    "选择 Reaktoro Python": "Choose Reaktoro Python",
+    "选择 Conda / Reaktoro 环境": "Choose Conda / Reaktoro environment",
+    "暂不连接？": "Connect later?",
+    "离线管理 .rtdb": "Manage .rtdb files offline",
+    "当前数据库": "Current database",
+    " · 有未保存的修改": " · Unsaved changes",
+    " 个 species · ": " species · ",
+    " 个元素 · ": " elements · ",
+    "只读数据": "Read-only data",
+    "可编辑数据": "Editable data",
+    "查看 species": "Browse species",
+    "进入模拟": "Open simulation",
+    "计算工作流程": "Calculation workflow",
+    "01 / 数据": "01 / Data",
+    "数据库与 species 管理": "Database and species management",
+    "按名称、化学式或元素寻找 species，检查热力学参数与来源。": "Find species by name, formula, or element, and inspect thermodynamic parameters and sources.",
+    "查看我的数据库和系统数据库": "Browse my databases and system databases",
+    "02 / 模拟": "02 / Simulation",
+    "继续上次模拟": "Continue last simulation",
+    "构建平衡计算": "Set up equilibrium calculations",
+    " 个路径位置": " path positions",
+    "选择可能生成的 species，设置温压路径、投料变化与物料传递；随时切换图形设置和 Python 代码。": "Choose the species allowed at equilibrium, set temperature and pressure paths, vary inputs, and transfer material between reactions. Switch between graphical settings and Python code at any time.",
+    "恢复 species、参数与代码": "Restore species, parameters, and code",
+    "继续当前体系": "Continue with this system",
+    "选择数据库后开始": "Choose a database to begin",
+    "模拟历史": "Simulation history",
+    "03 / 结果": "03 / Results",
+    "查看与比较结果": "View and compare results",
+    "打开计算结果或导入表格，比较不同条件，保存图表与工作区。": "Open calculation results or import tables, compare conditions, and save charts and workspaces.",
+    "打开结果": "Open results",
+    "最近数据库": "Recent databases",
+    "打开 .rtdb": "Open .rtdb",
+    "运行前选择保存位置 · 计算结果自动保存 · 支持独立查看与分享": "Choose a location before running · Results save automatically · View and share independently",
+    "计算从哪里开始": "Where calculations begin",
+    "数据库提供热力学数据。系统 species 决定平衡时允许出现什么；初始物质决定实际投入多少。运行前选择结果保存位置，计算和查看结果可在不同页面进行。": "The database provides thermodynamic data. System species define what can exist at equilibrium; initial materials define how much is introduced. Choose a results folder before running. Calculations and results have their own workspaces.",
+    "尚未打开本地数据库。可以直接使用已连接环境中的系统数据库，或打开自己的 .rtdb 文件。": "No local database is open. Use a system database from your connected Reaktoro environment, or open your own .rtdb file.",
+    "数量暂时无法读取，可点击刷新重试。": "Counts could not be read. Refresh to try again.",
+    "全部": "All",
+    "为模拟选择数据库 · 打开后继续设置化学体系": "Choose a database for this simulation, then define the chemical system",
+    "改为浏览数据库": "Browse databases instead",
+    "数据库分类": "Database category",
+    "我的数据库": "My databases",
+    "系统数据库": "System databases",
+    "只读": "Read-only",
+    "新建数据库": "New database",
+    "打开数据库": "Open database",
+    "搜索数据库": "Search databases",
+    "搜索我的数据库 · ⌘F": "Search my databases · ⌘F",
+    "搜索系统数据库 · ⌘F": "Search system databases · ⌘F",
+    "清除数据库搜索": "Clear database search",
+    "系统数据库类型": "System database type",
+    "由 Reaktoro 提供，可以查看和用于模拟。需要编辑时，可选取其中的 species 创建自己的数据库。": "Provided by Reaktoro for inspection and simulation. To edit data, select species and create your own database.",
+    "连接 Reaktoro 后可用": "Available after connecting Reaktoro",
+    "选取需要的 species，创建可编辑的数据库": "Select species to create an editable database",
+    "选取 species 建库": "Create from selected species",
+    "刷新数据库数量": "Refresh database counts",
+    "重新读取 species 数和元素数": "Reload species and element counts",
+    "读取中…": "Loading…",
+    "刷新": "Refresh",
+    "连接 Reaktoro 后可查看系统数据库。": "Connect Reaktoro to browse system databases.",
+    "正在读取系统数据库…": "Loading system databases…",
+    "系统数据库读取失败，请重新加载或检查连接。": "Could not load system databases. Reload or check the connection.",
+    "重新加载": "Reload",
+    "检查连接": "Check connection",
+    "名称": "Name",
+    "与位置": " and location",
+    "species 数": "Species count",
+    "元素数": "Element count",
+    " 个元素": " elements",
+    "数量暂不可用": "Counts unavailable",
+    "正在读取数量": "Loading counts",
+    " · 打开数据库": " · Open database",
+    "默认": "Default",
+    "未保存": "Unsaved",
+    "没有匹配的数据库": "No matching databases",
+    "还没有自己的数据库": "No personal databases yet",
+    "暂无此类系统数据库": "No system databases of this type",
+    "尝试其他名称，或清除搜索。": "Try a different name, or clear the search.",
+    "打开已有数据库，或从系统数据库中选取 species 开始。": "Open an existing database, or begin by selecting species from a system database.",
+    "可选择其他类型，或检查 Reaktoro 连接。": "Choose another type, or check the Reaktoro connection.",
+    "清除搜索": "Clear search",
+    "查看系统数据库": "Browse system databases",
+    "查看全部系统数据库": "View all system databases",
+    " 个数据库": " databases",
+    "符合搜索": " matching the search",
+    "数量包含数据库中的全部 species；未保存的修改会单独标出。": "Counts include all species in each database. Unsaved changes are marked separately.",
+    "数据来自 Reaktoro ": "Data provided by Reaktoro ",
+    "详情读取失败：": "Could not load details: ",
+    " 个元素 · 打开数据库": " elements · Open database",
+    " 详情": " details",
+    "收起详情": "Hide details",
+    "查看详情": "View details",
+    "重试": "Retry",
+    "正在读取详情…": "Loading details…",
+    "相态分布": "Phase distribution",
+    "尚无信息": "No information yet",
+    "热力学模型": "Thermodynamic models",
+    " 条": " entries",
+    "尚无参考文献": "No references yet",
+    "返回数据库列表": "Return to database list",
+    "数据库列表": "Database list",
+    "已保存": "Saved",
+    "数据库信息": "Database information",
+    " 元素": " Elements",
+    "文件格式 .rtdb": "File format .rtdb",
+    "以当前数据库中的 species 与参数设置模拟": "Set up a simulation with this database's species and parameters",
+    "用于模拟": "Use for simulation",
+    "新建 species": "New species",
+    "保存": "Save",
+    "操作": "Actions",
+    "搜索 species": "Search species",
+    "名称 / 化学式 / 模型 · ⌘F": "Name / formula / model · ⌘F",
+    "元素周期表": "Periodic table",
+    "筛选 species": "Filter species",
+    "相态与模型筛选": "Filter by phase and model",
+    "查找 species": "Find species",
+    "⌘F 定位搜索；支持名称、化学式、原始名称及模型。精确名称和化学式优先，随后是前缀和包含匹配；化学式的元素大小写参与排序。": "⌘F focuses search. Search names, formulas, original names, and models. Exact names and formulas rank first, followed by prefix and partial matches. Element capitalization is considered when ranking formulas.",
+    "↑↓ 浏览当前页，Enter 查看；Esc 清除搜索。元素周期表筛选包含全部所选元素的 species，可与相态、模型组合。": "Use ↑↓ to browse this page, Enter to view, and Esc to clear search. Periodic-table filters match every selected element and can be combined with phase and model filters.",
+    "筛选相态": "Filter by phase",
+    "全部相态": "All phases",
+    "筛选模型": "Filter by model",
+    "全部模型": "All models",
+    "清空筛选": "Clear filters",
+    "化学式": "Formula",
+    "相态": "Phase",
+    "模型": "Model",
+    "species 列表": "Species list",
+    " · 草稿": " · Draft",
+    "species 列表未能更新": "Could not update the species list",
+    "重新读取 species": "Reload species",
+    "正在读取 species…": "Loading species…",
+    "没有符合条件的 species，请调整搜索或筛选。": "No species match. Adjust the search or filters.",
+    "数据库还没有 species，点击“新建 species”开始。": "This database has no species yet. Choose “New species” to begin.",
+    "页 ": "Page ",
+    "species 页码": "Species page number",
+    "上一页": "Previous page",
+    "下一页": "Next page",
+    "调整 species 列表宽度": "Resize species list",
+    "从系统数据库选择 species 并创建": "Create from system database species",
+    "复制整个数据库…": "Copy entire database…",
+    "从 Reaktoro 系统数据库添加": "Add from a Reaktoro system database",
+    "从 YAML / .rtdb / 文件夹添加": "Add from YAML / .rtdb / folder",
+    "另存为 .rtdb…": "Save as .rtdb…",
+    "删除所选 species": "Delete selected species",
+    "验证数据库": "Validate database",
+    "导出需要连接 Reaktoro 进行重新加载验证": "Connect Reaktoro to verify the export by reloading it",
+    "导出…": "Export…",
+    "在 Finder 中显示": "Show in Finder",
+    "设为默认数据库": "Set as default database",
+    "关闭数据库": "Close database",
+    "原始名称": "Original name",
+    "元素组成": "Elemental composition",
+    "电荷": "Charge",
+    "摩尔质量 (kg/mol)": "Molar mass (kg/mol)",
+    "有效温压范围": "Valid temperature and pressure range",
+    "形成反应": "Formation reaction",
+    "所需 species": "Required species",
+    "活度参数": "Activity parameters",
+    "来源": "Source",
+    "标签": "Tags",
+    "备注": "Notes",
+    "资料校验码": "Data checksum",
+    "参考 species 数据": "Reference species data",
+    "计量系数": "Stoichiometric coefficient",
+    "参数参考文献": "Parameter references",
+    "赋值方式": "Assignment method",
+    "是否采用源库默认规则": "Uses the source database's default rule",
+    "说明": "Description",
+    "适用说明": "Scope of use",
+    "修改前的原始赋值": "Original assignment before editing",
+    "源参数条目": "Source parameter entry",
+    "来源文件": "Source file",
+    "原始记录位置": "Original record location",
+    "源记录编号": "Source record ID",
+    "源文件校验值": "Source file checksum",
+    "源记录校验值": "Source record checksum",
+    "映射校验值": "Mapping checksum",
+    "原始别名": "Original aliases",
+    "数据版本": "Data version",
+    "模型类型": "Model type",
+    "模型参数": "Model parameters",
+    "原始模型参数": "Original model parameters",
+    "Reaktoro 版本": "Reaktoro version",
+    "提供者": "Provider",
+    "数据库类型": "Database type",
+    "来源路径": "Source path",
+    "反应物及系数": "Reactants and coefficients",
+    "反应式": "Reaction equation",
+    "反应模型参数": "Reaction model parameters",
+    "温度范围 (K)": "Temperature range (K)",
+    "压力范围 (Pa)": "Pressure range (Pa)",
+    "离子尺寸 aᵢ (Å)": "Ion size aᵢ (Å)",
+    "平衡常数拟合": "Equilibrium constant fit",
+    "版本": "Version",
+    "单位": "Unit",
+    "水溶液": "Aqueous",
+    "气相": "Gas",
+    "液相": "Liquid",
+    "固相": "Solid",
+    "晶体固相": "Crystalline solid",
+    "离子交换": "Ion exchange",
+    "吸附态": "Adsorbed",
+    "未指定": "Not specified",
+    "Reaktoro 数据": "Reaktoro data",
+    "数据库热力学模型": "Database thermodynamic model",
+    "HKF（水）": "HKF (water)",
+    "数据库标准态": "Database standard state",
+    "反应标准态模型": "Reaction standard-state model",
+    "未提供": "Not provided",
+    "选择 species，查看热力学性质与数据来源。": "Select a species to inspect its thermodynamic properties and data sources.",
+    "概览": "Overview",
+    "模型与参数": "Model and parameters",
+    "来源与参考文献": "Sources and references",
+    "验证": "Validation",
+    "编辑": "Edit",
+    "详情暂时无法显示": "Details are unavailable",
+    "重新读取详情": "Reload details",
+    "正在读取 ": "Loading ",
+    " 的参数与来源…": " parameters and sources…",
+    "指定温压计算": "Evaluate at temperature and pressure",
+    "草稿不参与计算": "Draft species are excluded from calculations",
+    "除 Extended Maier–Kelley 外，计算需要连接 Reaktoro": "Connect Reaktoro to calculate models other than Extended Maier–Kelley",
+    "计算标准热力学性质": "Calculate standard thermodynamic properties",
+    "查看源模型参数": "View source model parameters",
+    "活度模型参数": "Activity model parameters",
+    "仅在记录声明的适用活度模型中使用；其中 aᵢ 是经验模型参数，并非物理半径。": "Use only with the activity model stated in the record. The ion size aᵢ is an empirical parameter, not a physical radius.",
+    "尚未执行验证。使用“操作 → 验证数据库”检查模型参数、形成反应和引用 species。草稿不参与计算或正式导出。": "Not yet validated. Use Actions → Validate database to check model parameters, formation reactions, and referenced species. Drafts are excluded from calculations and final exports.",
+    "尚无可显示的模型参数。": "No model parameters to display.",
+    "参数": "Parameter",
+    "数值": "Value",
+    "未声明": "Not specified",
+    "参数名称和单位请参照该模型的原始文献。": "Refer to the model's original publication for parameter definitions and units.",
+    "原始参数": "Original parameters",
+    "记录编号": "Record ID",
+    "编号": "ID",
+    "热容": "Heat capacity",
+    "热容项数": "Number of heat-capacity terms",
+    "数据质量": "Data quality",
+    "启用": "Enabled",
+    "补充来源": "Additional sources",
+    "其他来源的适用范围": "Validity ranges from other sources",
+    "是": "Yes",
+    "否": "No",
+    "Reaktoro 未提供": "Not provided by Reaktoro",
+    "尚无参考文献。可查阅该数据库的说明文件或原始文献。": "No references yet. Consult the database documentation or original publications.",
+    "常规": "General",
+    "数据库与文件": "Databases and files",
+    "Reaktoro 环境": "Reaktoro environment",
+    "关于": "About",
+    "界面语言": "Interface language",
+    "切换菜单、表单与帮助的语言，当前输入保持不变。": "Choose the language for menus, forms, and help. Your current entries are preserved.",
+    "自动保存模拟": "Save simulations automatically",
+    "关闭后手动保存；切换数据库、模拟或退出时询问如何处理未保存内容。": "When disabled, save manually. When switching databases or simulations, or quitting, you will be asked how to handle unsaved changes.",
+    "编辑与快捷键": "Editing and keyboard shortcuts",
+    "模拟支持撤销、重做和恢复到上次保存；具体参数与图表偏好在对应页面设置。": "Simulations support undo, redo, and restoring the last saved state. Parameter and chart options are available in their workspaces.",
+    "⌘ / Ctrl + S 保存": "⌘ / Ctrl + S Save",
+    "⌘ / Ctrl + Z 撤销": "⌘ / Ctrl + Z Undo",
+    "⇧ + ⌘ / Ctrl + Z 重做": "⇧ + ⌘ / Ctrl + Z Redo",
+    "主题": "Appearance",
+    "立即生效并在重启后保持。": "Applies immediately and is remembered after restarting.",
+    "跟随系统": "Follow system",
+    "浅色": "Light",
+    "深色": "Dark",
+    "界面密度": "Interface density",
+    "控制列表与表单间距。": "Adjust spacing in lists and forms.",
+    "舒适": "Comfortable",
+    "紧凑": "Compact",
+    "启动时打开": "Open at startup",
+    "下次启动生效；继续上次模拟会恢复其数据库、参数和代码。": "Applies next time the app starts. Continuing the last simulation restores its database, parameters, and code.",
+    "上次模拟": "Last simulation",
+    "默认数据库": "Default database",
+    "尚未设置": "Not set",
+    "未设置": "Not set",
+    "（当前默认）": " (current default)",
+    "使用当前数据库": "Use current database",
+    "选择文件…": "Choose file…",
+    "清除列表": "Clear list",
+    "默认保存位置": "Default save location",
+    "默认导出位置": "Default export location",
+    "已连接": "Connected",
+    "未连接": "Not connected",
+    "尚未连接 Reaktoro": "Reaktoro is not connected",
+    "正在检查…": "Checking…",
+    "检查并重新连接": "Check and reconnect",
+    "选择 Python": "Choose Python",
+    "选择环境文件夹": "Choose environment folder",
+    "检查当前连接，并在连接中断时重新连接。正常连接会保留已打开的数据库；其他已安装环境列在下方。": "Check the current connection and reconnect if needed. A working connection keeps the open database. Other installed environments are listed below.",
+    "版本 ": "Version ",
+    "许可证": "License",
+    "计算工具": "Calculation engine",
+    "计算服务连接": "Calculation service connection",
+    "通过": "Passed",
+    "失败": "Failed",
+    "Reaktoro 可用性": "Reaktoro availability",
+    "不可用": "Unavailable",
+    "已打开数据库": "Open databases",
+    "关闭对话框": "Close dialog",
+    "新建空白数据库": "New blank database",
+    "数据库名称使用你保存的 .rtdb 文件名，例如“热液实验.rtdb”在界面中显示为“热液实验”。": "The database name comes from its saved .rtdb filename. For example, “Hydrothermal experiment.rtdb” appears as “Hydrothermal experiment”.",
+    "保存位置": "Saved location",
+    "选择…": "Choose…",
+    "创建": "Create",
+    "正在保存或拟合，请稍候再退出。": "Saving or fitting is in progress. Wait before closing.",
+    "请输入 species 名称。": "Enter a species name.",
+    "请先从周期表选择元素。": "Select elements from the periodic table first.",
+    "每个元素的化学计量数必须大于 0。": "Every elemental stoichiometric coefficient must be greater than 0.",
+    "请选择一个已加载的热力学模型。": "Choose an available thermodynamic model.",
+    "平衡常数数据已修改，请先完成 MRB 拟合。": "Equilibrium constant data have changed. Fit the MRB parameters again before saving.",
+    "该模型必须指定形成反应所依赖的 species。": "This model requires reference species for its formation reaction.",
+    "依赖 species 和计量系数必须完整填写。": "Enter both the reference species and its stoichiometric coefficient.",
+    "同一个已有 species 只能填写一行，请合并计量系数。": "Each existing species can appear only once. Combine its stoichiometric coefficients.",
+    "有效范围必须填写有效的最小值和最大值，且最小值小于最大值。": "Enter valid minimum and maximum values for the range, with the minimum below the maximum.",
+    "扩展 Debye–Hückel 离子尺寸 aᵢ 必须大于 0 Å。": "The extended Debye–Hückel ion size aᵢ must be greater than 0 Å.",
+    "编辑 species": "Edit species",
+    "有未保存的 species 修改，确定退出？": "Quit with unsaved species changes?",
+    "放弃当前 species 的修改？": "Discard changes to this species?",
+    "放弃修改并退出": "Discard changes and quit",
+    "放弃表单修改": "Discard form changes",
+    "当前填写的内容尚未保存。继续编辑可保留这些内容；放弃后无法恢复。": "Your entries have not been saved. Continue editing to keep them; discarded changes cannot be recovered.",
+    "species 表单章节": "Species form sections",
+    "组成与身份": "Composition and identity",
+    "文献与备注": "References and notes",
+    "定义组成": "Define composition",
+    "先选择元素并填写化学计量数。系统生成初始化学式，你可以按数据库命名习惯继续修改。": "Select elements and enter their stoichiometric coefficients. An initial formula is generated automatically; you can edit it to follow your database's naming conventions.",
+    "species 名称": "Species name",
+    "用于数据库中的唯一名称": "Unique name in this database",
+    "选择组成元素": "Choose constituent elements",
+    "尚未选择元素": "No elements selected",
+    "清除已选元素": "Clear selected elements",
+    "最终电荷": "Net charge",
+    "已修改": "Modified",
+    "自动生成": "Generated automatically",
+    "请先选择元素": "Select elements first",
+    "恢复自动生成": "Restore automatic formula",
+    "排版预览": "Formula preview",
+    "可加入括号或相态标记": "Parentheses and phase labels are supported",
+    "选择元素后自动生成，也可以直接编辑": "Generated from the selected elements; you can also edit it directly",
+    "选择标准态热力学模型": "Choose a standard-state thermodynamic model",
+    "选择与数据来源一致的模型，按标明的单位填写参数。": "Choose the model used by your data source and enter parameters in the stated units.",
+    "这是已有来源记录，不能作为从零创建的新模型。": "This is an existing source record and cannot be used to create a model from scratch.",
+    "直接输入三个参数": "Enter three parameters directly",
+    "用多温压平衡常数拟合": "Fit equilibrium constants at multiple temperatures and pressures",
+    "实验或文献平衡常数": "Experimental or published equilibrium constants",
+    "输入至少 3 组温度、压力和观测值。选择 log K 时按热力学约定转换为 pK = −log K，再拟合 MRB 三参数。": "Enter at least 3 sets of temperature, pressure, and observed values. log K values are converted using pK = −log K before fitting the three MRB parameters.",
+    "输入值": "Input quantity",
+    "温度 (°C)": "Temperature (°C)",
+    "压力 (bar)": "Pressure (bar)",
+    "删除": "Delete",
+    "添加数据点": "Add data point",
+    "拟合 MRB 参数": "Fit MRB parameters",
+    "拟合成功，参数已写入当前表单": "Fit complete; parameters are in this form",
+    "尚未保存到数据库。请完成其余字段后点击“保存 species”，再保存数据库文件。": "These parameters have not been saved to the database. Complete the remaining fields, choose “Save species”, then save the database file.",
+    "当前模型的热力学参数不可在这里修改。可以编辑名称、适用温压范围、参考文献、活度参数和备注。": "Thermodynamic parameters for this model cannot be edited here. You can edit the name, valid temperature and pressure ranges, references, activity parameters, and notes.",
+    "当前模型参数来自所选数据库，不可在这里修改。可以补充适用温压范围、参考文献、活度参数和备注。": "These model parameters come from the selected database and cannot be edited here. You can add valid temperature and pressure ranges, references, activity parameters, and notes.",
+    "有效温压范围（可选）": "Valid temperature and pressure range (optional)",
+    "最低温度": "Minimum temperature",
+    "最高温度": "Maximum temperature",
+    "最低压力": "Minimum pressure",
+    "最高压力": "Maximum pressure",
+    "选择组成目标 species 的已有 species 并填写计量系数。MRB 给出该反应的平衡常数，已有 species 的标准态性质则用于求目标 species 的标准态性质。": "Choose existing species that form the target species and enter their stoichiometric coefficients. MRB gives the equilibrium constant for this reaction; the existing species' standard-state properties determine those of the target species.",
+    "反应式预览": "Reaction preview",
+    "待选择": "Not selected",
+    "请添加形成反应中的已有 species": "Add existing species for the formation reaction",
+    "目标 species": "Target species",
+    "目标 species 的系数固定为 1。正系数放在左侧，负系数放在右侧；保存前会检查元素和电荷是否守恒。": "The target species has a coefficient of 1. Positive coefficients appear on the left and negative coefficients on the right. Element and charge balance are checked before saving.",
+    "已有 species": "Existing species",
+    "搜索 species 名称或化学式": "Search species name or formula",
+    "没有匹配的已有 species。": "No matching existing species.",
+    "添加已有 species": "Add existing species",
+    "水溶液活度参数": "Aqueous activity parameters",
+    "这是活度系数模型参数，不是标准态热力学模型参数；aᵢ 为经验离子尺寸，并非物理半径。": "These are parameters for the activity coefficient model, separate from the standard-state thermodynamic model. The ion size aᵢ is empirical, not a physical radius.",
+    "已有其他活度模型的数据，此编辑器不会覆盖": "Data for another activity model are present and will be preserved",
+    "记录扩展 Debye–Hückel 参数": "Record extended Debye–Hückel parameters",
+    "已记录 ": "Recorded ",
+    " 活度参数，本次编辑会原样保留。": " activity parameters will be preserved.",
+    "适用活度模型": "Applicable activity model",
+    "离子尺寸 aᵢ": "Ion size aᵢ",
+    "来源、参考文献与说明": "Sources, references, and notes",
+    "粘贴完整参考文献即可，也可以分别填写作者、年份等信息。备注可用于记录数据说明。": "Paste a full citation, or enter authors, year, and other details separately. Use notes to describe the data.",
+    "完整引用": "Full citation",
+    "例如：Helgeson, H. C. et al. (1981). Thermodynamic properties... Journal..., 45, 123–145. https://doi.org/...": "For example: Helgeson, H. C. et al. (1981). Thermodynamic properties... Journal..., 45, 123–145. https://doi.org/...",
+    "补充作者、年份等信息": "Add authors, year, and other details",
+    "作者": "Authors",
+    "年份": "Year",
+    "题目": "Title",
+    "期刊 / 出版物": "Journal / publication",
+    "卷(期)": "Volume (issue)",
+    "页码": "Pages",
+    "添加参考文献": "Add reference",
+    "备注（可选）": "Notes (optional)",
+    "记录数据处理、适用条件或待核查事项；不参与计算。": "Record data processing, applicable conditions, or items to check. Notes do not affect calculations.",
+    "这是尚未启用的草稿": "This is an inactive draft",
+    "原记录因模型未知或参数不完整而被禁用。选择一个可创建模型并补齐参数后，保存时才会恢复为可计算记录。": "The original record was disabled because its model was unknown or its parameters were incomplete. Choose a supported model and complete its parameters to enable calculations when saving.",
+    "保存 species 后，还需保存数据库文件": "After saving the species, save the database file too",
+    "正在校验并保存…": "Checking and saving…",
+    "保存 species": "Save species",
+    "跨库选择 species，创建组合数据库": "Combine species from multiple databases",
+    "1 选择数据库": "1 Choose databases",
+    "2 选择 species": "2 Choose species",
+    "3 预览并创建": "3 Preview and create",
+    "选择需要的数据库，再挑选 species。软件会检查标准态依赖和同名记录；创建后仍需判断不同来源的模型和参数是否适合一起使用。": "Choose databases, then select species. Standard-state dependencies and duplicate names will be checked. Assess whether models and parameters from different sources are suitable for use together.",
+    "添加我的数据库…": "Add my database…",
+    "搜索名称、化学式或模型": "Search name, formula, or model",
+    "选择 species 相态": "Choose species phase",
+    "选择 species 模型": "Choose species model",
+    "元素筛选": "Filter by element",
+    " · 已选 ": " · Selected ",
+    " 个": " items",
+    "可以创建": "Ready to create",
+    "不能创建": "Cannot create",
+    " 个 species（含 ": " species (including ",
+    "个必需 species）· ": " required species) · ",
+    " 个来源重命名": " source-qualified names",
+    "反应循环：": "Formation-reaction cycle: ",
+    "查看重命名 (": "View renamed species (",
+    "数据库名称将使用最终保存的 .rtdb 文件名。": "The database name will come from the final .rtdb filename.",
+    "上一步": "Back",
+    "下一步": "Next",
+    "检查所需 species 并预览": "Check required species and preview",
+    "添加到当前数据库": "Add to current database",
+    "创建 .rtdb": "Create .rtdb",
+    "形成反应存在循环": "Formation reactions contain a cycle",
+    "同名 species 来源不明确": "Ambiguous source for a species with the same name",
+    "候选来源：": "Candidate sources: ",
+    "。请在源数据库中明确引用或区分名称后重试。": ". Specify the reference or distinguish names in the source database, then try again.",
+    "选择 Reaktoro YAML、其他 .rtdb，或已转换且包含 YAML / records.json 的扩展数据库文件夹。源文件不会被修改，也不会执行其中的 Python。": "Choose a Reaktoro YAML file, another .rtdb, or a converted extended database folder containing YAML / records.json. Source files are not modified, and Python files in the folder are not executed.",
+    "其他 .rtdb": "Another .rtdb",
+    "扩展数据库文件夹": "Extended database folder",
+    "可以导入": "Ready to import",
+    "导入被阻止": "Import blocked",
+    " 个新 species · 补充 ": " new species · Add information to ",
+    " 个已有 species · 复用 ": " existing species · Reuse ",
+    " 个 ·": " entries ·",
+    " 个重命名": " renamed",
+    "全选": "Select all",
+    "清除选择": "Clear selection",
+    "已选 ": "Selected ",
+    " 个 species": " species",
+    "补充信息 · ": "Additional information · ",
+    "；范围有差异，保留原范围及来源": "; validity ranges differ, so the original range and provenance will be preserved",
+    "选择已改变，请先检查所选 species；形成反应所需的其他 species 会自动加入。": "The selection has changed. Check the selected species again; species required for their formation reactions will be added automatically.",
+    "将自动加入 ": "Automatically includes ",
+    " 个必需 species。": " required species.",
+    "检查所选 species": "Check selected species",
+    "导入未完成，请重试。当前数据库仍保留原有内容。": "Import did not finish. Try again. The database retains its original contents.",
+    "导入所选记录": "Import selected records",
+    "温压下限必须小于上限，温度高于绝对零度、压力大于 0；每轴点数应为 2–100 的整数。": "Minimum values must be below maximum values, temperature must be above absolute zero, and pressure must be greater than 0. Each axis requires an integer from 2 to 100 points.",
+    "误差容限必须大于 0% 且不超过 100%。": "The error tolerance must be greater than 0% and no more than 100%.",
+    "导出数据库": "Export database",
+    "保留模型参数（YAML）": "Preserve model parameters (YAML)",
+    "当前 species 无法以这种格式导出，请选择温压插值数据。": "These species cannot be exported in this format. Choose temperature–pressure interpolation data.",
+    "温压插值数据（YAML）": "Temperature–pressure interpolation data (YAML)",
+    "在指定温压范围内计算热力学性质，并检查插值误差。误差超过容限时不会生成文件。": "Calculate thermodynamic properties over a temperature and pressure range and check interpolation errors. No file is created if errors exceed the tolerance.",
+    "温度下限 (°C)": "Minimum temperature (°C)",
+    "温度上限 (°C)": "Maximum temperature (°C)",
+    "温度点数": "Temperature points",
+    "压力下限 (bar)": "Minimum pressure (bar)",
+    "压力上限 (bar)": "Maximum pressure (bar)",
+    "压力点数": "Pressure points",
+    "归一化误差容限 (%)": "Normalized error tolerance (%)",
+    "误差按 |插值值 − 模型值| / max(1, |模型值|) 逐项检查（SI 单位）；中点检验不保证网格内每一点均满足容限。只有完整提供所需标准性质的 species 才参与导出。": "Each error is checked as |interpolated value − model value| / max(1, |model value|), in SI units. Midpoint checks do not guarantee the tolerance at every point in the grid. Only species with all required standard properties are exported.",
+    "正在采样与验证…": "Sampling and validating…",
+    "选择位置并导出": "Choose location and export",
+    "每行填写温度 °C、压力 bar 两列，用空格、逗号或制表符分隔。": "Enter temperature in °C and pressure in bar as two columns, separated by spaces, commas or tabs.",
+    "温压组合不能超过 10,000。": "The temperature–pressure matrix cannot exceed 10,000 combinations.",
+    "位置数须为 1–10,000 的整数。": "The position count must be an integer from 1 to 10,000.",
+    "请填写有效温压。温度高于 −273.15 °C、压力大于零；纯水饱和蒸汽压需 0.01 ≤ T < 373.946 °C。": "Enter valid conditions: temperature above −273.15 °C and pressure above zero. Pure-water saturation pressure requires 0.01 ≤ T < 373.946 °C.",
+    "将移除的位置仍被物料来源引用，请先修改对应来源。": "A position to be removed is still used as a material source. Update that source first.",
+    "温压安排": "Temperature and pressure",
+    "个位置 × ": " positions × ",
+    "轮": "rounds",
+    "运行轮数 ": "Number of rounds",
+    "轮次与位置": "Rounds and positions",
+    "一轮按位置 1 → 2 → … → 末位置依次求平衡，然后进入下一轮。位置数定义每轮的工作量，轮数定义重复次数。温压与物料来源分别设置。": "Each round solves equilibrium at positions 1 → 2 → … → the final position, then starts the next round. Positions define the work within each round; rounds define how often the path is repeated. Set conditions and material sources separately.",
+    "循环次数": "Number of rounds",
+    "走完一次路线即完成。": "The calculation finishes after one pass through the path.",
+    "基础路线": "Base path",
+    "单独设置某一轮": "Set a specific round",
+    "第 ": "Round ",
+    "单独设置轮次": "Round to set separately",
+    "未单独设置的轮次使用此路线": "Rounds without separate settings use this path",
+    "轮与基础路线共用 ": " uses the same ",
+    "个位置。直接填本轮温压，无需换算加减值；其他轮次保持自己的设置。": " positions as the base path. Enter its conditions directly; other rounds keep their own settings. ",
+    "此轮暂不运行；增加轮数后启用。": "This round is not currently included. Increase the round count to include it.",
+    "恢复使用基础路线": "Restore base path",
+    "收起批量生成": "Hide generator",
+    "批量生成路线": "Generate a path",
+    "一次填写整条序列、温压矩阵，或粘贴表格": "Create a series or temperature–pressure matrix, or paste a table",
+    "批量填写": "Generate values",
+    "应用后更新路线": "Apply to update the path",
+    "从当前路线读取": "Read current path",
+    "单点": "Single point",
+    "等间隔序列": "Uniform series",
+    "温压矩阵": "T–P matrix",
+    "粘贴温压表": "Paste temperature–pressure table",
+    "温度 °C    压力 bar\n250    700\n300    500": "Temperature °C    Pressure bar\n250    700\n300    500",
+    "起始温度 (°C)": "Start temperature (°C)",
+    "终止温度 (°C)": "End temperature (°C)",
+    "压力方式": "Pressure mode",
+    "生成路线压力方式": "Generated path pressure mode",
+    "指定压力": "Specified pressure",
+    "纯水饱和蒸汽压": "Pure-water saturation pressure",
+    "起始压力 (bar)": "Start pressure (bar)",
+    "终止压力 (bar)": "End pressure (bar)",
+    "位置数（含两端）": "Positions, including both ends",
+    "相邻温度间隔 (°C)": "Temperature interval (°C)",
+    "相邻压力间隔 (bar)": "Pressure interval (bar)",
+    "矩阵运行方向": "Matrix order",
+    "先遍历压力，再改变温度": "Vary pressure first, then temperature",
+    "先遍历温度，再改变压力": "Vary temperature first, then pressure",
+    "生成基础路线": "Generate base path",
+    "填写起点、终点和位置数，一次生成整条路线。": "Enter the start, end and number of positions to generate the whole path.",
+    "计算每一组温度 × 压力组合。": "Calculate every temperature × pressure combination.",
+    "可直接粘贴 Excel 的两列数值。": "Paste two numeric columns directly from Excel.",
+    "只计算一个温压位置。": "Calculate one temperature–pressure point.",
+    "应用后可撤销。": " You can undo after applying.",
+    "收起逐点编辑": "Hide point editor",
+    "查看 / 编辑各位置": "View / edit positions",
+    "个": " positions",
+    "当前路线 · 修改立即生效": "Current path · edits apply immediately",
+    "位置 / 名称": "Position / name",
+    "温度 °C": "Temperature °C",
+    "压力方式 / bar": "Pressure mode / bar",
+    "物料来源": "Material sources",
+    "顺序": "Order",
+    "本轮单独设置": "Set separately for this round",
+    "此位置单独设置": "Set for this position",
+    "统一设置": "Shared settings",
+    "添加位置": "Add position",
+    "独立温压轮次": "Rounds with separate conditions",
+    " · 暂不运行": " · not currently included",
+    "尚无；各轮使用基础路线": "None; all rounds use the base path",
+    "按固定增量逐轮改变温压": "Change conditions by a fixed increment each round",
+    " · 已启用": " · enabled",
+    "未单独设置的轮次：基础温压 +（轮次 − 1）× 增量。独立设置的轮次使用其绝对温压，不再叠加增量。": "Rounds without separate settings use base conditions + (round − 1) × increment. Separately set rounds use their absolute conditions without adding the increment.",
+    "每轮温度增加 (°C)": "Temperature increment per round (°C)",
+    "每轮压力增加 (bar)": "Pressure increment per round (bar)",
+    "填写至少一项增量；留空的项会保留各位置当前设置。": "Enter at least one increment. A blank field preserves the current setting at each position.",
+    "用于所有位置": "Apply to all positions",
+    "清除增量": "Clear increments",
+    "留空表示保留各位置当前增量；填写 0 表示该项不随轮次变化。": "Leave a field blank to keep the current increments; enter 0 to keep that condition unchanged between rounds.",
+    "当前：": "Current: ",
+    "各位置使用不同增量；可在代码中逐点调整，或在这里统一重新赋值。": "Positions have different increments. Adjust them individually in code, or assign a shared value here.",
+    "可自由设定温压；数据库记录中的适用范围可在物种详情中查看。": "Temperature and pressure are freely selectable. Recorded database validity ranges are available in species details.",
+    "放弃修改": "Discard changes",
+    "保存并继续": "Save and continue",
+    "继续编辑": "Keep editing",
+    "正在读取数量…": "Loading counts…",
+    "切换模拟数据库": "Switch simulation database",
+    "切换数据库，或组合多个数据库的 species": "Switch databases, or combine species from several databases",
+    "数据库有未保存修改": "Database has unsaved changes",
+    "选择模拟数据库": "Choose simulation database",
+    "切换计算数据库": "Switch calculation database",
+    "各数据库保留独立的模拟设置。": "Each database keeps its own simulation settings.",
+    "搜索可切换数据库": "Search available databases",
+    "搜索数据库…": "Search databases…",
+    "系统数据库 · 只读": "System databases · Read-only",
+    "打开数据库文件…": "Open database file…",
+    "跨库选择 species，创建组合数据库…": "Combine species from multiple databases…",
+    "查看当前数据库详情 →": "View current database details →",
+    "组合前预览同名 species 和依赖关系，保留参数来源。": "Preview duplicate names and dependencies before combining, preserving parameter provenance.",
+    "来源 ": "Source ",
+    "取哪些物料": "Material to take",
+    "从所选来源取出全部物料、水相、矿物、气相或指定 species。多条来源最终合在一起求一次平衡。": "Take all material, the aqueous phase, minerals, gases or selected species from this source. All sources are combined before solving equilibrium.",
+    "全部相": "All phases",
+    "水相": "Aqueous",
+    "矿物": "Mineral",
+    "指定 species": "Selected species",
+    "从哪里取": "Source",
+    "composition 是新的外部投料；上一个位置与上一轮的同一位置取已有计算输出。反应路径决定先后顺序；物料来源决定实际传入的物质。": "A composition adds new external material. The previous position and the same position in the previous round supply existing calculation outputs. The path sets the calculation order; sources determine which material is actually transferred.",
+    "加入物质 composition": "Add a composition",
+    "上一个位置的输出": "Previous position output",
+    "上一轮同一位置的输出": "Previous round, same position",
+    "另选一个点的输出": "Choose another output point",
+    "来源点": "Source point",
+    "来源轮次": "Source round",
+    "本轮（须已计算）": "This round, already calculated",
+    "上一轮": "Previous round",
+    "composition 已移除": "Composition removed",
+    "加入几份": "Number of portions",
+    "取用比例 (%)": "Fraction taken (%)",
+    "1 份等于初始物质页中这个 composition 的全部投料量；0.5 份为一半。": "One portion is the full amount defined for this composition on the Initial materials page; 0.5 portions is half that amount.",
+    "比例相对于来源点的原始输出量。同一份输出可分给多个点，但各相或 species 累计不能超过 100%。": "The fraction is relative to the source point's original output. It can supply several points, but total allocation of each phase or species cannot exceed 100%.",
+    "加入时机": "When to add",
+    "首次没有结果时怎么开始": "Start when no result exists",
+    "每轮执行": "Every round",
+    "仅首轮": "First round only",
+    "第二轮起": "From round 2",
+    "哪些轮次加入": "Rounds to include",
+    "执行时机": "When to apply",
+    "“每轮”是沿反应路径走一遍；“仅首轮”表示第 1 轮的每个位置都执行这条来源。只想在起点投一次料，请选择承接上一个位置的反应后物料。": "Each round follows the whole path. First round only applies this source at every position in round 1. To add material only at the start, choose to carry the reacted material from the previous position.",
+    "每一轮": "Every round",
+    "只在第一轮": "First round only",
+    "第二轮及以后": "Round 2 and later",
+    "首次没有结果时": "When no result exists yet",
+    "首次计算": "First calculation",
+    "路径起点没有上一步；第 1 轮没有上一轮。可从 composition 开始，也可以本次不加入。首次份数独立于后续取用比例。": "The path start has no previous position, and round 1 has no previous round. Start with a composition or add no material. The initial portion count is separate from the later transfer fraction.",
+    "从物质 composition 开始": "Start from a composition",
+    "此规则不传入物料": "Add no material from this source",
+    "停止计算并提示": "Stop and explain",
+    "首次 composition": "Initial composition",
+    "首次份数": "Initial portions",
+    "个 species": "species",
+    "仅显示当前 composition 中参与平衡的 species。": "Only equilibrium species present in this composition are shown.",
+    "取用量以来源结果中的实际含量为准。": "Amounts taken are based on the source result's actual composition.",
+    "有些 species 不在当前来源中。": "Some selected species are not available from this source.",
+    "移除不可用选择": "Remove unavailable selections",
+    "添加物料来源": "Add material source",
+    "拆分为水相、矿物、气相": "Separate aqueous, mineral and gas sources",
+    "重复": "Repeat",
+    "次": " times",
+    "各轮压力见图中标注": "Pressures for each round are shown in the diagram",
+    "压力待填写": "Pressure not set",
+    "用量随条件变化": "Quantity varies with conditions",
+    "反应过程": "Reaction process",
+    "设定反应条件，再选择每个位置实际加入的物料。": "Set the conditions, then choose the material supplied at each position.",
+    "多轮反应": "Multiple rounds",
+    "反应路径": "Reaction path",
+    "次平衡": " equilibria",
+    "使用原来的逐步路线": "Keep the original stepwise path",
+    "这份模拟为不同位置单独设置了条件。原有设置保留在下方。": "This simulation has conditions set for individual positions. Those settings are retained below.",
+    "重新定义反应路径": "Redefine the reaction path",
+    "位置": "Position",
+    "轮次": "Rounds",
+    "温压按各位置的设置": "Conditions follow each position's settings",
+    "物料如何衔接 ": "Material transfer",
+    "物料与运行顺序": "Materials and calculation order",
+    "条件变化规定各位置的温压或投料量。每次求解的物料可以重新投料、承接上一个位置、承接上一轮同一位置，或按不同相分别组合。": "Condition changes set temperature, pressure or dose at each position. Each equilibrium can receive fresh material, previous-position output, previous-round output at the same position, or a combination of different phases.",
+    "来源规则作用范围": "Material source scope",
+    "所有步骤的统一设置": "Shared settings for all positions",
+    "步骤 ": "Position ",
+    " · 单独设置": " · separate settings",
+    "物料衔接方式": "How materials continue",
+    "每次平衡重新加入 composition": "Add a fresh composition at every equilibrium",
+    "沿反应路径承接输出": "Carry output along the path",
+    "沿后续轮次承接同一步输出": "Carry output at the same position between rounds",
+    "分别设置各相、来源和比例": "Set phases, sources and fractions separately",
+    "每次加入的 composition": "Composition added each time",
+    "首次没有输出时使用的 composition": "Composition used when no output exists yet",
+    "流程起始 composition": "Starting composition",
+    "每次都使用 composition 定义的投料量；沿路径或轮次可改变其中的量。": "Use the amount defined by the composition each time; its quantities can vary along the path or between rounds.",
+    "每一轮从新 composition 开始；路径后续位置接收上一步的输出。": "Each round starts with a fresh composition. Later positions receive output from the previous position.",
+    "第 1 轮使用 composition；后续轮次接收同一步的输出。": "Round 1 uses the composition; later rounds receive output from the same position in the previous round.",
+    "只有此步骤使用这组来源。": "Only this position uses these sources.",
+    "当前沿用统一来源。": "This position uses the shared sources.",
+    "恢复统一设置": "Restore shared settings",
+    "个物料来源": " material sources",
+    "收起详细设置": "Hide source details",
+    "编辑 composition、比例与各相来源": "Edit composition, fractions and phase sources",
+    "新 composition 是外部加入的物料。取用已有结果时，各相或 species 的总分配比例不超过 100%；未传走的物料保留。": "A new composition is external material. When reusing output, total allocation of each phase or species cannot exceed 100%; untransferred material remains in the inventory.",
+    "查看逐步物料传递": "View stepwise transfers",
+    "首次起点": "First starting point",
+    "首轮后续位置": "Remaining positions in the first round",
+    "后续轮起点": "Starting points in later rounds",
+    "后续轮其余位置": "Remaining positions in later rounds",
+    "全部物料": "All material",
+    "物料": "Material",
+    "反应轮次": "Reaction rounds",
+    "本轮前一步": "Previous step in this round",
+    "上一轮同位置": "Same position in the previous round",
+    "指定来源": "Specified source",
+    "反应示意图": "Reaction diagram",
+    "补全反应条件后，这里会显示反应路径。": "Complete the reaction conditions to see the path here.",
+    "第": "Round ",
+    "此处没有投料": "No material added here",
+    "部分位置加入": "Added at some positions",
+    "物料来源与用量": "Material sources and quantities",
+    "尚未设置物料来源。": "No material sources set yet.",
+    "单次反应": "Single equilibrium",
+    "反应物": "Reactant",
+    "反应条件": "Reaction conditions",
+    "查看反应物": "View reactants",
+    "反应条件与物料传递": "Conditions and material transfer",
+    "编号表示计算顺序，箭头表示物料传递。": "Numbers show calculation order; arrows show material transfer.",
+    "编号表示计算顺序。": "Numbers show calculation order.",
+    "显示部分反应条件，共 ": "Showing selected conditions; ",
+    "反应物如何衔接": "How reactants continue",
+    "沿路径": "Along the path",
+    "轮次间": "Between rounds",
+    "按反应顺序填写各步条件": "Enter conditions in reaction order",
+    "以逗号、空格或换行分隔": "Separate values with commas, spaces or line breaks",
+    "条件": "Conditions",
+    "Composition 投料量": "Composition dose",
+    "物料份数与比例": "Portions and transfer fractions",
+    "沿路径依次反应。可以逐步改变压力、温度或投料量，也可以保持条件不变，让物料继续反应。": "Follow the path in order. Pressure, temperature or dose can change at each position, or conditions can remain fixed while the material continues reacting.",
+    "一轮就是沿完整路径反应一次。各轮可以分别改变条件，使用新的 composition，或从前次结果中选择各相物料。": "A round is one complete pass through the path. Each round can use different conditions, a fresh composition, or selected phases from previous results.",
+    "沿路径怎样变化": "Variation along the path",
+    "各轮条件怎样变化": "Variation between rounds",
+    "保持条件不变": "Keep conditions fixed",
+    "逐步增加或减少": "Increase or decrease stepwise",
+    "分别指定条件": "Specify each value",
+    "路径位置数": "Number of path positions",
+    "总轮数（含第 1 轮）": "Total rounds, including round 1",
+    "变化的量": "Quantity to vary",
+    "所选参数已移除，请重新选择": "The selected parameter was removed. Choose another.",
+    "起始值": "Starting value",
+    "每步变化 ±": "Change per position ±",
+    "每轮变化 ±": "Change per round ±",
+    "结束值": "End value",
+    "比例": "fraction",
+    "条件保持不变，按下方设置加入或承接物料。": "Conditions stay fixed; add or reuse materials as set below.",
+    "每轮沿完整反应路径走一遍。": "Each round follows the complete reaction path.",
+    "按填写顺序反应；可以重复条件，也可以先升高再降低。": "React in the specified order. Values can repeat or rise and then fall.",
+    "按轮次单独设置压力": "Set pressure for individual rounds",
+    "未列出的轮次沿用上方条件。这里仅调整所选轮次的压力，温度仍按反应路径变化。": "Unlisted rounds use the conditions above. Only pressure is changed here; temperature still follows the reaction path.",
+    "第几轮": "Round",
+    "压力 / bar": "Pressure / bar",
+    "沿用路径或基础压力": "Use path or base pressure",
+    "随当前温度计算": "Calculated from current temperature",
+    "当前共 ": "There are currently ",
+    "轮；此项保留，增加轮数后生效。": " rounds. This setting is retained and takes effect if the round count is increased.",
+    "设置另一轮的压力": "Set another round's pressure",
+    "基础条件": "Base conditions",
+    "温度、压力或投料量若在下方指定逐步变化，则使用对应位置的数值；其余条件保持这里的设置。下方“每次用什么反应”设置实际加入的物料。": "Parameters varied below use the value at each position; all others keep these base conditions. The material-source settings determine what actually enters each equilibrium.",
+    "温度": "Temperature",
+    "由": "Set by ",
+    "设定": "",
+    "温度 / °C": "Temperature / °C",
+    "基础温度": "Base temperature",
+    "基础压力方式": "Base pressure mode",
+    "压力": "Pressure",
+    "随本次温度计算": "Calculated from this point's temperature",
+    "基础压力": "Base pressure",
+    "温压可超出数据库记录的范围；需要时可在物种详情中查看所记录的适用范围。": "Temperature and pressure may exceed recorded database ranges. You can review the recorded validity ranges in species details.",
+    "每份含量由计算流程设置，基础数量在当前范围不使用": "The calculation process defines per-portion amounts. The base amount is not used in the current range.",
+    "这里编辑未单独设置处的每份含量": "Edit the per-portion amount for points without a separate setting",
+    " · 当前范围不使用": " · Not used in the current range",
+    "修改": "Edit",
+    " · 饱和": " · saturation",
+    "计算运行图": "Calculation diagram",
+    "运行图 ": "Run diagram",
+    "阅读运行图": "Read the run diagram",
+    "编号是实际求解顺序。横向走完一轮，再回到下一轮的第一个点。带颜色的来源标记表示所选点实际接收的物料；相邻的编号本身不表示物料相连。点击任一点查看收发。": "Numbers show the actual solve order: complete one round, then start the next at its first point. Colored source marks show which material enters the selected point. Adjacent numbers alone do not imply material transfer. Click a point to inspect its inputs and outputs.",
+    "轮 = ": " rounds = ",
+    "流程总览": "Overview",
+    "运行顺序": "Calculation order",
+    "温压分布": "Temperature–pressure path",
+    "收发预览循环": "Transfer preview round",
+    "收发预览点": "Transfer preview point",
+    "一轮内：从位置 ": "Within one round: position ",
+    "走到位置 ": " to position ",
+    "编号表示先后顺序": "Numbers indicate order",
+    "走到最后一个位置 → ": "Complete the final position → ",
+    "还有轮次时，回到下一轮第一个位置；末轮结束后完成。": "Start at the first position of the next round, or finish after the final round.",
+    "完成计算。": "Finish the calculation.",
+    "前 8 点": "Previous 8 points",
+    "后 8 点": "Next 8 points",
+    "温度压力路径图": "Temperature–pressure path plot",
+    "温度 / °C →": "Temperature / °C →",
+    "压力 / bar ↑": "Pressure / bar ↑",
+    "曲线连接本轮实际温压；点较多时只标注部分位置。箭头表示运行方向。物料是否传递，以下方来源为准。重合温压点可用上方位置选择器逐个查看。": "The curve connects this round's actual conditions; only some positions are labelled in long paths. Arrows indicate calculation direction. Material transfer is defined by the sources below. Use the position selector above to inspect overlapping conditions individually.",
+    "请先补全温压值后查看分布。": "Complete the temperature and pressure values to see the distribution.",
+    "进入物料": "Incoming material",
+    "当前查看 · #": "Viewing · #",
+    "轮 · ": " · ",
+    "混合进入物料": "Mix incoming materials",
+    "求一次平衡": "Solve equilibrium",
+    "输出去向": "Output destinations",
+    "本次输出没有后续点取用。": "No later point takes output from this point.",
+    "未被转走的部分保留在结果库存中。": "Untransferred material remains in the result inventory.",
+    "当前点": "Current point",
+    "进入物料的来源点": "Source of incoming material",
+    "沿本轮路线": "Along this round's path",
+    "从上一轮同一位置或指定位置": "From the previous round at the same or a specified position",
+    "混合物料": "Mixed",
+    "图外来源": "Source outside view",
+    "位置 ": "Position ",
+    "箭头表示设置的物料来源与取用比例。点击反应点查看详情，继承的实际组成由平衡结果决定。": "Arrows show the chosen material sources and fractions. Click a reaction point for details; the actual composition of reused material is determined by equilibrium.",
+    "显示所选点附近的位置；完整路径共 ": "Showing positions near the selected point. The full path has ",
+    "个位置、": " positions and ",
+    "轮。": " rounds.",
+    "指定物种": "Selected species",
+    "这里选择初始物质页中已定义的配方。流体、岩石或其他物质可分别加入；每份配方包含哪些物种及其数量，在初始物质页编辑。后续是否再次投料，由下方反应路径决定。": "Choose compositions defined on the Initial materials page. Fluids, rocks, and other materials can be added separately. Edit species and amounts per portion on that page; the reaction path below determines whether material is added again.",
+    "编辑配方": "Edit compositions",
+    "参与反应的部分": "Material included in the reaction",
+    "使用配方": "Composition",
+    "没有前次结果时": "When no previous result exists",
+    "从配方开始": "Start from composition",
+    "暂不加入": "Do not add yet",
+    "停止并检查来源": "Stop and check the source",
+    "请选择配方": "Choose a composition",
+    "份数由变化设置确定": "Portion count is controlled by parameter settings",
+    "加入份数": "Portions added",
+    "每份：": "Per portion: ",
+    "配方还没有填写投料量": "No input amounts entered for this composition",
+    "第 2 轮起使用": "Used from round 2",
+    "参与传递的物种": "Species transferred",
+    "加入另一组反应物": "Add another reactant group",
+    "下一位置用什么反应": "Materials for the next position",
+    "下一位置的反应物": "Next-position reactants",
+    "每个位置都求一次平衡。可以重新加入配方，也可以让流体沿路径移动、让矿物留在各位置并接收上一轮反应后的矿物。多组反应物会合在一起反应。": "Each position is equilibrated once. Add a fresh composition, move fluid along the path, or retain minerals at each position using the previous round's mineral output. Multiple reactant groups are combined before reaction.",
+    "重新投料（请先更改取用比例的变化设置）": "Fresh input (change the fraction parameter settings first)",
+    "每个位置重新加入配方": "Add a fresh composition at each position",
+    "上一个位置的反应后物料": "Reaction output from the previous position",
+    "上一轮同一位置的反应后物料": "Reaction output from the same position in the previous round",
+    "另选一个位置的结果": "Result from another position",
+    "来源位置": "Source position",
+    "所属轮次": "Source round",
+    "本轮已完成的位置": "A completed position in this round",
+    "比例由变化设置确定": "Fraction is controlled by parameter settings",
+    "取用比例 / %": "Fraction taken / %",
+    "各轮使用哪些反应物": "Reactants used in each round",
+    "各轮反应物": "Reactants by round",
+    "每轮沿反应路径走一遍。“仅第 1 轮”表示第一轮的每个位置都使用这条来源；“第 2 轮起”表示后续各轮的每个位置使用。若希望每轮只在路径起点投料，在路径中选择承接上一个位置的反应后物料。": "Each round traverses the reaction path once. First round only applies this source at every position in round 1; From round 2 applies it at every position in subsequent rounds. To add fresh material only at each round's start, choose the previous position's reaction output as the subsequent source.",
+    "仅第 1 轮": "First round only",
+    "第 2 轮起": "Round 2 onward",
+    "承接上一轮在相同位置留下的物料。": "Uses material left at the same position in the previous round.",
+    "每轮从所选配方开始，再沿路径承接物料。": "Starts each round with the selected composition, then carries material along the path.",
+    "路径起点不加入这一项，后续承接反应后物料。": "Adds nothing at the path start, then takes material from the previous reaction.",
+    "路径起点缺少前次结果，检查时会提示。": "The path start has no previous result; the settings check will report this.",
+    "按配方重新投料。": "Adds fresh material from the composition.",
+    "按指定位置的结果取料。": "Takes material from the specified result position.",
+    "固相（矿物）": "Solid (minerals)",
+    "已移除的 composition": "Removed composition",
+    "起点没有前一步结果，请选择composition或上一轮的物料。": "The start has no previous-step result. Choose a composition or material from the previous round.",
+    "第一轮没有上一轮结果，请选择composition或本轮前一步的物料。": "The first round has no previous-round result. Choose a composition or material from the previous step in this round.",
+    "首次起点还没有反应结果，请选择composition。": "No reaction result exists at the first starting point. Choose a composition.",
+    "第一轮没有上一轮结果，请改选本轮已完成的结果。": "The first round has no previous-round result. Choose a completed result from this round.",
+    "每轮起点尚无本轮结果，请改选上一轮的结果。": "No result from this round exists at its starting point. Choose a previous-round result.",
+    "来源位置已不在当前路径中，请重新选择。": "The source position is no longer in the current path. Choose a source again.",
+    "这类反应从位置 2 开始，此时本轮只有位置 1 已完成。": "This reaction stage begins at position 2, when only position 1 of this round has finished.",
+    "已复制物料和通常用量；单独设置的范围保留原样。": "Copied material sources and their base amounts. Existing local parameter settings were kept.",
+    "各处反应物": "Reactants by position",
+    "每次用什么反应": "Materials for each reaction",
+    "反应物组成": "Reaction inputs",
+    "下面每格表示一种反应位置。在每处添加所需物料，再选择来源、相态或 species，以及用量。来源可以是新的 composition 或已完成的反应结果。": "Each cell below represents a reaction stage. Add the materials needed, then choose their source, phase or species, and amount. Sources can be fresh compositions or completed reaction results.",
+    "编辑 composition": "Edit compositions",
+    "选择反应位置": "Choose reaction stage",
+    "增加路径位置或反应轮数后可设置": "Increase the path length or number of rounds to use this stage",
+    "当前不经过这里": "Not used in the current calculation",
+    "尚未加入物料": "No material added",
+    "这里只加入下列物料": "Only the following materials are added here",
+    "复制其他位置的组成": "Copy inputs from another stage",
+    "复制其他位置…": "Copy from another stage…",
+    "正在查看第 ": "Viewing actual amounts for round ",
+    "轮 · 位置 ": "· position ",
+    "的实际用量。组成修改适用于": ". Input changes apply to",
+    "；只改此处用量请使用单独调整。": "; use a local adjustment to change amounts only at this point.",
+    "尚未加入物料。添加 composition，或取用已反应过的流体、矿物。": "No material added. Add a composition or take fluid or minerals from a completed reaction.",
+    "加入新的 composition": "Add a fresh composition",
+    "composition 已移除，请重新选择": "The composition was removed. Choose another source.",
+    "取用反应后的物料": "Take reaction output",
+    "本轮前一步的结果": "Previous-step result in this round",
+    "上一轮同位置的结果": "Previous-round result at the same position",
+    "其他位置的结果…": "Result from another position…",
+    "取用比例": "Fraction taken",
+    "此处用量由变化或单独调整设置；修改该设置可更改此值": "This amount is controlled by parameter changes or a local adjustment. Edit that setting to change the value.",
+    "份": "portions",
+    "本处不加入这项物料": "This material is not added here",
+    "切换到 ": "Switch to ",
+    "以下 species 不在新来源中，将移除这些选择：": "The following species are absent from the new source and will be removed from this selection:",
+    "切换后尚未选择 species，不会加入物料。": "No species will be selected after switching, so no material will be added.",
+    "确认切换": "Confirm change",
+    "保留原来源": "Keep current source",
+    "取哪一位置": "Source position",
+    "原来源 ": "Previous source ",
+    "（当前不存在）": "(no longer available)",
+    "哪一轮": "Source round",
+    "本轮已完成的结果": "A completed result in this round",
+    "上一轮的结果": "Previous-round result",
+    "搜索 species…": "Search species…",
+    "该 composition 没有可用的 species。": "This composition has no available species.",
+    "体系中尚未选择 species。": "No species selected in the system yet.",
+    "没有匹配的 species。": "No matching species.",
+    "仅显示该 composition 已包含且参与平衡的 species。": "Shows only species included in this composition and selected for equilibrium.",
+    "可选择体系中的 species；实际取用以来源结果为准。": "Choose species from the system. Actual material taken depends on the source result.",
+    "不在当前 composition 中": "Not in the current composition",
+    "已从体系移除": "Removed from the system",
+    "。这些选择不会加入物料。": ". These selections contribute no material.",
+    "移除这些选择": "Remove these selections",
+    "当前选择没有可加入的物质。": "The current selection contains no material to add.",
+    "更换来源类型前，请先调整相关用量设置。": "Adjust the related amount settings before changing the source type.",
+    "添加物料": "Add material",
+    "每项独立选择来源、相态与用量": "Choose each material's source, phase, and amount independently",
+    "同名结果已存在": "Results with this name already exist",
+    "”已存在": "” already exists",
+    "覆盖会替换这个结果文件夹中的内容。另存为可同时保留两次结果。": "Overwrite replaces the contents of this result folder. Save As keeps both calculations.",
+    "此位置无法覆盖，请另存为其他名称。": "This location cannot be overwritten. Save using another name.",
+    "新的结果名称": "New result name",
+    "覆盖结果": "Overwrite results",
+    "使用新名称": "Use new name",
+    "另存为…": "Save As…",
+    "结果历史": "Result history",
+    "重新打开已保存的计算结果。": "Reopen saved calculation results and chart workspaces.",
+    "关闭结果历史": "Close result history",
+    "搜索结果历史": "Search result history",
+    "名称或保存位置…": "Name or saved location…",
+    "份结果": " results",
+    "当前计算完成或停止后，可以打开其他结果。": "You can open another result when the current calculation finishes or stops.",
+    "当前": "Current",
+    "图表工作区": "Chart workspace",
+    "计算结果": "Calculation results",
+    "上次未结束": "Previously unfinished",
+    "个平衡点": " equilibrium points",
+    "最近打开 · ": "Last opened · ",
+    "正在移除…": "Removing…",
+    "移除记录": "Remove entry",
+    "正在读取结果历史…": "Loading result history…",
+    "没有匹配的结果。": "No matching results.",
+    "运行模拟或打开已保存结果后，会出现在这里。": "Results appear here after you run a simulation or open saved results.",
+    "这里只记录保存位置。移除记录不会删除本地结果；文件移动后，可重新打开新的保存位置。": "History stores locations only. Removing an entry does not delete local results. If files are moved, open them from their new location.",
+    "反应规模": "Calculation size",
+    "路径位置": "Path positions",
+    "步": "positions",
+    "反应轮数": "Number of reaction rounds",
+    "路径与轮次": "Path and rounds",
+    "每轮按路径位置依次反应。同一位置可以同时改变多个条件；选择哪些参数不会改变步数或轮数。单点计算设为 1 步、1 轮。": "Each round reacts at the path positions in order. Multiple conditions can change at the same position; selecting parameters does not change the number of steps or rounds. Set 1 step and 1 round for a single point.",
+    "按顺序填写，用逗号或空格分隔": "Enter values in order, separated by commas or spaces",
+    "此参数的来源已移除": "This parameter's source was removed",
+    "固定值": "Fixed value",
+    "按步与轮次变化": "Change by step and round",
+    "按数列填写": "Value sequence",
+    "承接前一步增减": "Change from the previous step",
+    "承接上一轮增减": "Change from the previous round",
+    "随该次反应的实际温度计算": "Calculated from this reaction's actual temperature",
+    "每步变化": "Change per step",
+    "百分点": "percentage points",
+    "每轮变化": "Change per round",
+    "当前范围只有一个反应点，使用此值。": "This range contains one reaction point; this value is used.",
+    "从所选范围的第一处计算数列；正数增加，负数减少，0 保持不变。单独改动某处不会改变后面的数列。": "The sequence starts at the first selected position and round. Positive changes increase the value; negative changes decrease it; 0 leaves it unchanged. A local change does not alter subsequent sequence values.",
+    "首次值": "Initial value",
+    "比前一步增减": "Change from previous step",
+    "比上一轮增减": "Change from previous round",
+    "各轮起点变化": "Change in each round's start",
+    "首轮各步变化": "Change along the first round",
+    "接着前一步的实际值变化；每轮起点使用首次值及各轮起点变化。": "Continues from the previous step's actual value. Each round starts from the initial value adjusted by the round-start change.",
+    "接着上一轮同位置的实际值变化；首轮使用首次值及首轮各步变化。": "Continues from the previous round's actual value at the same position. The first round uses the initial value and first-round step change.",
+    "所选范围从已有前一步的实际值接着变化。": "Continues from the actual value of the step immediately before the selected range.",
+    "所选范围从上一轮同位置的实际值接着变化。": "Continues from the actual value at the same position in the previous round.",
+    "单独改动某处时，后面的承接值会随之变化。": "A local change affects later values that depend on it.",
+    "固定数列的单点修改不改变后面的数列；承接变化会使用前一处修改后的实际值。这里传递的是参数数值，物料来源在“物料来源”中选择。": "A local change to a fixed sequence leaves later sequence values unchanged. Relative changes use the preceding point's updated actual value. This carries parameter values; choose material transfers separately under Material sources.",
+    "这些值依次用于": "Apply these values in order to",
+    "路径中的各步": "Steps along the path",
+    "各轮反应": "Successive rounds",
+    "数值序列": "Value sequence",
+    "个值 · 当前范围 ": "values · Current range: ",
+    "请补足当前范围的值。": "Add enough values for the current range.",
+    "超出当前范围的值保留，暂不使用。": "Values beyond the current range are kept but are not used yet.",
+    "设为 ": "Set to ",
+    "按起止值批量生成": "Generate from start and end values",
+    "生成到哪个方向": "Generate along",
+    "每次增减": "Increment",
+    "从 ": "Start at ",
+    "开始，": ";",
+    "应用并设为 ": "Apply and set to ",
+    "添加参数": "Add parameter",
+    "到": "To",
+    "通常采用的条件与用量": "General conditions and amounts",
+    "可以同时改变多项参数。未在这里列出的投料和取用比例，沿用物料来源中的设置。": "Multiple parameters can vary together. Inputs and fractions not listed here use the values in Material sources.",
+    "条件与用量": "Conditions and amounts",
+    "温度和压力定义反应条件。Composition 每份含量改变其中某个 species 的数量；加入份数决定实际投几份；取用比例决定从已有结果取多少。改变 composition 不会自动把它加入反应。": "Temperature and pressure define reaction conditions. A composition's per-portion amount changes the quantity of one species; portions added determines the number of portions; fraction taken determines how much to use from a previous result. Changing a composition does not automatically add it to a reaction.",
+    "只调整某些轮次或位置": "Adjust specific rounds or positions",
+    "选择范围，再指定要改的参数；其他内容继续沿用通常设置。": "Choose a range, then the parameters to change. Other parameters keep their general settings.",
+    "添加单独设置": "Add local setting",
+    "选择范围和要修改的参数": "Choose a range and parameters to change",
+    "此范围内的参数": "Parameters in this range",
+    "调整轮次与位置范围": "Adjust the round and position ranges",
+    "当前计算不经过此范围；设置会保留。": "The current calculation does not pass through this range. Its settings are kept.",
+    "选择要单独修改的参数": "Choose a parameter to adjust locally",
+    "此处尚无对应来源结果": "No corresponding source result exists here yet",
+    "这份模拟尚未定义统一反应路径。": "This simulation has no unified reaction path yet.",
+    "请补全反应条件。": "Complete the reaction conditions.",
+    "反应预览": "Reaction preview",
+    "选择任一反应点，查看实际条件与用量。": "Select any reaction point to inspect its actual conditions and amounts.",
+    "预览上一位置": "Preview previous position",
+    "预览下一位置": "Preview next position",
+    "预览上一轮次": "Preview previous round",
+    "预览下一轮次": "Preview next round",
+    "核对反应设置": "Review reaction settings",
+    "物料传递图": "Material transfer diagram",
+    "逐点条件表": "Conditions by point",
+    "实际参数变化": "Actual parameter changes",
+    "沿路径 ": "Along the path ",
+    "轮次之间 ": "Between rounds ",
+    "单独调整此处": "Adjust this point",
+    "本次加入与取用": "Inputs and fractions at this point",
+    "此处尚未设置物料。": "No material sources set here yet.",
+    "项参数变化": "varying parameters",
+    "请选择此时已经完成的反应结果。": "Choose a reaction result that has already completed at this point.",
+    "此处用量尚未填写完整。": "Complete the amount for this point.",
+    "当前选取部分没有投料。": "The selected part contains no input material.",
+    "此处不取用该来源。": "This source is not used at this point.",
+    "实际组成由该来源的平衡结果决定。": "The actual composition is determined by equilibrium at the source.",
+    "本轮逐点条件": "Conditions along this round",
+    "更多参数": "Additional parameters",
+    "条件表附加参数": "Additional parameter in the conditions table",
+    "仅温度与压力": "Temperature and pressure only",
+    "此处不取用该来源": "This source is not used here",
+    "调整": "Adjust",
+    "条件表上一页": "Previous conditions page",
+    "条件表下一页": "Next conditions page",
+    "压力 →，然后改变温度 ↓": "Pressure →, then change temperature ↓",
+    "温度 →，然后改变压力 ↓": "Temperature →, then change pressure ↓",
+    "按位置列表的自定义顺序": "Custom order from the position list",
+    "配方已移除": "Composition removed",
+    "本轮前一位置": "Previous position in this round",
+    "上一轮同一位置": "Previous round, same position",
+    "待填写": "Value needed",
+    "第 1 轮": "Round 1",
+    "每轮沿路线依次计算 ": "Each round calculates ",
+    "个位置": " positions along the path",
+    " · 仅首轮": " · first round only",
+    " · 第二轮起": " · from round 2",
+    "首次：不加入物料": "Initially: no material added",
+    "首次：没有来源时停止": "Initially: stop if no source exists",
+    "尚未设置进入物料。": "No incoming material set yet.",
+    "用于未单独设置来源的位置。": "Applies to positions without separate sources. ",
+    "当前第 ": "Viewing round ",
+    "单点平衡": "Single equilibrium",
+    "温压序列": "T–P series",
+    "使用基础路线与轮次增量": "Using the base path and round increments",
+    "个温度 × ": " temperatures × ",
+    "个压力": " pressures",
+    "位置 1": "Position 1",
+    "个中间位置": " intermediate positions",
+    "查看某个位置的实际收发 →": "Inspect a position's actual inputs and outputs →",
+    "每个位置保存一组结果": "Each position saves one set of results",
+    "本轮末位置完成": "Finish this round's last position",
+    "下一轮位置 1": "Next round, position 1",
+    "新配方加入": "Fresh composition added",
+    "沿本轮路线传递": "Transfer along this round's path",
+    "从上轮传入": "Transfer from the previous round",
+    "运行顺序不等于物料传递；首次无输出时按各来源的首次规则处理。": "Calculation order does not imply material transfer. When no output exists yet, each source uses its own initial-supply rule.",
+    "模拟正在载入，请稍后保存。": "The simulation is loading. Please wait before saving.",
+    "自动保存失败：": "Autosave failed: ",
+    "已恢复到上次保存；仍可用撤销返回。": "Restored the last saved version. You can still undo this.",
+    "模拟设置文件已从本机删除。计算结果文件保留。": "The simulation settings file was deleted from this computer. Result files were kept.",
+    "已移入最近删除，可在历史中恢复；计算结果文件保留。": "Moved to Recently Deleted. You can restore it from history; result files were kept.",
+    "模拟已恢复到历史列表。": "The simulation has been restored to history.",
+    " · 副本": " · Copy",
+    "已复制为独立模拟。": "Created an independent copy of the simulation.",
+    "已新建模拟，之前的模拟保留在历史中。": "Created a new simulation. The previous simulation remains in history.",
+    "模拟已恢复，但计算结果未能打开：": "The simulation was restored, but its results could not be opened: ",
+    "运行连接中断，可重新打开保存的结果文件夹": "The calculation connection was lost. You can reopen the saved result folder.",
+    "载入模拟设置": "Load simulation settings",
+    "模拟设置": "Simulation settings",
+    "已从设置文件新建独立模拟，并保存到本机历史。原文件不会被修改；本次使用当前数据库的 species 和热力学参数。": "Created an independent simulation from the settings file and saved it to local history. The original file is unchanged. This simulation uses the species and thermodynamic data in the current database.",
+    "保存模拟设置": "Save simulation settings",
+    "无法确认设置是否已保存，请检查保存位置后重试。": "Could not confirm that the settings were saved. Check the destination and try again.",
+    "模拟已保存。": "Simulation saved.",
+    "选择本次计算的保存位置": "Choose where to save this calculation",
+    "计算未能启动，请重试并重新选择保存位置。": "The calculation could not start. Try again and choose a save location.",
+    "计算已启动，结果会继续保存；本机模拟历史暂未保存：": "The calculation has started and will continue saving results, but local simulation history could not be saved: ",
+    "请先停止当前计算或等待完成，再打开其他结果。": "Stop the current calculation or wait for it to finish before opening other results.",
+    "打开已保存的计算结果": "Open saved calculation results",
+    "检查 species、composition 和物料传递规则": "Check species, compositions, and material transfer rules",
+    "检查设置": "Check settings",
+    "停止计算": "Stop calculation",
+    "检查设置后选择保存位置；运行时自动保存，并进入结果页": "Check settings and choose a save location; results are saved automatically while running",
+    "正在准备…": "Preparing…",
+    "运行自定义代码": "Run custom code",
+    "检查并运行代码": "Check and run code",
+    "运行与保存": "Run and save",
+    "点击运行后选择保存位置，程序会新建本次结果文件夹，每个有效点完成后自动写入。运行开始后进入“结果”查看进度与数据。": "Choose a save location after clicking Run. A new result folder is created, and each valid point is saved as it completes. The Results page opens when the calculation starts.",
+    "“保存设置”保存模拟参数和代码；“保存工作区”保存已载入的数据和图表视图。": "Save settings stores simulation parameters and code. Save workspace stores the loaded data and chart views.",
+    "撤销模拟修改": "Undo simulation changes",
+    "撤销 · ⌘Z / Ctrl+Z": "Undo · ⌘Z / Ctrl+Z",
+    "重做模拟修改": "Redo simulation changes",
+    "重做 · ⇧⌘Z / Ctrl+Shift+Z": "Redo · ⇧⌘Z / Ctrl+Shift+Z",
+    "保存当前模拟": "Save current simulation",
+    "保存到历史 · ⌘S / Ctrl+S": "Save to history · ⌘S / Ctrl+S",
+    "文件": "File",
+    "载入设置": "Load settings",
+    "载入模拟设置…": "Load simulation settings…",
+    "保存设置": "Save settings",
+    "另存模拟设置": "Save simulation settings as",
+    "另存模拟设置…": "Save simulation settings as…",
+    "恢复到上次保存": "Restore last saved version",
+    "恢复到上次保存；仍可撤销": "Restore the last saved version; this can be undone",
+    "查看与切换模拟历史": "Browse and switch between simulations",
+    "历史": "History",
+    "查看与打开结果历史": "Browse and open saved results",
+    "打开 EasyReaktoro 计算生成的结果文件夹": "Open a result folder created by EasyReaktoro",
+    "打开已保存结果": "Open saved results",
+    "选择 EasyReaktoro 计算生成的整个结果文件夹，查看已完成的点、运行状态和守恒记录。已有 CSV 或 HTML 请使用“导入表格 / 工作区”。": "Choose the complete result folder created by EasyReaktoro to view completed points, calculation status, and balance records. For CSV or HTML files, use Import tables / workspace.",
+    "模拟名称": "Simulation name",
+    "已自动保存": "Autosaved",
+    "保存失败": "Save failed",
+    "正在保存…": "Saving…",
+    "新建模拟": "New simulation",
+    "新建模拟，保留当前历史": "Create a new simulation and keep the current history",
+    "新建": "New",
+    "模拟历史已保存。": "Simulation history saved.",
+    "重试保存": "Retry save",
+    "关闭模拟错误": "Dismiss simulation error",
+    "原模拟文件已删除": "The original simulation file was deleted",
+    "放弃当前编辑并继续": "Discard current edits and continue",
+    "保留为新模拟": "Keep as a new simulation",
+    "当前修改仍保留在窗口中。可以保存成一份新模拟，或放弃这些修改后切换；已删除的文件不会重新生成。": "Your current edits are still in this window. Save them as a new simulation or discard them before switching. The deleted file will not be recreated.",
+    "保存当前模拟的修改？": "Save changes to this simulation?",
+    "不保存并继续": "Continue without saving",
+    "已关闭自动保存。保存会更新这份模拟的历史记录；不保存会恢复到上次保存的内容。": "Autosave is off. Saving updates this simulation in history; continuing without saving restores its last saved contents.",
+    "清空最近删除？": "Empty Recently Deleted?",
+    "将永久删除最近删除中的 ": "Permanently delete ",
+    "份模拟设置与代码，无法恢复。计算结果和数据库文件都保留。": "simulation settings and code files from Recently Deleted. This cannot be undone. Result and database files will be kept.",
+    "永久删除这份模拟？": "Permanently delete this simulation?",
+    "永久删除": "Delete permanently",
+    "”的模拟设置与代码文件将从本机删除，无法从最近删除恢复。已生成的计算结果文件仍保留。": "” settings and code files will be deleted from this computer and cannot be restored from Recently Deleted. Existing result files will be kept.",
+    "每份模拟保留自己的 species、参数与代码。": "Each simulation keeps its own species, parameters, and code.",
+    "关闭模拟历史": "Close simulation history",
+    "搜索模拟历史": "Search simulation history",
+    "名称、数据库或文件编号…": "Name, database, or file ID…",
+    "复制当前": "Duplicate current",
+    "所有模拟 · ": "All simulations · ",
+    "最近删除": "Recently Deleted",
+    "清空最近删除…": "Empty Recently Deleted…",
+    "个 species · ": "species · ",
+    "个路径位置": "path positions",
+    "文件：": "File: ",
+    "显示文件": "Show file",
+    "恢复模拟": "Restore simulation",
+    "移到最近删除": "Move to Recently Deleted",
+    "永久删除…": "Delete permanently…",
+    "查看结果": "View results",
+    "没有匹配的模拟。": "No matching simulations.",
+    "没有已删除的模拟。": "No deleted simulations.",
+    "还没有模拟历史。选择数据库后即可开始。": "No simulation history yet. Choose a database to get started.",
+    "保存在当前电脑的用户目录。分享模拟请另存设置；计算结果单独保留。": "Stored in this computer's user folder. To share a simulation, save a settings file; calculation results are stored separately.",
+    "在文件夹中显示模拟历史": "Show simulation history in folder",
+    "模拟步骤": "Simulation steps",
+    "系统 species": "System species",
+    "初始物质": "Initial materials",
+    "计算流程": "Reaction workflow",
+    "活度模型": "Activity model",
+    "分模块编辑当前模拟": "Edit this simulation in code modules",
+    "模拟编辑方式": "Simulation editor mode",
+    "图形": "Visual",
+    "代码": "Code",
+    "进入独立结果页；计算开始后会自动切换": "Open the Results page; it opens automatically when a calculation starts",
+    "关闭模拟提示": "Dismiss simulation message",
+    "正在读取数据库 species…": "Loading database species…",
+    "连接 Reaktoro 后即可检查设置并计算；当前设置可以继续编辑。": "Connect to Reaktoro to check settings and run calculations. You can continue editing the current settings.",
+    "连接环境": "Connect environment",
+    "当前数据库未提供 ": "The current database does not provide ",
+    "个已选 species。": "selected species.",
+    "查看并移除": "Review and remove",
+    "已修改求解代码。图形设置只展示参数，计算将使用你修改后的代码。": "The solver code has been modified. Visual settings show the parameters; calculations will use your modified code.",
+    "恢复标准求解": "Restore standard solver",
+    "选择计算数据库": "Choose a calculation database",
+    "打开数据库后选择系统 species。“结果”可独立打开已有计算或表格。": "Open a database, then choose the system species. You can open existing calculations or tables independently in Results.",
+    "选择数据库": "Choose database",
+    "正在打开代码编辑器…": "Opening code editor…",
+    "代码和参数检查通过；计算时还会检查求解收敛与物料守恒。": "Code and parameter checks passed. Calculations will also check convergence and material balance.",
+    "已保留上次代码，可继续编辑。": "Your previous code has been kept and can be edited further.",
+    "恢复上次代码": "Restore previous code",
+    "模拟设置摘要": "Simulation settings summary",
+    "已填写，运行前检查": "Filled in; check before running",
+    "这里概览已填写的参数；物料连接、模型适用条件及求解约束由“检查设置”和实际计算验证。": "This is an overview of the parameters entered. Material connections, model requirements, and solver constraints are verified by Check settings and the calculation itself.",
+    "设置摘要": "Settings summary",
+    "参数已填写 · 运行前将检查设置": "Parameters entered · Settings will be checked before running",
+    "下一步：": "Next: ",
+    "点击右上角运行，选择保存位置后开始计算": "Click Run at the top right and choose a save location to begin",
+    "溶质 i 的无量纲活度。下方离子尺寸同用字母 a 时以 Å 单位区分。": "Dimensionless activity of solute i. Where a also denotes ion size below, the Å unit distinguishes it.",
+    "溶质的质量摩尔浓度，mol·kg⁻¹ H₂O。": "Solute molality, mol·kg⁻¹ H₂O.",
+    "质量摩尔浓度标准值，1 mol·kg⁻¹。": "Standard molality, 1 mol·kg⁻¹.",
+    "以质量摩尔浓度为标度的溶质活度系数。": "Solute activity coefficient on the molality scale.",
+    "species 电荷数（有符号整数）。": "Species charge number, a signed integer.",
+    "由平衡溶质浓度计算的离子强度，mol·kg⁻¹。": "Ionic strength calculated from equilibrium solute concentrations, mol·kg⁻¹.",
+    "Reaktoro AqueousMixture 将可解离复合物计入后的化学计量离子强度；mⱼˢ 为对应离子的化学计量浓度。": "Stoichiometric ionic strength after Reaktoro AqueousMixture accounts for dissociable complexes; mⱼˢ is the corresponding stoichiometric ion concentration.",
+    "水在水相中的摩尔分数。": "Mole fraction of water in the aqueous phase.",
+    "水的摩尔质量，kg·mol⁻¹。": "Molar mass of water, kg·mol⁻¹.",
+    "绝对温度，K（界面输入 °C，计算时换算）。": "Absolute temperature, K. Values entered in °C are converted for calculation.",
+    "纯水密度；下列 A、B 数值表达式用 g·cm⁻³。": "Pure-water density. The numerical expressions for A and B below use g·cm⁻³.",
+    "水的相对介电常数，无量纲。": "Relative permittivity of water, dimensionless.",
+    "Debye–Hückel 参数；Aγ 单位 (kg·mol⁻¹)¹ᐟ²，Bγ 单位 Å⁻¹(kg·mol⁻¹)¹ᐟ²。": "Debye–Hückel parameters. Units: Aγ in (kg·mol⁻¹)¹ᐟ²; Bγ in Å⁻¹(kg·mol⁻¹)¹ᐟ².",
+    "理想水溶液": "Ideal aqueous solution",
+    "逐离子尺寸的扩展 Debye–Hückel 方程，短程作用采用随温压变化的 NaCl 参数化；水活度在同一次模型计算中求出。": "Extended Debye–Hückel with individual ion sizes and temperature- and pressure-dependent NaCl short-range interaction parameters. Water activity is evaluated in the same model calculation.",
+    "带电 species i 的离子尺寸。取本次指定值或数据库中保存的有来源参数。": "Ion size of charged species i. Uses the value specified for this simulation or a sourced parameter stored in the database.",
+    "NaCl 短程作用系数，kg·mol⁻¹；由 Oelkers–Helgeson 型温压方程在各点计算，数值随结果一并保存。": "NaCl short-range interaction coefficient, kg·mol⁻¹, calculated at each point using an Oelkers–Helgeson temperature–pressure expression and saved with the results.",
+    "水密度使用 HGK 液态水分支，介电常数使用 Johnson–Norton 方程。": "Water density uses the HGK liquid-water branch; permittivity uses the Johnson–Norton equation.",
+    "水活度及渗透项": "Water activity and osmotic terms",
+    "水活度；求和仅包含溶质，不包含水。": "Water activity. The sums include solutes only, excluding water.",
+    "无量纲辅助量。稀释极限 α → −1/ln(10)，σᵢ → 1，以级数计算避免数值相消。": "Dimensionless auxiliary quantities. At infinite dilution, α → −1/ln(10) and σᵢ → 1; series expansions avoid numerical cancellation.",
+    "Davies 方程描述离子强度对活度系数的影响。这里采用 Reaktoro 的默认参数 b = 0.3、bₙ = 0.1。": "The Davies equation describes the effect of ionic strength on activity coefficients. This implementation uses Reaktoro's default parameters b = 0.3 and bₙ = 0.1.",
+    "离子经验系数 0.3，采用浓度数值以 mol·kg⁻¹ 代入的约定。": "Empirical ionic coefficient, 0.3, with concentrations entered numerically in mol·kg⁻¹.",
+    "中性溶质盐析系数 0.1 kg·mol⁻¹。": "Salting-out coefficient for neutral solutes, 0.1 kg·mol⁻¹.",
+    "由水密度和介电常数计算的 Debye–Hückel 参数。": "Debye–Hückel parameter calculated from water density and permittivity.",
+    "常用于低至中等离子强度的水溶液。": "Commonly used for aqueous solutions of low to moderate ionic strength.",
+    "理想质量摩尔浓度标度：溶质活度系数为 1，水活度随溶质含量变化。": "Ideal molality scale: solute activity coefficients are 1, while water activity varies with solute content.",
+    "水活度采用 Reaktoro 理想水相实现中的 Gibbs–Duhem 关系，适合用作理想近似的计算基准。": "Water activity follows the Gibbs–Duhem relation in Reaktoro's ideal aqueous model, providing a reference calculation for the ideal approximation.",
+    "使用 Helgeson–Kirkham–Flowers 活度模型及 Reaktoro 保存的离子半径和温压参数。": "Uses the Helgeson–Kirkham–Flowers activity model with the ion radii and temperature–pressure parameters provided by Reaktoro.",
+    "有效静电半径与 Debye–Hückel 尺寸，Å。cᵢ 对阳离子为 1.81 Å，对阴离子为 1.91 Å。": "Effective electrostatic radius and Debye–Hückel size, Å. cᵢ is 1.81 Å for cations and 1.91 Å for anions.",
+    "分别为溶剂化参数 (kg·cal⁻¹) 和短程作用参数 (kg·mol⁻¹)，按模型的温压表插值。": "Solvation parameter (kg·cal⁻¹) and short-range interaction parameter (kg·mol⁻¹), respectively, interpolated from the model's temperature–pressure tables.",
+    "Born 系数与绝对 Born 系数，cal·mol⁻¹。": "Born coefficient and absolute Born coefficient, cal·mol⁻¹.",
+    "水活度": "Water activity",
+    "水渗透项使用带电 species 的化学计量浓度与 ωᵢ，溶质方程使用 ωᵢᵃᵇˢ。此选择是水相活度模型；数据库的 HKF 标准态热力学方程另行提供标准化学势。": "The water osmotic term uses stoichiometric concentrations of charged species and ωᵢ; the solute equation uses ωᵢᵃᵇˢ. This option selects the aqueous activity model. The database's HKF standard-state equations provide standard chemical potentials separately.",
+    "按 PHREEQC 数据库各 species 的活度参数，选择对应的 Debye–Hückel、Davies、盐析或 LLNL 分支。": "Uses each species' activity parameters in the PHREEQC database to select the appropriate Debye–Hückel, Davies, salting-out, or LLNL branch.",
+    "数据库为各 species 提供的离子尺寸与盐析/线性系数（bᵢ 单位 kg·mol⁻¹）。": "Species-specific ion sizes and salting-out/linear coefficients from the database; bᵢ is in kg·mol⁻¹.",
+    "Reaktoro PHREEQC 水活度近似中的系数，kg·mol⁻¹，求和不含水。": "Coefficient in Reaktoro's PHREEQC water-activity approximation, kg·mol⁻¹. Water is excluded from the sum.",
+    "LLNL 分支": "LLNL branch",
+    "Aₗ、Bₗ、Ḃₗ 从数据库 LLNL 温度表插值；c₀…c₄ 为数据库的 CO₂ 经验系数，温度用 K，离子强度以 mol·kg⁻¹ 数值代入。中性 LLNL 分支 γ = 1。此选项不实现 Pitzer 或 SIT。": "Aₗ, Bₗ, and Ḃₗ are interpolated from the database's LLNL temperature tables. c₀…c₄ are its empirical CO₂ coefficients; temperature is in K and ionic strength is entered numerically in mol·kg⁻¹. The neutral LLNL branch has γ = 1. This option does not implement Pitzer or SIT.",
+    "通用符号、活度标度与离子强度": "Common symbols, activity scales, and ionic strength",
+    "标准化学势 μ° 由所选数据库提供，μᵢ = μᵢ° + RT ln(aᵢ)。纯矿物存在时活度取 1；气相按下方逸度模型计算。结果中的 Eh 由所选体系与约束计算得到，其地球化学解释还取决于所选氧化还原 species。": "The selected database supplies the standard chemical potential μ°; μᵢ = μᵢ° + RT ln(aᵢ). Present pure minerals have activity 1; gases use the fugacity model below. Result Eh values follow from the selected system and constraints; their geochemical interpretation also depends on the selected redox species.",
+    "数据库提供标准态热力学数据，活度模型描述混合物中的非理想行为。": "The database provides standard-state thermodynamic data; activity models describe non-ideal mixing.",
+    "当前体系没有水相，水相活度模型不参与计算。": "This system has no aqueous phase, so the aqueous activity model is not used.",
+    "水相活度模型": "Aqueous activity model",
+    "气相逸度模型": "Gas fugacity model",
+    "理想气体": "Ideal gas",
+    "个 species 的尺寸参数待设置": "species need ion-size parameters",
+    "保留当前活度模型，补全参数与来源；也可根据体系需要选择其他模型。": "Complete the parameters and sources for this activity model, or choose another model appropriate for your system.",
+    "查看待设置 species →": "Review species needing parameters →",
+    "有未完成的离子尺寸编辑": "Incomplete ion-size edits",
+    "当前模型不使用这些尺寸。可切回 Extended Debye–Hückel 补全，或清除未完成项后继续。": "The current model does not use these sizes. Switch back to Extended Debye–Hückel to complete them, or clear the incomplete entries to continue.",
+    "清除未完成的尺寸编辑": "Clear incomplete ion-size edits",
+    "求解设置": "Solver settings",
+    "首点使用矿物渐进初始化": "Initialize the first point by gradually adding minerals",
+    "仅用于改善数值初值，最终点使用完整的实际物料量。": "Improves the numerical initial guess only. The final point uses the full actual material amount.",
+    "守恒误差限值 (mol)": "Balance tolerance (mol)",
+    "离子尺寸来源": "Ion-size sources",
+    "沿用数据库的默认尺寸": "Use database default sizes",
+    "数据库已保存数值并标记为默认赋值；不会给缺失的尺寸自动补值。": "Uses values explicitly stored and marked as defaults in the database. Missing sizes are not filled automatically.",
+    "沿用有理由但无文献的尺寸": "Use justified sizes without a reference",
+    "尺寸数值和赋值理由已保存，但未填写文献来源时也允许采用。": "Allows recorded sizes with an assignment reason even when no literature reference has been provided.",
+    "离子尺寸与来源 · ": "Ion sizes and sources · ",
+    "个带电水相 species": "charged aqueous species",
+    "本次指定值优先于数据库值。覆盖值只保存在模拟设置和结果中。": "Values specified here take precedence over database values. Overrides are stored only in simulation settings and results.",
+    "数据库 aᵢ / Å": "Database aᵢ / Å",
+    "来源与依据": "Source and basis",
+    "本次指定": "Simulation override",
+    "默认记录": "Default record",
+    "未注明文献": "No reference provided",
+    "指定本次值": "Override for this simulation",
+    "文献或参数来源": "Reference or parameter source",
+    "使用理由": "Assignment reason",
+    "当前体系没有水相": "No aqueous phase in this system",
+    "加入水相 species 后，可在这里选择活度模型并查看方程。": "Add aqueous species to select an activity model and view its equations here.",
+    "Peng–Robinson 状态方程": "Peng–Robinson equation of state",
+    "逸度、逸度系数和气相摩尔分数。标准压力 P° = 1 bar，P 与 P° 使用一致单位。": "Fugacity, fugacity coefficient, and gas mole fraction. Standard pressure P° = 1 bar; use matching units for P and P°.",
+    "气体常数、气相摩尔体积与总摩尔数。": "Gas constant, gas-phase molar volume, and total number of moles.",
+    "混合物吸引参数、共体积与二元相互作用参数；式中的 aᵢ、bᵢ 是纯组分的状态方程参数，分别由临界温度、临界压力及偏心因子计算。采用 Reaktoro 的 Peng–Robinson 1978 实现。": "Mixture attraction, covolume, and binary interaction parameters. The pure-component equation-of-state parameters aᵢ and bᵢ are calculated from critical temperature, critical pressure, and acentric factor. Uses Reaktoro's Peng–Robinson 1978 implementation.",
+    "选择参与平衡的物种和水溶剂。": "Choose equilibrium species and the water solvent.",
+    "填写每份配方的物种、数量和单位。": "Enter the species, amounts, and units in each composition portion.",
+    "设置温度、压力或投料变化，指定反应路径与轮次。": "Set temperature, pressure, or input changes and define path positions and rounds.",
+    "设置每个点接收哪些物料，以及取用比例。": "Choose the materials received at each point and the fractions taken.",
+    "选择活度模型与气相模型，填写离子尺寸。": "Select aqueous and gas activity models and specify ion sizes.",
+    "设置初始状态和物料守恒的误差容限。": "Set initialization options and the material-balance tolerance.",
+    "准备计算所需工具，读取当前模拟参数。": "Prepare calculation tools and read the current simulation parameters.",
+    "建立各相、活度模型和求解器，换算投料数量。": "Build phases, activity models, and the solver, and convert input amounts.",
+    "由实际投料建立初始状态和组分约束。": "Build initial states and component constraints from the actual inputs.",
+    "在指定温压下求平衡，检查收敛与物料守恒。": "Solve equilibrium at the specified temperature and pressure, then check convergence and material balance.",
+    "按来源和比例分配物料，记录输入、转移和剩余量。": "Allocate material by source and fraction, recording inputs, transfers, and remaining amounts.",
+    "读取物种量、活度、pH 和物料守恒结果。": "Read species amounts, activities, pH, and material-balance results.",
+    "沿路径和各轮接收物料、求平衡并保存结果。": "Receive materials, solve equilibrium, and save results along the path and across rounds.",
+    "开始计算，并将每个完成点保存到所选位置。": "Start the calculation and save every completed point to the selected location.",
+    "自定义 Python": "Custom Python",
+    "Python 模拟": "Python simulation",
+    "有修改，运行前检查": "Modified; check before running",
+    "参数已同步": "Parameters synchronized",
+    "代码界面": "Code editor",
+    "前六个模块与图形设置同步，后面的模块控制平衡求解和物料传递。修改代码后切回图形界面，参数与代码都会保留。": "The first six modules synchronize with visual settings. The remaining modules control equilibrium solving and material transfer. Switching back to the visual editor preserves both parameters and code.",
+    "点击运行时，所有模块从头依次执行，不沿用上次计算的变量。代码可以读取和写入电脑上的文件。": "Each run executes all modules from the beginning, without reusing variables from the previous run. Code can read and write files on this computer.",
+    "Tab 缩进；按 Esc 再按 Tab 可移出编辑区。保存设置时会一起保存代码和注释。": "Tab indents; press Esc then Tab to leave the editor. Saving settings also saves your code and comments.",
+    "检查代码与参数": "Check code and parameters",
+    "恢复标准求解代码": "Restore standard solver code",
+    "放弃代码修改并返回图形界面": "Discard code edits and return to visual settings",
+    "代码未能自动保存，请使用“保存设置”另存。当前编辑已保留。": "Code could not be autosaved. Use Save settings to save a separate copy. Your current edits have been kept.",
+    "代码模块": "Code modules",
+    "参数 · 与图形设置同步": "Parameters · Synchronized with visual settings",
+    "执行 · 顺序运行": "Execution · Run in order",
+    "编辑反应过程": "Edit reaction process",
+    "温压可超出数据库记录的范围；species 详情中可查看所记录的适用范围。": "Temperature and pressure can exceed the ranges recorded in the database. Species details show the recorded ranges.",
+    "导入的结果": "Imported results",
+    "选择结果表格或图表工作区": "Choose result tables or a chart workspace",
+    "结果文件": "Result files",
+    "保存结果工作区": "Save result workspace",
+    "导出结果文件": "Export result file",
+    "无法确认文件是否已保存，请检查保存位置后重试。": "The file could not be confirmed as saved. Check the location and try again.",
+    "当前为独立导入的数据": "Showing independently imported data",
+    "；模拟仍在后台计算": "; the simulation is still running in the background",
+    "返回": "Return to ",
+    "预览轮次": "Preview round",
+    "结果预览轮次": "Result preview round",
+    "点段": "Point range",
+    "结果预览点段": "Result preview point range",
+    "刷新结果预览": "Refresh result preview",
+    "运行记录": "Run details",
+    "已保存至 ": "Saved to ",
+    "结果较大，按轮次与点段载入。此处另存的工作区和图表只包含当前载入部分；计算目录中的 CSV 和结果页面保留全部完成点。": "Large results are loaded by round and point range. Workspaces and charts saved here contain only the loaded part. The calculation folder retains all completed points in its CSV files and result page.",
+    "参考点在其他轮次或点段中，当前不显示相对该点的差值。": "The reference point is in another round or point range, so differences from it are not shown here. ",
+    "切回相应轮次或点段后可继续使用。": "Load the corresponding round or point range to use them again.",
+    "数据库：": "Database: ",
+    "最大逐点误差 ": "Maximum point balance error ",
+    "本次运行使用自定义求解代码；此处展示代码输出的守恒记录，请核对修改后的约束与计算逻辑。": "This run uses custom solver code. These are the balance records produced by that code; check them against your modified constraints and calculation logic.",
+    "累计账：所有外部投料 = 尚未转移的输出库存。停止或失败时，只有完整通过守恒检查的点进入结果。": "Cumulative balance: all external input equals the output inventory not yet transferred. After a stop or failure, results include only complete points that passed the balance checks.",
+    "组分": "Component",
+    "累计输入 / mol": "Cumulative input / mol",
+    "未转移库存 / mol": "Untransferred inventory / mol",
+    "误差 / mol": "Error / mol",
+    "精确配方、传递比例、活度参数、计算所用的数据库及逐点物料记录保存在本次结果文件夹。": "The calculation folder contains the exact compositions, transfer fractions, activity parameters, database information and material records for each point.",
+    "正在计算第一个平衡点": "Calculating the first equilibrium point",
+    "本次计算未产生有效结果": "This run produced no valid results",
+    "尚无已完成的平衡点": "No completed equilibrium points yet",
+    "完成后会在这里显示数据。结果正保存到所选文件夹，可以切换页面查看当前设置。": "Data will appear here when a point is complete. Results are being saved to the chosen folder; you can switch pages to review the settings.",
+    "已有设置仍然保留。查看上方运行信息，返回模拟调整后可重新运行。": "Your settings are retained. Review the run information above, then return to the simulation to adjust and run again.",
+    "返回模拟": "Back to simulation",
+    "返回结果首页，打开其他数据": "Results home · open other data",
+    "正在载入保存的结果…": "Loading saved results…",
+    "恢复后将超过 500 个 species，请先移除不需要的 species。": "Restoring these selections would exceed 500 species. Remove species you do not need first.",
+    "一次计算最多选择 500 个 species，请缩小筛选范围。": "A calculation can include up to 500 species. Narrow the filter first.",
+    "参与平衡计算的 species": "Species included in equilibrium",
+    "选中的 species 共同定义化学体系；初始含量为零的 species 也可以在反应中生成。": "Selected species define the chemical system. Species with zero initial amounts can still form during a reaction.",
+    "个暂不可算": "currently unavailable",
+    "暂不可算的 species": "Unavailable species",
+    "数据库中存在，当前计算尚不支持": "Present in the database, but not currently supported for calculation",
+    "species 可用性": "Species availability",
+    "species 记录保留在数据库里。可用性由相态支持、名称唯一性和记录是否为草稿决定，不代表热力学数据缺失。": "These records remain in the database. Availability depends on supported phases, unique names, and whether a record is a draft; it does not mean that thermodynamic data are missing.",
+    "当前数据库未提供的 species": "Species unavailable in the current database",
+    "个已选 species 在当前数据库不可用": "selected species are unavailable in the current database",
+    "移除全部不可用 species": "Remove all unavailable species",
+    "这些选择来自之前的数据库，列在这里以便移除；不会出现在下方的当前数据库列表中。移除时会同步清理 composition 和物料传递中的引用。": "These selections came from a previous database. They are listed here for removal and are absent from the current database list below. Removing them also clears references in compositions and material transfers.",
+    "搜索系统 species": "Search system species",
+    "搜索名称或化学式…": "Search name or formula…",
+    "species 相态": "Species phase",
+    "species 排序": "Species order",
+    "基础 species → 络合物": "Basic species → complexes",
+    "常用优先": "Common first",
+    "按名称": "By name",
+    "按相态": "By phase",
+    "基础水相": "Basic aqueous species",
+    "只看已选": "Selected only",
+    "选中筛选结果": "Select filtered species",
+    "移除筛选结果": "Remove filtered species",
+    "水 · H⁺ · OH⁻": "Water · H⁺ · OH⁻",
+    "新建模拟默认加入可唯一识别的基础 species。同一化学式的不同记录代表不同数据版本，请为尚未加入的基础 species 选择一项；更换已有版本可在网格中操作。": "New simulations include uniquely identified basic species by default. Records with the same formula represent different data versions. Choose a version for any basic species not yet included; use the grid to change an existing selection.",
+    "水溶剂": "Water solvent",
+    "氢离子": "Hydrogen ion",
+    "氢氧根": "Hydroxide ion",
+    "选择数据版本…": "Choose data version…",
+    "数据库未提供": "Not provided by the database",
+    "元素匹配方式": "Element matching",
+    "组成元素仅限所选元素": "Contains only selected elements",
+    "包含全部所选元素": "Contains all selected elements",
+    "包含任意所选元素": "Contains any selected element",
+    "清除元素筛选": "Clear element filter",
+    "没有匹配的 species，调整名称、相态或元素筛选。": "No matching species. Adjust the name, phase, or element filter.",
+    "个匹配 species · 点击方块选中，再次点击移除": "matching species · Click a tile to select; click again to remove",
+    "已同步移除相应初始投料。": "The corresponding initial inputs were also removed.",
+    "撤销移除": "Undo removal",
+    "元素周期表筛选": "Periodic table filter",
+    "选元素用于筛选；在 species 网格中决定哪些参与计算。": "Choose elements to filter the list, then use the species grid to select which species participate.",
+    "关闭元素周期表": "Close periodic table",
+    "加入 H / O": "Add H / O",
+    "查看 ": "Show ",
+    "个匹配 species": "matching species",
+    "Compositions · 初始物质与补充投料": "Compositions · Initial and additional inputs",
+    "每个 composition 定义一份物料。投到哪个点、何时加入以及加入多少，在“计算流程”中设定。": "Each composition defines one portion of material. Set where, when, and how much to add in Calculation process.",
+    "种初始物质": "initial species",
+    "添加 composition": "Add composition",
+    "Composition 名称": "Composition name",
+    "此 composition 被计算流程引用，请先修改对应来源规则": "This composition is used in the calculation process. Change its source rules before deleting it.",
+    "删除 composition": "Delete composition",
+    "的投料单位从 ": "input unit changes from ",
+    "改为 ": "to ",
+    "。数值不自动换算，计算流程中该 species 的每份含量设置也将按 ": ". Values will not be converted automatically. The per-portion amounts for this species in the calculation process will also use ",
+    "解释。": ".",
+    "按新单位使用这些数值": "Use these values with the new unit",
+    "保留原单位": "Keep original unit",
+    "数量": "Amount",
+    "每份含量由计算流程设置，请使用下方修改入口": "The per-portion amount is set in Calculation process. Use the edit link below.",
+    "的每份含量": "per-portion amount",
+    "从右侧选择 species，填写本 composition 的初始量。": "Choose species on the right and enter their initial amounts in this composition.",
+    "移除初始投料会保留系统中的平衡 species。水相浓度以实际水溶剂质量为基准。各 composition 可分别带电荷；每次反应汇合后的总投料须电荷平衡。": "Removing an initial input keeps the species in the equilibrium system. Aqueous concentrations use the actual water-solvent mass. Individual compositions can carry net charge; the combined input at each reaction must be charge-balanced.",
+    "从系统 species 中添加": "Add from system species",
+    "搜索可投料 species": "Search input species",
+    "名称或化学式…": "Name or formula…",
+    "投料 species 相态": "Input species phase",
+    "先在“系统 species”中选择参与平衡的 species。": "First choose the species that participate in equilibrium under System species.",
+    "· 电荷 ": "· Charge ",
+    "热力学模型未注明": "Thermodynamic model not specified",
+    "离子尺寸 aᵢ ": "Ion size aᵢ ",
+    "另有 ": "Another ",
+    "项参数，可在数据库查看": "parameters are available in the database",
+    "参数暂时无法读取": "Parameters are temporarily unavailable",
+    "正在读取热力学参数…": "Loading thermodynamic parameters…",
+    "未指定；保存时选择位置。": "Not set; choose a location when saving.",
+    "查找元素": "Find elements",
+    "元素符号 / 中文 / English": "Element symbol / name",
+    " 个匹配": " matches",
+    "点击选择或取消；方向键移动，空格选择。": "Click to select or deselect. Use arrow keys to move and Space to select.",
+    "镧系 / 锕系见下方两行": "Lanthanides / actinides are in the bottom two rows",
+    "已选元素": "Selected elements",
+    "移除元素 ": "Remove element ",
+    "选择元素后返回表单填写化学计量数。": "Choose elements, then enter stoichiometric coefficients in the form.",
+    "关闭组成元素选择": "Close element selection",
+    "使用这些元素": "Use these elements",
+    "试算温度单位": "Trial temperature unit",
+    "试算压力单位": "Trial pressure unit",
+    "查看完整数值": "View full value",
+    "已复制": "Copied",
+    "复制": "Copy",
+    "无法自动复制，可选中上方数值复制。": "Could not copy automatically. Select the value above to copy it.",
+    "物料份数尚未填完整": "Enter the number of material portions",
+    "缺失的配方": "Missing composition",
+    "本轮不加入": "Not added in this round",
+    "缺失的点": "Missing position",
+    "还没有来源输出，本次不加入": "Source result not yet available; no addition at this reaction",
+    "没有来源输出，将报错停止": "Source result unavailable; calculation will stop",
+    "起点": "Start",
+    "其余位置": "Following positions",
+    "反应物组成设置不完整。": "The reactant composition is incomplete.",
+    "各处组成应在该类位置每次反应时使用；请分别设置四处组成，不要在同一物料项中附加轮次条件。": "Set the composition separately for each reaction stage. Each input must apply whenever that stage is used.",
+    "物料记录的标识无效，请检查模拟设置文件。": "Invalid material record ID. Check the simulation settings file.",
+    "各反应位置存在重复的物料记录，请保留独立的物料项。": "Duplicate material records occur across reaction stages. Keep a separate input record for each stage.",
+    "此模拟为不同位置分别设置了组成，请继续使用原逐步路线。": "This simulation defines a separate composition at each position. Continue using its step-by-step path.",
+    "结果历史尚未更新，请重试。": "Result history could not be updated. Try again.",
+    "结果文件保留，历史记录未能更新：": "Result files are retained, but history could not be updated: ",
+    "计算中": "Running",
+    "已完成": "Completed",
+    "计算失败": "Calculation failed",
+    "已停止": "Stopped",
+    "已中断": "Interrupted",
+    "实际值待填写": "Values needed",
+    "部分位置的实际值待填写": "Values needed at some positions",
+    "未使用": "Not used",
+    "指定 ": "Fixed ",
+    "每步": "per reaction",
+    "每轮": "per round",
+    "Psat(T) / 指定压力 · ": "Psat(T) / fixed pressure · ",
+    "保持不变": "Constant",
+    "通常设置": "General settings",
+    "范围尚未填完整": "Range is incomplete",
+    "缺少有效的离子尺寸": "A valid ion-size parameter is missing",
+    "本次指定值需填写来源和理由": "Enter a source and reason for this override",
+    "缺少文献来源，或尚未允许已有赋值": "A reference is missing, or recorded assignments are not enabled",
+    "尚未允许数据库默认值": "Database defaults are not enabled",
+    "选择参与平衡的 species": "Select the species allowed at equilibrium",
+    "水相需选一个水溶剂 species": "Select one water solvent species for the aqueous phase",
+    "投料中有未选入体系的 species": "An input species is missing from the system selection",
+    "填写初始投料及其数量": "Enter the initial composition and amounts",
+    "检查温压、轮数及独立轮次设置": "Check temperature, pressure, round counts and individual round settings",
+    "当前体系无水相": "No aqueous phase in the system",
+    "当前数据库不支持此 PHREEQC 活度选项": "This database does not support the selected PHREEQC activity model",
+    "离子尺寸仍有未完成的编辑": "Some ion-size edits are incomplete",
+    "这份模拟历史不完整，未替换当前模拟。": "This saved simulation is incomplete. The current simulation has been kept.",
+    "历史记录中的代码不完整，未替换当前模拟。": "The code in this saved simulation is incomplete. The current simulation has been kept.",
+    "历史记录中的恢复代码不完整。": "The recovery code in this saved simulation is incomplete.",
+    "模拟尚未保存，请重试或另存设置。": "The simulation has not been saved. Try again or save the settings as a new file.",
+    "历史记录操作未完成，请重试。": "The history operation did not finish. Try again.",
+    "最近删除尚未清空，请刷新后重试。": "Recently deleted items could not all be cleared. Refresh and try again.",
+    "重复次数须为 1–10,000 的整数。": "Enter a whole number of repetitions from 1 to 10,000.",
+    "请填写 1–10,000 个有效数值。": "Enter between 1 and 10,000 valid values.",
+    "步长不能为 0，正负方向须能从起点走向终点。": "The increment must be nonzero and move toward the ending value.",
+    "路径位置数或总轮数最多 10,000 次。": "A path or series of rounds can contain at most 10,000 reactions.",
+    "各轮压力设置须为列表，最多 10,000 轮。": "Round pressure settings must be a list of at most 10,000 rounds.",
+    "各轮压力需包含轮次和压力方式，可另填压力值。": "Each pressure setting needs a round number and pressure mode, with an optional pressure value.",
+    "指定轮次须为 1–10,000 之间的整数。": "The round number must be an integer from 1 to 10,000.",
+    "所选路径位置或轮次超出当前范围。": "The selected path position or round is outside the current range.",
+    "已移除的配方": "Removed composition",
+    "已移除": "removed",
+    "本次计算超过 20,000 个平衡点，请减少位置数或轮数。": "This simulation exceeds 20,000 equilibrium points. Reduce the number of positions or rounds.",
+    "路径变化和轮次变化不能同时设定同一个量，请调整其中一项。": "The path and round series cannot both control the same parameter. Adjust one of them.",
+    "各处组成已分别设置，请把变化量改为实际加入的配方份数或物料取用比例。": "Compositions are set separately at each stage. Vary the number of composition portions or the fraction of material transferred.",
+    "温度须高于绝对零度。": "Temperature must be above absolute zero.",
+    "各轮均使用饱和蒸汽压或另定压力，当前压力变化没有生效；请调整轮次压力设置或移除压力变化。": "Every round uses saturation pressure or a separate pressure setting, so this pressure series has no effect. Adjust the round settings or remove the series.",
+    "投料量或比例不能为负数。": "Input amounts and fractions cannot be negative.",
+    "取用已有结果的比例须在 0–1 之间。": "The fraction taken from an existing result must be between 0 and 1.",
+    "请补全反应路径设置。": "Complete the reaction path settings.",
+    "起始轮次或位置须为 1–10,000 的整数。": "The first round or position must be an integer from 1 to 10,000.",
+    "结束轮次或位置须不小于起点，且不超过 10,000。": "The last round or position must be at least the first, and no greater than 10,000.",
+    "选择间隔须为 1–10,000 的整数。": "Select every 1 to 10,000 positions or rounds, using a whole number.",
+    "Composition 每份含量": "Composition content per portion",
+    "Composition 加入份数": "Composition portions added",
+    "反应后物料取用比例": "Fraction of reacted material transferred",
+    "首次 composition 份数": "Initial composition portions",
+    "反应条件设置不完整，请补全当前编辑。": "Complete the reaction conditions before continuing.",
+    "路径位置数和反应轮数须为 1–10,000 的整数。": "Enter a whole number from 1 to 10,000 for path positions and reaction rounds.",
+    "同一参数设置重复引用了物料来源。": "This parameter setting refers to the same material source more than once.",
+    "物料用量设置的主来源与引用不一致。": "The main source of the material amount setting does not match its references.",
+    "通常设置中同一个参数出现了多次，请保留一项。": "A parameter appears more than once in the general settings. Keep one setting.",
+    "通常设置中需要温度和压力。": "Temperature and pressure are required in the general settings.",
+    "单独设置的编号重复。": "Duplicate individual setting ID.",
+    "饱和蒸汽压只能用于压力。": "Saturation pressure can only be used for pressure.",
+    "所选轮次或路径位置超出当前范围。": "The selected round or path position is outside the current range.",
+    "Psat(T) · 随当前温度计算": "Psat(T) · calculated at the current temperature",
+    "前一步": "Previous reaction",
+    "新的平衡模拟": "New equilibrium simulation",
+    "模拟设置格式无效。": "Invalid simulation settings format.",
+    "不支持此模拟设置版本。": "This version of simulation settings is not supported.",
+    "旧版模拟设置格式不完整。": "The legacy simulation settings are incomplete.",
+    "模拟设置格式不完整或包含无效数值。": "The simulation settings are incomplete or contain invalid values.",
+    "反应条件设置不完整或包含无效数值。": "The reaction conditions are incomplete or contain invalid values.",
+    "反应条件设置格式不完整。": "The reaction conditions format is incomplete.",
+    "步长须为非零有限数，方向与起止值一致。": "Enter a nonzero increment that moves from the starting value toward the ending value.",
+    "单轴点数不能超过 10,000。": "A series can contain at most 10,000 points.",
+    "代码草稿格式不完整": "The code draft is incomplete",
+    "恢复代码格式不完整": "The recovery code is incomplete",
+    "单独调整": "Local adjustment",
+    "另一方向的变化": "Change in the other direction",
+    "反应路径设置": "Reaction path settings",
+    "次数": "Count",
+    "终点": "End",
+    "步长": "Step size",
+    "数列": "Sequence",
+    "投料": "Input",
+    "温压点": "Temperature–pressure point",
+    "单独设置的轮次": "Individually adjusted rounds",
+    "每轮温度变化": "Temperature change per round",
+    "每轮压力变化": "Pressure change per round",
+    "反应组成": "Reaction inputs",
+    "离子尺寸": "Ion size",
+    "尺寸参数": "Size parameter",
+    "守恒误差容限": "Balance tolerance",
+    " 的数值尚未填完整，请补全后切换。": " has an incomplete numeric value. Complete it before switching.",
+    "模拟参数": "Simulation parameters",
+    "这份代码草稿暂时无法打开，请重新载入保存的设置。": "This code draft cannot currently be opened. Reload the saved settings.",
+    "代码草稿无法读取，原内容已另存为本机恢复副本。当前图形参数可继续使用。": "The code draft could not be read. Its original content was saved in a local recovery copy. You can continue using the current visual parameters.",
+    "代码草稿无法读取，请先另存当前设置。": "The code draft could not be read. Save the current settings to a separate file first.",
+    "代码未能完整载入，请重试。": "The code did not load completely. Try again.",
+    "代码尚未同步：请修正模块中标出的错误。当前代码和上次有效参数均已保留。": "Code is not synchronized. Correct the errors marked in the modules. Your current code and last valid parameters have been kept.",
+    "参数无法显示在图形界面中：": "These parameters cannot be shown in the visual editor: ",
+    "代码参数结构不完整，未替换当前图形参数。": "The code parameter structure is incomplete. Current visual parameters were kept.",
+    "设置中的代码模块格式不完整，未载入这份设置。": "The code modules in this settings file are incomplete. The file was not loaded.",
+    "模拟历史暂时无法读取，请重试。": "Simulation history is temporarily unavailable. Try again.",
+    " 份历史记录无法读取，原文件已保留。": " history entries could not be read. Their original files were kept.",
+    "请先选择数据库。": "Choose a database first.",
+    "模拟未载入：": "Simulation not loaded: ",
+    "请先打开此模拟对应的数据库。": "Open this simulation's database first.",
+    "请检查代码": "Check the code"
+  },
+  "patterns": [
+    {
+      "zh": [
+        "已导出 ",
+        " 个 species，排除 ",
+        " 个；Reaktoro 重新加载验证通过。"
+      ],
+      "en": [
+        "Exported ",
+        " species and excluded ",
+        ". Reaktoro successfully reloaded the exported data."
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "饱和蒸汽压温度须在 0.01 °C 至临界温度 373.946 °C 之间。"
+      ],
+      "en": [
+        "",
+        ": saturation pressure requires a temperature from 0.01 °C to below the critical temperature of 373.946 °C."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮需要 ",
+        " 个位置，与基础路线一一对应。请在基础路线修改位置总数。"
+      ],
+      "en": [
+        "Round ",
+        " needs ",
+        " positions, matching the base path. Change the number of positions in the base path."
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "没有前一步结果，请改选实际加入的 composition 或有效来源。"
+      ],
+      "en": [
+        "",
+        " has no previous reaction. Choose a composition or an available result."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "没有上一轮结果，请改选实际加入的 composition 或有效来源。"
+      ],
+      "en": [
+        "",
+        " has no previous round. Choose a composition or an available result."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "纯水饱和蒸汽压需要 0.01–373.946 °C（不含临界温度）。"
+      ],
+      "en": [
+        "",
+        ": pure-water saturation pressure requires 0.01–373.946 °C, excluding the critical temperature."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "确定从当前数据库删除“",
+        "”吗？保存前仍可通过放弃更改撤销。"
+      ],
+      "en": [
+        "Delete “",
+        "” from this database? You can discard database changes to undo this before saving."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "温度超出该 species 模型的有效范围：",
+        "–",
+        " ",
+        "。"
+      ],
+      "en": [
+        "Temperature is outside this species model's stated range: ",
+        "–",
+        " ",
+        "."
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "压力超出该 species 模型的有效范围：",
+        "–",
+        " ",
+        "。"
+      ],
+      "en": [
+        "Pressure is outside this species model's stated range: ",
+        "–",
+        " ",
+        "."
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "没有前一步结果，请改选实际加入的配方或有效来源。"
+      ],
+      "en": [
+        "",
+        " has no previous reaction. Choose a composition or an available result."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "没有上一轮结果，请改选实际加入的配方或有效来源。"
+      ],
+      "en": [
+        "",
+        " has no previous round. Choose a composition or an available result."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "与另一处单独设置重复修改同一个参数，请调整范围。"
+      ],
+      "en": [
+        "",
+        " overlaps another setting for the same parameter. Adjust the affected positions or rounds."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "每轮走完 ",
+        " 个位置，再从位置 1 开始下一轮。"
+      ],
+      "en": [
+        "Each round covers ",
+        " positions, then the next round starts at position 1."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "已删除 ",
+        " 份模拟设置与代码。计算结果文件保留。"
+      ],
+      "en": [
+        "Deleted ",
+        " simulation settings and code files. Result files were kept."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "的来源不属于当前反应路径，请重新选择来源位置。"
+      ],
+      "en": [
+        "",
+        " refers to a source outside this reaction path. Choose a source position again."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "的步骤不属于当前反应路径，请重新选择来源步骤。"
+      ],
+      "en": [
+        "",
+        " refers to a position outside this reaction path. Choose a source position again."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "引用的本轮结果尚未完成，请选择已完成的位置。"
+      ],
+      "en": [
+        "",
+        " refers to a result that has not yet been calculated in this round. Choose an earlier position."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "指向的位置已超出反应路径范围，请调整来源。"
+      ],
+      "en": [
+        "",
+        " refers to a position outside the reaction path. Adjust the source."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "指向的步骤已超出反应路径范围，请调整来源。"
+      ],
+      "en": [
+        "",
+        " refers to a position outside the reaction path. Adjust the source."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "发现 ",
+        " 个可用环境，请选择要连接的环境。"
+      ],
+      "en": [
+        "Found ",
+        " available environments. Choose one to connect."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮请选择指定压力或纯水饱和蒸汽压。"
+      ],
+      "en": [
+        "Choose a fixed pressure or pure-water saturation pressure for round ",
+        "."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "向“",
+        "”添加其他数据库的 species"
+      ],
+      "en": [
+        "Add species from other databases to “",
+        "”"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "中的参数已移除，请重新选择或删除该项。"
+      ],
+      "en": [
+        "A parameter in ",
+        " has been removed. Choose another parameter or remove the setting."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "取用已有结果的比例不能超过 100%。"
+      ],
+      "en": [
+        "",
+        ": no more than 100% of an existing result can be transferred."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 行的温度、压力或平衡常数无效。"
+      ],
+      "en": [
+        "Row ",
+        " has an invalid temperature, pressure, or equilibrium constant."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 首次 composition"
+      ],
+      "en": [
+        "Source ",
+        " initial composition"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮的压力设置重复，请保留一项。"
+      ],
+      "en": [
+        "Round ",
+        " has duplicate pressure settings. Keep one setting."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "当前取用 ",
+        "% 会改为加入 1 份。"
+      ],
+      "en": [
+        "The current ",
+        "% fraction will change to adding 1 portion."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "每轮温度 ",
+        " °C、压力 ",
+        " bar"
+      ],
+      "en": [
+        "Per round: temperature ",
+        " °C, pressure ",
+        " bar"
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮 → 第 ",
+        " 轮，位置 ",
+        "：",
+        ""
+      ],
+      "en": [
+        "Round ",
+        " → round ",
+        ", position ",
+        ": ",
+        ""
+      ],
+      "order": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "zh": [
+        "当前 ",
+        " 份会改为取用 100%。"
+      ],
+      "en": [
+        "The current ",
+        " portions will change to taking 100%."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮 · 位置 ",
+        " 的反应结果"
+      ],
+      "en": [
+        "Reaction result at round ",
+        " · position ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个所选 species 不可用"
+      ],
+      "en": [
+        "",
+        " selected species are unavailable"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "请填写大于 0 bar 的压力。"
+      ],
+      "en": [
+        "",
+        ": enter a pressure greater than 0 bar."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "Reaktoro ",
+        " 连接正常。"
+      ],
+      "en": [
+        "Reaktoro ",
+        " is connected."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "species 列表未能读取：",
+        ""
+      ],
+      "en": [
+        "Could not load the species list: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "species 详情未能读取：",
+        ""
+      ],
+      "en": [
+        "Could not load species details: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "请输入大于 0 ",
+        " 的有效压力。"
+      ],
+      "en": [
+        "Enter a valid pressure greater than 0 ",
+        "."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " composition"
+      ],
+      "en": [
+        "Source ",
+        " composition"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "搜索物料 ",
+        " 的 species"
+      ],
+      "en": [
+        "Search species for material ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个可能出现的 species"
+      ],
+      "en": [
+        "",
+        " species available at equilibrium"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "连接失败，原数据库保持打开：",
+        ""
+      ],
+      "en": [
+        "Connection failed; your database remains open: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "此处可编辑",
+        "；其他范围另有设置"
+      ],
+      "en": [
+        "Edit the ",
+        " here; other ranges have separate settings"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个书签在其他轮次或点段中。"
+      ],
+      "en": [
+        "",
+        " bookmarks are in other rounds or point ranges. "
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "移除不可用 species ",
+        ""
+      ],
+      "en": [
+        "Remove unavailable species ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "已连接 Reaktoro ",
+        ""
+      ],
+      "en": [
+        "Connected to Reaktoro ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "Reaktoro ",
+        " 已连接"
+      ],
+      "en": [
+        "Reaktoro ",
+        " connected"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "已导出 ",
+        " 条，排除 ",
+        " 条：",
+        ""
+      ],
+      "en": [
+        "Exported ",
+        " records, excluded ",
+        ": ",
+        ""
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "缺少必需 species：",
+        ""
+      ],
+      "en": [
+        "Missing required species: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "正在设置第 ",
+        " 轮的绝对温压"
+      ],
+      "en": [
+        "Setting absolute temperature and pressure for round ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " · ",
+        " 组条件，按指定顺序"
+      ],
+      "en": [
+        "",
+        " · ",
+        " conditions, in the specified order"
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮位置 ",
+        " 的实际设置"
+      ],
+      "en": [
+        "Actual settings at round ",
+        ", position ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "在 Finder 中显示：",
+        ""
+      ],
+      "en": [
+        "Show in Finder: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个路径位置 · ",
+        " 轮反应"
+      ],
+      "en": [
+        "",
+        " path positions · ",
+        " reaction rounds"
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮压力须为有效数值。"
+      ],
+      "en": [
+        "Enter a valid pressure for round ",
+        "."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "投料量或取用比例不能为负。"
+      ],
+      "en": [
+        "",
+        ": input amounts and transferred fractions cannot be negative."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "系统数据库目录加载失败：",
+        ""
+      ],
+      "en": [
+        "Could not load the system database catalog: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "模型参数“",
+        "”必须是数值。"
+      ],
+      "en": [
+        "Model parameter “",
+        "” must be a number."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 1 轮 → 第 ",
+        " 轮"
+      ],
+      "en": [
+        "Round 1 → round ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 1 步 → 第 ",
+        " 步"
+      ],
+      "en": [
+        "Position 1 → position ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "本轮位置 ",
+        " → 位置 ",
+        "：",
+        ""
+      ],
+      "en": [
+        "This round, position ",
+        " → position ",
+        ": ",
+        ""
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个位置使用本轮独立温压"
+      ],
+      "en": [
+        "",
+        " positions have separate conditions in this round"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个离子尺寸或来源待设置"
+      ],
+      "en": [
+        "",
+        " ion-size parameters or sources need to be set"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "压力须大于 0 bar。"
+      ],
+      "en": [
+        "",
+        ": pressure must be greater than 0 bar."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "最近文件暂时无法检查：",
+        ""
+      ],
+      "en": [
+        "Recent files could not be checked: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 行尚未填写完整。"
+      ],
+      "en": [
+        "Complete all fields in row ",
+        "."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        " · 温压矩阵 ",
+        " × ",
+        ""
+      ],
+      "en": [
+        " · T–P matrix ",
+        " × ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "上方未展开的第 ",
+        " 轮：",
+        ""
+      ],
+      "en": [
+        "Round ",
+        ", above the displayed area: ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮位置 ",
+        " 的物料"
+      ],
+      "en": [
+        "Materials at round ",
+        ", position ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮 · ",
+        " → ",
+        "%"
+      ],
+      "en": [
+        "Round ",
+        " · ",
+        " → ",
+        "%"
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "% → 第 ",
+        " 轮 · ",
+        ""
+      ],
+      "en": [
+        "",
+        "% → round ",
+        " · ",
+        ""
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "请填写模型参数“",
+        "”。"
+      ],
+      "en": [
+        "Enter the model parameter “",
+        "”."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "预览第 ",
+        " 轮第 ",
+        " 点"
+      ],
+      "en": [
+        "Preview round ",
+        ", point ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮位置 ",
+        " → ",
+        ""
+      ],
+      "en": [
+        "Round ",
+        ", position ",
+        " → ",
+        ""
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "左侧未展开的位置 ",
+        "：",
+        ""
+      ],
+      "en": [
+        "Position ",
+        ", beyond the left edge: ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个位置有独立来源。"
+      ],
+      "en": [
+        "",
+        " positions have separate sources."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " / ",
+        " 点 · ",
+        " s"
+      ],
+      "en": [
+        "",
+        " / ",
+        " points · ",
+        " s"
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "首次补入：",
+        " × ",
+        " 份"
+      ],
+      "en": [
+        "Initial addition: ",
+        " × ",
+        " portions"
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮 · 位置 ",
+        ""
+      ],
+      "en": [
+        "Round ",
+        " · position ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "温度须高于绝对零度。"
+      ],
+      "en": [
+        "",
+        ": temperature must be above absolute zero."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "参数设置编号重复：",
+        "。"
+      ],
+      "en": [
+        "Duplicate parameter setting ID: ",
+        "."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "验证发现 ",
+        " 个问题"
+      ],
+      "en": [
+        "Validation found ",
+        " issues"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "编辑器初始化失败：",
+        ""
+      ],
+      "en": [
+        "Could not initialize the editor: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "MRB 拟合失败：",
+        ""
+      ],
+      "en": [
+        "MRB fit failed: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "此处",
+        "由以下设置确定"
+      ],
+      "en": [
+        "The ",
+        " here is determined by these settings"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "↳ 第",
+        "轮·位置",
+        " ",
+        "%"
+      ],
+      "en": [
+        "↳ Round ",
+        " · position ",
+        " ",
+        "%"
+      ],
+      "order": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 起始方式"
+      ],
+      "en": [
+        "Reactant ",
+        " initialization"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 指定物种"
+      ],
+      "en": [
+        "Reactant ",
+        " selected species"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 后续来源"
+      ],
+      "en": [
+        "Reactant ",
+        " subsequent source"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 来源位置"
+      ],
+      "en": [
+        "Reactant ",
+        " source position"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 来源轮次"
+      ],
+      "en": [
+        "Reactant ",
+        " source round"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 取用比例"
+      ],
+      "en": [
+        "Reactant ",
+        " fraction taken"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 使用轮次"
+      ],
+      "en": [
+        "Reactant ",
+        " rounds used"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        " · ",
+        " 组单独设置"
+      ],
+      "en": [
+        "· ",
+        " local settings"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "查看第 ",
+        " 轮位置 ",
+        ""
+      ],
+      "en": [
+        "View round ",
+        ", position ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "调整第 ",
+        " 轮位置 ",
+        ""
+      ],
+      "en": [
+        "Adjust round ",
+        ", position ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮实际温压"
+      ],
+      "en": [
+        "Actual conditions in round ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 来源轮次"
+      ],
+      "en": [
+        "Source ",
+        " round"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 首次来源"
+      ],
+      "en": [
+        "Source ",
+        " initial supply"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 首次份数"
+      ],
+      "en": [
+        "Source ",
+        " initial portions"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "压力设置 ",
+        " 轮次"
+      ],
+      "en": [
+        "Pressure setting ",
+        " round"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "压力设置 ",
+        " 方式"
+      ],
+      "en": [
+        "Pressure setting ",
+        " mode"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "压力设置 ",
+        " 数值"
+      ],
+      "en": [
+        "Pressure setting ",
+        " value"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "↳ ",
+        " 项指定来源"
+      ],
+      "en": [
+        "↳ ",
+        " specified sources"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "物料 ",
+        " 来源位置"
+      ],
+      "en": [
+        "Material ",
+        " source position"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "物料 ",
+        " 来源轮次"
+      ],
+      "en": [
+        "Material ",
+        " source round"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 处单独设置"
+      ],
+      "en": [
+        "Individual setting ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "的",
+        "缺少有效数值。"
+      ],
+      "en": [
+        "",
+        ": enter a valid value for ",
+        "."
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "设置保存失败：",
+        ""
+      ],
+      "en": [
+        "Could not save settings: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "应用到第 ",
+        " 轮"
+      ],
+      "en": [
+        "Apply to round ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "点 ",
+        " 压力方式"
+      ],
+      "en": [
+        "Point ",
+        " pressure mode"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 来源点"
+      ],
+      "en": [
+        "Source ",
+        " point"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "压力 ",
+        " bar"
+      ],
+      "en": [
+        "Pressure ",
+        " bar"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 次反应：",
+        ""
+      ],
+      "en": [
+        "Equilibrium ",
+        ": ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "删除压力设置 ",
+        ""
+      ],
+      "en": [
+        "Delete pressure setting ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "温压图第 ",
+        " 点"
+      ],
+      "en": [
+        "T–P plot point ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 相态"
+      ],
+      "en": [
+        "Reactant ",
+        " phase"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 配方"
+      ],
+      "en": [
+        "Reactant ",
+        " composition"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "反应物 ",
+        " 份数"
+      ],
+      "en": [
+        "Reactant ",
+        " portions"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "删除单独设置 ",
+        ""
+      ],
+      "en": [
+        "Delete local setting ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "删除 ",
+        " 份模拟"
+      ],
+      "en": [
+        "Delete ",
+        " simulations"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 行 · "
+      ],
+      "en": [
+        "Line ",
+        " · "
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "试算温度 (",
+        ")"
+      ],
+      "en": [
+        "Trial temperature (",
+        ")"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "试算压力 (",
+        ")"
+      ],
+      "en": [
+        "Trial pressure (",
+        ")"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "查看完整数值 ",
+        ""
+      ],
+      "en": [
+        "View full value ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "复制完整数值 ",
+        ""
+      ],
+      "en": [
+        "Copy full value ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "的第 ",
+        " 项物料"
+      ],
+      "en": [
+        "",
+        " · input ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "当前数据库：",
+        ""
+      ],
+      "en": [
+        "Current database: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "已连接 · ",
+        ""
+      ],
+      "en": [
+        "Connected · ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "另存为失败：",
+        ""
+      ],
+      "en": [
+        "Could not save as: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个有效记录"
+      ],
+      "en": [
+        "",
+        " available entries"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 相态"
+      ],
+      "en": [
+        "Source ",
+        " phase"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 来源"
+      ],
+      "en": [
+        "Source ",
+        " origin"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 数量"
+      ],
+      "en": [
+        "Source ",
+        " quantity"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "规则 ",
+        " 时机"
+      ],
+      "en": [
+        "Source ",
+        " timing"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "温度 ",
+        " °C"
+      ],
+      "en": [
+        "Temperature ",
+        " °C"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "移除反应物 ",
+        ""
+      ],
+      "en": [
+        "Remove reactant ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "物料 ",
+        " 来源"
+      ],
+      "en": [
+        "Material ",
+        " source"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "物料 ",
+        " 相态"
+      ],
+      "en": [
+        "Material ",
+        " phase"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "移除 ",
+        " 设置"
+      ],
+      "en": [
+        "Remove ",
+        " setting"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        " · 单位 ",
+        ""
+      ],
+      "en": [
+        "· Unit: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 批量结束值"
+      ],
+      "en": [
+        "",
+        " generated end value"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 次反应"
+      ],
+      "en": [
+        "Reaction ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个指定物种"
+      ],
+      "en": [
+        "",
+        " selected species"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "为",
+        "加入反应物"
+      ],
+      "en": [
+        "Add reactants for ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        " · 每步 ",
+        "",
+        ""
+      ],
+      "en": [
+        " · per reaction ",
+        "",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        " · 每轮 ",
+        "",
+        ""
+      ],
+      "en": [
+        " · per round ",
+        "",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "刷新失败：",
+        ""
+      ],
+      "en": [
+        "Could not refresh: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "检测失败：",
+        ""
+      ],
+      "en": [
+        "Detection failed: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "连接失败：",
+        ""
+      ],
+      "en": [
+        "Connection failed: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "打开失败：",
+        ""
+      ],
+      "en": [
+        "Could not open: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "保存失败：",
+        ""
+      ],
+      "en": [
+        "Could not save: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "关闭失败：",
+        ""
+      ],
+      "en": [
+        "Could not close: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "计算失败：",
+        ""
+      ],
+      "en": [
+        "Calculation failed: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "删除失败：",
+        ""
+      ],
+      "en": [
+        "Could not delete: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "复制失败：",
+        ""
+      ],
+      "en": [
+        "Could not copy: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "验证失败：",
+        ""
+      ],
+      "en": [
+        "Validation failed: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "已另存为：",
+        ""
+      ],
+      "en": [
+        "Saved as: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "点 ",
+        " 名称"
+      ],
+      "en": [
+        "Point ",
+        " name"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "点 ",
+        " 温度"
+      ],
+      "en": [
+        "Point ",
+        " temperature"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "点 ",
+        " 压力"
+      ],
+      "en": [
+        "Point ",
+        " pressure"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "删除规则 ",
+        ""
+      ],
+      "en": [
+        "Delete source ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "移除物料 ",
+        ""
+      ],
+      "en": [
+        "Remove material ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "实际加入：",
+        ""
+      ],
+      "en": [
+        "Actual input: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 变化方式"
+      ],
+      "en": [
+        "",
+        " variation method"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 承接变化"
+      ],
+      "en": [
+        "",
+        " relative changes"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 数列方向"
+      ],
+      "en": [
+        "",
+        " sequence direction"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 批量方向"
+      ],
+      "en": [
+        "",
+        " generation direction"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 批量增减"
+      ],
+      "en": [
+        "",
+        " generated increment"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "加入 ",
+        " 份"
+      ],
+      "en": [
+        "Add ",
+        " portions"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "输出的 ",
+        "%"
+      ],
+      "en": [
+        "",
+        "% of the output"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 参数来源"
+      ],
+      "en": [
+        "",
+        " parameter source"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 使用理由"
+      ],
+      "en": [
+        "",
+        " assignment reason"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "路径位置 ",
+        ""
+      ],
+      "en": [
+        "Path position ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "参与平衡 ",
+        ""
+      ],
+      "en": [
+        "Include ",
+        " in equilibrium"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 投料单位"
+      ],
+      "en": [
+        "",
+        " input unit"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "移除投料 ",
+        ""
+      ],
+      "en": [
+        "Remove input ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 每份含量"
+      ],
+      "en": [
+        "",
+        " per-portion amount"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "添加投料 ",
+        ""
+      ],
+      "en": [
+        "Add input ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " × ",
+        " 份"
+      ],
+      "en": [
+        "",
+        " × ",
+        " portions"
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 个模型"
+      ],
+      "en": [
+        "",
+        " models"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "删除点 ",
+        ""
+      ],
+      "en": [
+        "Delete point ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "修改",
+        "中的",
+        ""
+      ],
+      "en": [
+        "Edit ",
+        " in ",
+        ""
+      ],
+      "order": [
+        1,
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 项投料"
+      ],
+      "en": [
+        "",
+        " inputs"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "范围起点"
+      ],
+      "en": [
+        "",
+        " range start"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "范围终点"
+      ],
+      "en": [
+        "",
+        " range end"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "选择间隔"
+      ],
+      "en": [
+        "",
+        " selection interval"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 轮"
+      ],
+      "en": [
+        "Round ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "共 ",
+        " 轮"
+      ],
+      "en": [
+        "",
+        " rounds in total"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "已保存：",
+        ""
+      ],
+      "en": [
+        "Saved: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 投料量"
+      ],
+      "en": [
+        "",
+        " input amount"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "范围 ",
+        "–",
+        ""
+      ],
+      "en": [
+        "Range ",
+        "–",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
+        "第 ",
+        " 项"
+      ],
+      "en": [
+        "Item ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "加入：",
+        ""
+      ],
+      "en": [
+        "Add: ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 数列"
+      ],
+      "en": [
+        "",
+        " sequence"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "物质 ",
+        ""
+      ],
+      "en": [
+        "Material ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "来源 ",
+        ""
+      ],
+      "en": [
+        "Source ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "帮助"
+      ],
+      "en": [
+        "",
+        " help"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 份"
+      ],
+      "en": [
+        "",
+        " portions"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "设置"
+      ],
+      "en": [
+        "",
+        " settings"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "方式"
+      ],
+      "en": [
+        "",
+        " mode"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "次数"
+      ],
+      "en": [
+        "",
+        " count"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "变量"
+      ],
+      "en": [
+        "",
+        " variable"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "起点"
+      ],
+      "en": [
+        "",
+        " start"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "步长"
+      ],
+      "en": [
+        "",
+        " increment"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "终点"
+      ],
+      "en": [
+        "",
+        " end"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "数列"
+      ],
+      "en": [
+        "",
+        " values"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "全部",
+        ""
+      ],
+      "en": [
+        "All ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "预览",
+        ""
+      ],
+      "en": [
+        "Preview ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "代码"
+      ],
+      "en": [
+        "",
+        " code"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "关闭",
+        ""
+      ],
+      "en": [
+        "Close ",
+        ""
+      ],
+      "order": [
+        0
+      ]
+    }
+  ]
+}

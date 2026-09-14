@@ -192,7 +192,8 @@ def _ad(params: dict[str, float], temperature_k: float, pressure_pa: float) -> d
 
 
 REGISTRY: dict[str, ModelDefinition] = {
-    "reaktoro-native": ModelDefinition("reaktoro-native", "Reaktoro 原生记录", "由已连接 Reaktoro 数据库或可重新加载的原生 YAML 提供；它不是手工建模选项。", (), None, True, False),
+    "converted-standard-state": ModelDefinition("converted-standard-state", "转换标准态模型", "保留来源方程、分段热容、相变及参考态约定的版本化模型；可计算，可修改备注和活度参数，当前不提供方程参数编辑器。", (), None, creatable=False),
+    "reaktoro-native": ModelDefinition("reaktoro-native", "Reaktoro 数据", "使用数据库已有的热力学参数。可以选取已有物种，不支持在这里新建此类模型。", (), None, True, False),
     "modified-ryzhenko-bryzgalin": ModelDefinition("modified-ryzhenko-bryzgalin", "Modified Ryzhenko–Bryzgalin", "根据形成反应的平衡常数模型和依赖物种计算目标物种标准态性质。", (
         Parameter("pK0", "参考 pK", "1", "298.15 K 参考项"), Parameter("Azz", "溶剂项 Azz", "1", "MRB 溶剂修正系数"), Parameter("Bzz", "溶剂项 Bzz", "K", "MRB 温度修正系数")), _mrb, reaction_based=True),
     "extended-maier-kelley": ModelDefinition("extended-maier-kelley", "Extended Maier–Kelley", "以 298.15 K、1 bar 的标准态量和热容系数计算 G°、H°、S°、Cp° 与 V°。", (
@@ -208,10 +209,13 @@ REGISTRY: dict[str, ModelDefinition] = {
 
 
 def definitions() -> list[dict[str, Any]]:
-    return [{"id": m.id, "label": m.label, "description": m.description, "native": m.native, "creatable": m.creatable, "calculable": m.evaluator is not None, "reaction_based": m.reaction_based, "states": list(m.states), "parameters": [p.__dict__ for p in m.parameters]} for m in REGISTRY.values()]
+    return [{"id": m.id, "label": m.label, "description": m.description, "native": m.native, "creatable": m.creatable, "calculable": m.evaluator is not None or m.id == "converted-standard-state", "reaction_based": m.reaction_based, "states": list(m.states), "parameters": [p.__dict__ for p in m.parameters]} for m in REGISTRY.values()]
 
 
 def validate_model(model: dict[str, Any], disabled: bool = False) -> list[dict[str, str]]:
+    if model.get("type") == "converted-standard-state":
+        from .converted import validate
+        return validate(model)
     model_id = str(model.get("type", ""))
     definition = REGISTRY.get(model_id)
     if not definition:

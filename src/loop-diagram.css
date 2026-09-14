@@ -1,0 +1,51 @@
+.loop-diagram{padding:16px 18px;color:var(--text);min-width:0}
+.loop-diagram__heading{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:11px}
+.loop-diagram__heading strong{font-size:14px;font-weight:650}
+.loop-diagram__heading>span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.loop-diagram__conditions{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 13px}
+.loop-diagram__conditions>span{font-size:12px;line-height:1.5;background:var(--surface-soft);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+.loop-diagram__reactants{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 10px;font-size:12px;line-height:1.6}
+.loop-diagram__reactants b{font-size:11px;font-weight:500;color:var(--muted);margin-right:3px}
+.loop-diagram__reactants>span{border-radius:6px;padding:3px 8px;background:var(--accent-soft);color:var(--text)}
+.loop-diagram--single .loop-diagram__reactants{margin:0}
+.loop-diagram__axes{display:flex;flex-wrap:wrap;gap:10px 26px;margin-bottom:3px}
+.loop-diagram__axes>div{display:flex;flex-direction:column;gap:3px;flex:1;min-width:210px}
+.loop-diagram__axes strong{font-size:12px;font-weight:600;color:var(--text)}
+.loop-diagram__axis-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 10px}
+.loop-diagram__axis-heading small{font-size:11px;color:var(--muted)}
+.loop-diagram__axes span{color:var(--muted);font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums}
+.loop-diagram__canvas{width:100%;max-width:920px;margin:0 auto}
+.loop-diagram__canvas--vertical{max-width:340px}
+.loop-diagram__canvas svg{width:100%;height:auto;display:block;overflow:visible;font-family:inherit}
+.loop-diagram__axis{stroke:var(--muted);stroke-width:1;stroke-opacity:.65;fill:none}
+.loop-diagram__node{fill:var(--surface);stroke:var(--line-strong,var(--line));stroke-width:1.5;transition:fill .12s,stroke .12s}
+.loop-diagram__point--selectable{cursor:pointer;outline:none}
+.loop-diagram__point--selectable:hover .loop-diagram__node,.loop-diagram__point--selectable:focus .loop-diagram__node,.loop-diagram__point--selected .loop-diagram__node{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.loop-diagram__point--selectable:focus-visible .loop-diagram__node{stroke-dasharray:3 2;stroke-width:2.5}
+.loop-diagram__value{fill:var(--text);font-size:14px;font-variant-numeric:tabular-nums}
+.loop-diagram__axis-note{fill:var(--muted);font-size:14px}
+.loop-diagram__gap{fill:var(--muted);font-size:20px;font-weight:600}
+.loop-diagram__gap-bg{fill:var(--surface)}
+.loop-diagram__caption{display:flex;flex-wrap:wrap;gap:5px 18px;color:var(--muted);font-size:11px;line-height:1.6}
+.loop-diagram__sampling{font-variant-numeric:tabular-nums}
+.loop-diagram__material-flow{display:flex;flex-wrap:wrap;gap:7px 18px;border-top:1px solid var(--line);padding-top:10px;margin-top:11px;font-size:12px;line-height:1.5;color:var(--muted)}
+.loop-diagram__flow-label{font-weight:600;color:var(--text)}
+.loop-diagram__material-flow b{font-weight:500;margin-right:7px;color:var(--text)}
+.loop-diagram__single{display:flex;align-items:center;gap:10px;min-height:42px;font-size:13px;color:var(--muted)}
+.loop-diagram__single .text-btn{margin-left:auto;font-size:12px}
+.loop-diagram--empty p{color:var(--muted);font-size:13px;margin:8px 0 0}
+@media(max-width:650px){.loop-diagram{padding:12px}.loop-diagram__axes{gap:8px 15px}.loop-diagram__axes>div{min-width:190px}.loop-diagram__canvas .loop-diagram__value{font-size:14px}.loop-diagram__canvas .loop-diagram__axis-note{font-size:15px}.loop-diagram__single{flex-wrap:wrap}}
+.loop-diagram__canvas .loop-diagram__value--round{font-size:13px}
+@media(prefers-reduced-motion:reduce){.loop-diagram__node{transition:none}}
+
+.loop-diagram .phase-aqueous{color:#368bb7}.loop-diagram .phase-mineral{color:#ac773b}.loop-diagram .phase-gas{color:#956ecc}.loop-diagram .phase-species{color:#b86686}.loop-diagram .phase-all{color:var(--accent)}.loop-diagram .phase-mixed{color:var(--text)}
+.loop-diagram__material-edge>line{stroke:currentColor;stroke-width:2;fill:none}
+.loop-diagram__material-arrowhead{stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.loop-diagram__axis-arrowhead{stroke:var(--muted);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.loop-diagram__fresh-sign{fill:currentColor;font-size:16px;font-weight:600}
+.loop-diagram__edge-label text{font-size:14px;fill:var(--text);paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.loop-diagram__node-number{fill:var(--text);font-size:13px;font-weight:550;font-variant-numeric:tabular-nums;pointer-events:none}
+
+.loop-diagram__material-stages{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}.loop-diagram__materials-title{display:block;font-size:12px;margin-bottom:8px}.loop-diagram__material-ledger{display:grid;gap:3px;list-style:none;margin:0;padding:0}.loop-diagram__material-entry{display:flex;align-items:flex-start;gap:9px;min-width:0;padding:5px 8px;border:1px solid transparent;border-radius:6px;background:transparent;font-size:12px;line-height:1.5}.loop-diagram__material-entry.is-selected{border-color:var(--line-strong,var(--line));background:var(--accent-soft)}.loop-diagram__material-entry>div{display:grid;gap:2px;min-width:0;overflow-wrap:anywhere}.loop-diagram__material-description{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 9px}.loop-diagram__material-description b{font-weight:550;color:var(--text)}.loop-diagram__material-description>span{color:var(--muted)}.loop-diagram__material-description>strong{font-weight:550;color:var(--text);font-variant-numeric:tabular-nums}.loop-diagram__material-entry small{color:var(--muted);font-size:10px;line-height:1.5}.loop-diagram__species-list{font-size:11px;color:var(--text);overflow-wrap:anywhere}.loop-diagram__source-symbol{font-size:16px;line-height:1.35;width:14px;flex-shrink:0;font-weight:600}.loop-diagram__material-entry.is-inactive{opacity:.7}.loop-diagram__material-stages>p{font-size:12px;color:var(--muted)}.loop-diagram--single .loop-diagram__material-stages{margin:0;padding:0;border:0;flex:1;min-width:180px}.loop-diagram__edge-label text{font-size:15px;fill:currentColor;stroke-width:5px}.loop-diagram__value{font-size:15px}.loop-diagram__row-annotation{font-size:14px;fill:var(--muted)}.loop-diagram__canvas svg{overflow:hidden}.loop-diagram__canvas--vertical{max-width:360px}
+
+.loop-diagram__material-edge--other>line{stroke-dasharray:5 3;stroke-opacity:.8}

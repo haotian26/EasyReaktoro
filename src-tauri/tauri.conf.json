@@ -1,23 +1,72 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "EasyReaktoro",
-  "version": "0.2.0",
+  "version": "0.16.0",
   "identifier": "com.hliu0242.easyreaktoro",
-  "build": { "beforeDevCommand": "npm run dev", "beforeBuildCommand": "npm run build", "devUrl": "http://127.0.0.1:1420", "frontendDist": "../dist" },
-  "app": { "windows": [{ "title": "EasyReaktoro", "width": 1380, "height": 900, "minWidth": 1040, "minHeight": 680, "resizable": true }], "security": { "csp": null } },
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "EasyReaktoro",
+        "width": 1380,
+        "height": 900,
+        "minWidth": 1040,
+        "minHeight": 680,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
   "bundle": {
     "active": true,
-    "targets": ["app"],
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns"],
+    "targets": [
+      "app"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
     "resources": {
       "../bridge/reaktoro_bridge.py": "bridge/reaktoro_bridge.py",
       "../bridge/easyreaktoro_runtime/__init__.py": "bridge/easyreaktoro_runtime/__init__.py",
       "../bridge/easyreaktoro_runtime/errors.py": "bridge/easyreaktoro_runtime/errors.py",
       "../bridge/easyreaktoro_runtime/models.py": "bridge/easyreaktoro_runtime/models.py",
+      "../bridge/easyreaktoro_runtime/converted.py": "bridge/easyreaktoro_runtime/converted.py",
+      "../bridge/easyreaktoro_runtime/converted_equations.py": "bridge/easyreaktoro_runtime/converted_equations.py",
+      "../bridge/easyreaktoro_runtime/loader.py": "bridge/easyreaktoro_runtime/loader.py",
       "../bridge/easyreaktoro_runtime/references.py": "bridge/easyreaktoro_runtime/references.py",
       "../bridge/easyreaktoro_runtime/repository.py": "bridge/easyreaktoro_runtime/repository.py",
-      "../bridge/easyreaktoro_runtime/service.py": "bridge/easyreaktoro_runtime/service.py"
+      "../bridge/easyreaktoro_runtime/service.py": "bridge/easyreaktoro_runtime/service.py",
+      "../bridge/easyreaktoro_runtime/activity_nacl.py": "bridge/easyreaktoro_runtime/activity_nacl.py",
+      "../bridge/easyreaktoro_runtime/simulation.py": "bridge/easyreaktoro_runtime/simulation.py",
+      "../bridge/easyreaktoro_runtime/simulation_code.py": "bridge/easyreaktoro_runtime/simulation_code.py",
+      "../bridge/easyreaktoro_runtime/simulation_jobs.py": "bridge/easyreaktoro_runtime/simulation_jobs.py",
+      "../bridge/easyreaktoro_runtime/simulation_templates.py": "bridge/easyreaktoro_runtime/simulation_templates.py",
+      "../bridge/easyreaktoro_runtime/simulation_worker.py": "bridge/easyreaktoro_runtime/simulation_worker.py",
+      "../bridge/easyreaktoro_runtime/simulation_process.py": "bridge/easyreaktoro_runtime/simulation_process.py",
+      "../bridge/easyreaktoro_runtime/simulation_storage.py": "bridge/easyreaktoro_runtime/simulation_storage.py",
+      "../bridge/easyreaktoro_runtime/result_explorer.html": "bridge/easyreaktoro_runtime/result_explorer.html",
+      "../third_party/KaTeX-LICENSE.txt": "licenses/KaTeX-LICENSE.txt",
+      "../src-tauri/vendor/rfd/LICENSE": "licenses/rfd-LICENSE.txt",
+      "../third_party/CodeMirror-LICENSES.txt": "licenses/CodeMirror-LICENSES.txt",
+      "../bridge/easyreaktoro_runtime/simulation_program.py": "bridge/easyreaktoro_runtime/simulation_program.py",
+      "../bridge/easyreaktoro_runtime/species_search.py": "bridge/easyreaktoro_runtime/species_search.py",
+      "../bridge/easyreaktoro_runtime/simulation_loops.py": "bridge/easyreaktoro_runtime/simulation_loops.py",
+      "../bridge/easyreaktoro_runtime/simulation_result_import.py": "bridge/easyreaktoro_runtime/simulation_result_import.py",
+      "../bridge/easyreaktoro_runtime/simulation_reactions.py": "bridge/easyreaktoro_runtime/simulation_reactions.py",
+      "../bridge/easyreaktoro_runtime/simulation_schedule.py": "bridge/easyreaktoro_runtime/simulation_schedule.py"
     },
-    "macOS": { "minimumSystemVersion": "13.0" }
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    }
   }
 }

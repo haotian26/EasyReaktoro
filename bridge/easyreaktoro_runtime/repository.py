@@ -147,6 +147,75 @@ def normalize_species(record: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def calculation_signature(record: dict[str, Any]) -> str:
+    # Numerically identical JSON values (1 and 1.0) describe the same parameter.
+    def canonical(value):
+        if isinstance(value, dict): return {k: canonical(v) for k, v in value.items()}
+        if isinstance(value, list): return [canonical(v) for v in value]
+        if isinstance(value, float) and value.is_integer(): return int(value)
+        return value
+    data = {k: record.get(k) for k in (
+        'name', 'formula', 'composition', 'charge', 'state', 'model', 'reaction',
+        'dependencies', 'activity_parameters', 'disabled')}
+    model = dict(record.get('model') or {})
+    if model.get('type') == 'reaktoro-native':
+        # Reaktoro serializes numeric parameters with more digits than ordinary
+        # YAML exports. Compare decoded values, not whitespace or display labels.
+        try:
+            import yaml
+            read = lambda text, fallback: yaml.safe_load(text) if text else fallback
+            params = read(model.get('parameters_yaml'), model.get('parameters') or {})
+            data['model'] = {k: v for k, v in model.items() if k not in ('native_type','runtime_version','parameters_yaml','parameters')}
+            data['model']['parameters'] = params
+            reaction = {k: v for k, v in (record.get('reaction') or {}).items() if k not in ('equation','model_parameters_yaml')}
+            reaction['parameters'] = read((record.get('reaction') or {}).get('model_parameters_yaml'), {})
+            data['reaction'] = {k: v for k, v in reaction.items() if v not in ({}, [], '', None)}
+        except Exception:
+            # A missing decoder or malformed native serialization must not make
+            # the import preview crash or accidentally compare a partial model.
+            data['model'] = record.get('model')
+            data['reaction'] = record.get('reaction')
+    return fingerprint(canonical(data))
+
+
+def merge_supplemental(existing: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
+    """Keep calculation identity and original provenance; union additional evidence."""
+    import copy
+    result = copy.deepcopy(existing)
+    def union(left, right):
+        found = {fingerprint(x) for x in left}
+        output = copy.deepcopy(left)
+        for item in right:
+            key = fingerprint(item)
+            if key not in found: output.append(copy.deepcopy(item)); found.add(key)
+        return output
+    for key in ('references', 'tags'):
+        result[key] = union(result.get(key) or [], incoming.get(key) or [])
+    text = result.get('notes') or ''
+    extra = [x for x in (incoming.get('notes') or '').split('\n\n') if x and x not in text.split('\n\n')]
+    result['notes'] = text + ('\n\n' if text and extra else '') + '\n\n'.join(union([], extra))
+    provenance = result.setdefault('provenance', {})
+    source = incoming.get('provenance') or {}
+    history_keys = ('merged_sources', 'valid_tp_alternatives')
+    origin = lambda data: {k: v for k, v in data.items() if k not in history_keys}
+    origins = list(source.get('merged_sources') or [])
+    if origin(source) and origin(source) != origin(provenance): origins.insert(0, origin(source))
+    sources = union(provenance.get('merged_sources') or [], [x for x in origins if x != origin(provenance)])
+    if sources: provenance['merged_sources'] = sources
+    valid = result.setdefault('valid_tp', {})
+    incoming_valid = incoming.get('valid_tp') or {}
+    conflict = any(key in valid and valid[key] != value for key, value in incoming_valid.items())
+    alternatives = list(source.get('valid_tp_alternatives') or [])
+    if conflict:
+        alternatives.append({'valid_tp': incoming_valid, 'source': origin(source)})
+    else:
+        # Missing bounds can be filled, but contradictory ranges are never widened.
+        valid.update(copy.deepcopy(incoming_valid))
+    alternatives = union(provenance.get('valid_tp_alternatives') or [], alternatives)
+    if alternatives: provenance['valid_tp_alternatives'] = alternatives
+    return normalize_species(result)
+
+
 def insert_species(conn: sqlite3.Connection, record: dict[str, Any]) -> dict[str, Any]:
     r = normalize_species(record)
     conn.execute("""INSERT INTO species(id,name,original_name,formula,composition_json,charge,state,tags_json,model_json,valid_tp_json,reaction_json,activity_json,provenance_json,references_json,notes,disabled,fingerprint)
@@ -216,6 +285,35 @@ def create(path: str, name: str, runtime_version: str = "", base: dict[str, Any]
         for record in records or []:
             insert_species(conn, record)
         audit(conn, "create", {"species_count": len(records or [])})
+
+
+def database_info(path: str) -> dict[str, Any]:
+    """Read list counts without opening a workspace or migrating the file."""
+    target = Path(path).expanduser().resolve()
+    require(target.is_file(), "RTDB_NOT_FOUND", "error.rtdbNotFound", "文件不存在，请重新选择数据库。")
+    require(target.suffix.lower() == ".rtdb", "RTDB_EXTENSION", "error.rtdbExtension", "请选择 .rtdb 数据库文件。")
+    try:
+        conn = sqlite3.connect(target.as_uri() + "?mode=ro", uri=True, timeout=1)
+        try:
+            conn.execute("BEGIN")
+            schema = metadata(conn).get("schema")
+            require(schema in (SCHEMA_ID, "easyreaktoro.rtdb/v1"), "RTDB_SCHEMA_UNSUPPORTED", "error.rtdbSchemaUnsupported", "此数据库版本暂不支持，请使用兼容版本打开。")
+            column = "composition_json" if schema == SCHEMA_ID else "payload_json"
+            count = 0
+            elements = set()
+            for (raw,) in conn.execute(f"SELECT {column} FROM species"):
+                value = json.loads(raw or "{}")
+                composition = value if schema == SCHEMA_ID else value.get("composition", {})
+                require(isinstance(composition, dict), "RTDB_INVALID", "error.rtdbInvalid", "数据库的元素组成无法读取。")
+                elements.update(composition)
+                count += 1
+            return {"species_count": count, "element_count": len(elements)}
+        finally:
+            conn.close()
+    except BridgeError:
+        raise
+    except Exception as exc:
+        raise BridgeError("RTDB_INVALID", "error.rtdbInvalid", "暂时无法读取数量，请检查文件是否完整或正在被其他程序使用。") from exc
 
 
 def open_database(path: str) -> tuple[dict[str, str], list[dict[str, Any]]]:

@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="application-name" content="Result Explorer for Reaktoro">
+<meta name="application-version" content="2.2">
+<title>Result Explorer for Reaktoro</title>
+<style>
+:root{color-scheme:light;--ink:#233340;--muted:#687b87;--line:#dce4e9;--bg:#f4f7f9;--blue:#3376b9;--pale:var(--pale);--orange:#c77943;--olive:#829047;--pink:#b96d92;--gold:#b28c35}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit;color:inherit}button,select{cursor:pointer}button{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:6px 10px;white-space:nowrap}button:hover{background:var(--pale);border-color:#a9c5db}button:disabled{opacity:.4;cursor:default}button.primary{background:var(--ink);color:white;border-color:var(--ink)}button.quiet{border-color:transparent;background:transparent}button.small{font-size:11px;padding:4px 7px}button.icon{padding:4px 9px;font-size:15px;line-height:1.5}input,select,textarea{min-width:0;border:1px solid var(--line);border-radius:5px;background:var(--surface);padding:5px 7px}input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid #78a8d0;outline-offset:2px}input[type=checkbox],input[type=range]{accent-color:var(--blue)}input[type=range]{padding:0;border:0;cursor:pointer}input[type=search]{width:100%;padding:8px 10px}input[type=number]{width:95px}h1,h2,h3,p{margin:0}h1{font-size:17px;font-weight:650;white-space:nowrap}h2{font-size:14px;font-weight:650}h3{font-size:12px}.muted,.note{color:var(--muted)}.note{font-size:11px;line-height:1.65}.label{font-size:10px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}.number,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-numeric:tabular-nums}.row{display:flex;align-items:center;gap:7px}.between{justify-content:space-between}.wrap{flex-wrap:wrap}.grow{flex:1;min-width:0}.hide{display:none!important}.dot{display:inline-block;width:8px;height:8px;background:var(--series);border-radius:50%;flex-shrink:0}.empty{padding:32px 20px;color:var(--muted);text-align:center}.empty h2{font-size:19px;font-weight:550;color:var(--ink);margin-bottom:10px}.empty p{max-width:390px;margin:0 auto;line-height:1.9}.warning,.error{border-radius:5px;padding:8px 10px;font-size:11px;background:#fcf6e9;color:#886127}.error{color:#843d3d;background:#fcf1f1}.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;border:1px solid var(--line);border-radius:4px;padding:2px 6px}
+.topbar{height:64px;padding:0 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);background:var(--surface)}.brand{display:flex;align-items:center;gap:8px}.dataset{border-left:1px solid var(--line);padding-left:14px;overflow:hidden}.dataset strong{display:block;font-size:11px;font-weight:500;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}.dataset span{font-size:10px;color:var(--muted)}#language{font-size:11px}#x-search{width:120px;min-width:80px;padding:4px 7px;font-size:11px}#x-axis{max-width:260px}#x-measure{max-width:180px}#path-axis-wrap[hidden],#x-measure-wrap[hidden]{display:none}.workspace{display:grid;grid-template-columns:236px minmax(390px,1fr) 250px;height:calc(100vh - 64px)}.library{border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;min-height:0;overflow:hidden}.library-head{padding:17px 14px 10px}.library-head select{width:100%;margin:6px 0 10px;font-weight:600}.tabs{display:flex;gap:18px;margin-top:8px;border-bottom:1px solid var(--line)}.tabs button{border:0;border-radius:0;background:none;padding:8px 0;color:var(--muted);font-size:12px}.tabs button.active{border-bottom:2px solid var(--blue);color:var(--ink);font-weight:600}.library-options{padding:0 14px 8px}.library-options select{width:100%;margin-bottom:6px}.library-actions{padding:0 10px 8px;display:flex;align-items:center;flex-wrap:wrap;gap:2px;justify-content:space-between}.library-list{flex:1;overflow:auto;padding:0 7px 10px}.choice{display:flex;align-items:flex-start;gap:8px;padding:7px;border-radius:5px;cursor:pointer}.choice:hover{background:var(--bg)}.choice.selected{background:var(--pale)}.choice input{margin:3px 0 0}.choice-text{min-width:0;overflow-wrap:anywhere}.choice-name{font-size:12px}.choice-sub{font-size:10px;color:var(--muted);display:block}.library-bottom{padding:11px 14px;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}.center{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.navigation{padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);flex-shrink:0}.navigation .row+.row{margin-top:7px}.nav-group{display:flex;align-items:center;gap:5px}.nav-group select{max-width:170px;font-size:12px}.path-pins{display:flex;gap:5px;flex-wrap:wrap}.path-chip{border:1px solid #c8d7e2;border-radius:4px;padding-left:7px;background:var(--surface);font-size:10px;display:flex;align-items:center;gap:4px}.path-chip button{border:0;background:none;padding:2px 5px}.chart-scroll{flex:1;overflow:auto;padding:16px;scrollbar-gutter:stable}.chart-toolbar{margin-bottom:13px;gap:8px}.chart-toolbar select{font-size:11px}.figures{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}.figures.two{grid-template-columns:repeat(2,minmax(0,1fr))}.figure{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;min-width:0}.figure.active{border-color:#90b5d3;box-shadow:0 0 0 1px #3376b912}.figure-head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;background:var(--surface)}.figure-title{border:0;background:none;padding:2px 0;font-weight:650;font-size:13px;text-align:left;white-space:normal;overflow-wrap:anywhere;flex:1}.figure.active .figure-title{color:var(--blue)}.figure-body{padding-bottom:4px}.figure-settings{margin:0;padding:0}.figure-settings summary{padding:8px 12px;font-size:10px}.figure-settings>div{padding:2px 12px 10px;border-bottom:1px solid var(--line)}.figure-settings label{font-size:11px}.lane+.lane{border-top:1px solid var(--line)}.lane-head{padding:10px 12px 4px;display:flex;align-items:center;gap:7px;justify-content:space-between}.lane-title{font-size:11px;overflow-wrap:anywhere}.lane-head select{font-size:10px;padding:3px 5px}.legend{display:flex;gap:3px 11px;flex-wrap:wrap;padding:1px 12px 3px}.legend button{border:0;padding:2px 0;background:none;font-size:10px;display:flex;align-items:center;gap:5px;white-space:normal;text-align:left;overflow-wrap:anywhere;max-width:100%}.legend button.off{opacity:.38;text-decoration:line-through}.legend svg{width:20px;flex-shrink:0}.chart{display:block;width:100%;height:auto;user-select:none;touch-action:pan-y}.chart text{fill:var(--muted);font:10.5px ui-monospace,SFMono-Regular,monospace}.chart .axis-title{font:11px -apple-system,BlinkMacSystemFont,sans-serif}.plot-note{font-size:10px;color:#886127;padding:0 12px 8px}.cursor-line{stroke:#486a80;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}.figure-context{font-size:10px;padding:6px 12px 9px;color:var(--muted)}.onboard-art{width:175px;height:64px;margin:8px auto 19px}.scrubber{padding:10px 16px 11px;border-top:1px solid var(--line);background:var(--surface);flex-shrink:0}.scan-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.scan-head label{font-size:11px}.scan-head select{font-size:11px}.scan-value{margin-left:auto;font-size:12px;font-weight:600}.scan-track{display:flex;gap:8px;align-items:center;margin:7px 0 6px}.scan-track input{flex:1;width:0}.scan-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.scan-tools select{font-size:10px}.point-track{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);display:flex;align-items:center;gap:7px}.point-track input{flex:1;width:0;min-width:30px}.point-track span{font-size:11px}.key-hint{margin-top:6px;font-size:10px;color:var(--muted)}.inspector{border-left:1px solid var(--line);background:var(--surface);overflow:auto;padding:17px 14px}.point-heading{font-size:23px;font-weight:550;margin:3px 0 5px}.coordinates{display:flex;gap:4px 10px;flex-wrap:wrap;margin-bottom:11px;font-size:11px}.value-row{padding:9px 0;border-bottom:1px solid var(--line)}.value-label{font-size:11px;display:flex;align-items:flex-start;gap:7px;overflow-wrap:anywhere}.value-main{font-size:17px;margin:3px 0 0 15px}.unit{font:10px -apple-system,BlinkMacSystemFont,sans-serif;color:var(--muted)}.value-delta{margin-left:15px;font-size:10px;color:var(--muted)}.section-separator{border:0;border-top:1px solid var(--line);margin:16px 0}.locator select{width:100%;font-size:11px;margin-top:7px}.change-item{width:100%;text-align:left;white-space:normal;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 0;background:transparent;font-size:11px}.change-item:hover{background:var(--pale)}.change-value{font-size:10px;color:var(--muted);margin-top:3px}.bookmark{display:flex;align-items:center;gap:3px;margin-top:4px}.bookmark .jump{flex:1;font-size:10px;text-align:left;white-space:normal}.result-count{font-size:10px;color:var(--muted);margin-top:8px}.pager{display:flex;align-items:center;justify-content:space-between;margin:8px 0}.onboard-tip{font-size:11px;color:var(--muted);padding:12px 0}
+dialog{border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 60px #20344730;max-width:92vw;width:650px;max-height:88vh;overflow:auto;color:var(--ink);padding:23px}dialog::backdrop{background:#14273255}dialog p{margin:11px 0}dialog label.block{display:block;margin:13px 0 5px;font-size:12px}dialog input[type=file]{width:100%;padding:12px;font-size:12px}dialog pre{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);padding:12px;border-radius:5px;max-height:300px;overflow:auto}dialog .dialog-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}details{margin-top:13px}summary{cursor:pointer;color:var(--muted);font-size:11px}.loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:20}.loading-box{max-width:540px;padding:28px}.loading-box h2{font-size:20px;margin-bottom:12px}.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#233340;color:white;border-radius:7px;padding:10px 16px;box-shadow:0 10px 35px #20344730;z-index:30;max-width:90vw;display:flex;gap:10px;align-items:center}.toast button{font-size:11px}.drop-active{outline:4px dashed var(--blue);outline-offset:-8px}.spinner{display:inline-block;width:14px;height:14px;border:2px solid #c7d3dd;border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin-right:8px}@keyframes spin{to{transform:rotate(360deg)}}
+@media(min-width:1700px){.workspace{grid-template-columns:252px minmax(390px,1fr) 275px}.chart-scroll{padding:20px 24px}.inspector{padding:20px}}
+@media(max-width:1200px){.workspace{grid-template-columns:205px minmax(340px,1fr) 220px}.topbar{padding:0 14px;gap:9px}.topbar button{font-size:11px;padding:5px 8px}.navigation,.scrubber{padding-left:12px;padding-right:12px}.chart-scroll{padding:12px}.inspector{padding:15px 11px}.library-head{padding:14px 11px 8px}.figures.two{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:920px){.workspace{grid-template-columns:205px minmax(0,1fr);height:auto}.library{height:calc(100vh - 64px);position:sticky;top:0;grid-row:1/3}.center{height:calc(100vh - 64px);min-height:700px}.inspector{grid-column:2;border-top:1px solid var(--line);overflow:visible}.dataset{display:none}.topbar .brand{flex:1}.optional{display:none}.figures.two{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:580px){.topbar{height:auto;min-height:64px;flex-wrap:wrap;padding:11px;gap:7px}.topbar .brand{flex-basis:calc(100% - 105px)}.workspace{display:flex;flex-direction:column}.library{position:static;height:320px;flex-shrink:0}.library-head{padding:10px 12px 5px}.library-head select{margin:4px 0 7px}.library-list{display:grid;grid-template-columns:1fr 1fr;gap:0 5px}.library-bottom{display:none}.library-options select{width:49%;margin:0}.library-actions{padding-bottom:4px}.tabs{margin-top:3px}.center{height:870px;min-height:0}.inspector{padding:17px}.scan-value{font-size:11px}.figure-head{flex-wrap:wrap}.point-track{flex-wrap:wrap}.point-track input{flex-basis:90px}.key-hint{font-size:9px}.navigation select{max-width:165px}}
+#source-info .source-facts{margin:8px 0;font-size:12px}#source-info .source-facts>div{display:grid;grid-template-columns:minmax(110px,36%) minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}#source-info dt{color:var(--muted);overflow-wrap:anywhere}#source-info dd{margin:0;overflow-wrap:anywhere}#source-info h3{margin:18px 0 8px;font-size:14px}
+</style>
+<style>
+.brand h1{font-size:15px;line-height:1.15}.brand-sub{display:block;font-size:10px;font-weight:450;letter-spacing:.05em;color:var(--muted);margin-top:3px}.axis-controls{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 12px 5px}.axis-control{display:flex;align-items:center;gap:7px;font-size:11px;min-width:0}.axis-control>span{overflow-wrap:anywhere}.axis-control select{font-size:10px;padding:3px 5px}.axis-tag{font-size:9px;color:var(--muted);border:1px solid var(--line);padding:0 3px;border-radius:3px}.axis-note,.scale-note{font-size:10px;line-height:1.6;color:var(--muted);padding:3px 12px}.detail-scale{color:#8b5f24;background:#fdf7ea}.plot-viewport{overflow-x:auto;overflow-y:hidden}.series-layer.dimmed{opacity:.2}.series-layer.highlighted>path{stroke-width:2.8}.figure{cursor:default}.figure:focus-visible{outline:2px solid var(--blue)}#bookmark-point[aria-pressed=true]{background:var(--pale);color:var(--blue);border:1px solid #aac7df}.blank-start{margin:55px 10px;background:var(--surface);border:1px solid var(--line);border-radius:8px}.curve-tooltip{position:fixed;z-index:45;pointer-events:none;max-width:min(350px,90vw);background:var(--surface);color:var(--ink);box-shadow:0 8px 28px #23334030;border:1px solid #bfcfdb;border-radius:7px;padding:10px 12px;font-size:11px;overflow-wrap:anywhere}.curve-tooltip strong{font-size:12px}.hover-entry+.hover-entry{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}.curve-tooltip .number{font-size:12px}.figure-settings{scroll-margin-top:12px}.legend{max-height:130px;overflow:auto}.figure-context{line-height:1.6}
+</style>
+<style id="explorer-appearance">
+:root{--surface:#fff;--ink:#172033;--muted:#6f7a8d;--line:#e5e8ef;--bg:#f5f6f9;--blue:#435ed1;--pale:#eef1ff;--plot-grid:#e8edf2;--plot-axis:#b7c3cc;--cursor:#486a80;--accent-text:#fff;--warning-bg:#fcf6e9;--warning-text:#886127;--error-bg:#fcf1f1;--error-text:#843d3d;--plot-neutral:#6f7a8d}
+:root[data-theme=dark]{color-scheme:dark;--surface:#1d2532;--ink:#e9edf5;--muted:#a0adbf;--line:#303a4a;--bg:#242d3b;--blue:#91a5ff;--pale:#2c355c;--plot-grid:#354152;--plot-axis:#65758c;--cursor:#bbcbdf;--accent-text:#172033;--warning-bg:#392f20;--warning-text:#dfbb79;--error-bg:#39252c;--error-text:#efa4ab;--plot-neutral:#a0adbf}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-theme=dark]){color-scheme:dark;--surface:#1d2532;--ink:#e9edf5;--muted:#a0adbf;--line:#303a4a;--bg:#242d3b;--blue:#91a5ff;--pale:#2c355c;--plot-grid:#354152;--plot-axis:#65758c;--cursor:#bbcbdf;--accent-text:#172033;--warning-bg:#392f20;--warning-text:#dfbb79;--error-bg:#39252c;--error-text:#efa4ab;--plot-neutral:#a0adbf}}
+button.primary{background:var(--blue);color:var(--accent-text);border-color:var(--blue)}dialog{background:var(--surface)}.figure.active{border-color:var(--blue);box-shadow:none}.curve-tooltip{background:var(--surface);border-color:var(--line)}.warning,.detail-scale{background:var(--warning-bg);color:var(--warning-text)}.error{background:var(--error-bg);color:var(--error-text)}.plot-note{color:var(--warning-text)}.chart .plot-grid{stroke:var(--plot-grid)}.chart .plot-axis{stroke:var(--plot-axis)}.cursor-line{stroke:var(--cursor)}
+</style>
+<style id="workspace-save-coverage">
+#save-workspace{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.2;flex-shrink:0}
+#save-workspace small{display:block;font-size:10px;font-weight:450;line-height:1.25;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading" class="loading"><div class="loading-box"><h2><span class="spinner"></span>读取结果 / Loading results</h2><p id="loading-text" class="muted">本地处理 · Local processing</p></div></div>
+<div id="toast" class="toast hide" role="status"></div>
+<div id="curve-tooltip" class="curve-tooltip hide" role="tooltip"></div>
+<script id="payload" type="application/octet-stream" data-encoding="gzip-base64"></script>
+<script>
+"use strict";
+// Result Explorer for Reaktoro 2.2. The tool is empty by default; saved
+// workspaces embed user-imported data. No solver or network is involved.
+// Chart contract: raw multi-series lines at saved samples, optional separate
+// Y axes, stable cross-condition scales, explicit detail zoom, gap-aware hover.
+// There are no network requests, solver calls, external packages or file writes.
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => v == null || typeof v === 'boolean' || (typeof v === 'string' && !v.trim()) ? NaN : Number(v);
+const finite = Number.isFinite;
+const unique = a => [...new Set(a)];
+const same = (a,b) => String(a)===String(b);
+const compare = (a,b) => finite(num(a)) && finite(num(b)) ? num(a)-num(b) : String(a).localeCompare(String(b));
+const clamp = (n,lo,hi) => Math.max(lo,Math.min(hi,n));
+const nice = (v,d=6) => !finite(num(v)) ? '—' : num(v)===0 ? '0' : Math.abs(v)<.001 || Math.abs(v)>=1e5 ? Number(v).toExponential(d-1).replace(/\.?0+e/,'e') : Number(Number(v).toPrecision(d)).toString();
+const signed = v => finite(v) ? (v>0?'+':'')+nice(v,5) : '—';
+const copy = o => JSON.parse(JSON.stringify(o));
+const roots = ['#3376b9','#c77943','#829047','#b96d92','#b28c35'];
+const displayColor=c=>{const dark=document.documentElement.dataset.theme==='dark' || (document.documentElement.dataset.theme!=='light' && globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches);return dark?({'#3376b9':'#79b8f0','#c77943':'#e9a66f','#829047':'#bbcb83','#b96d92':'#e3a0c3','#b28c35':'#e3c566'}[c] || c):c;};
+const dashes = ['', '7 3', '2 3', '8 3 2 3', '5 2'];
+let language = document.documentElement.lang.startsWith('en')?'en':'zh';
+const L = (zh,en) => language==='en'?en:zh;
+const info = {
+ temperature_c:['温度','Temperature','°C'],pressure_bar:['压力','Pressure','bar'],cycle:['反应轮次','Reaction round',''],pass:['反应轮次','Reaction round',''],step:['路径位置','Path position',''],step_index:['路径位置','Path position',''],inner_index:['路径位置','Path position',''],outer_index:['反应轮次','Reaction round',''],inner_value:['路径变量值','Path variable',''],outer_value:['轮次变量值','Round variable',''],time:['time','time',''],time_s:['时间','Time','s'],record_index:['记录顺序','Record order',''],
+ amount_mol:['物质的量','Amount','mol'],inlet_amount_mol:['输入量','Inlet amount','mol'],outlet_amount_mol:['输出量','Outlet amount','mol'],delta_amount_mol:['变化量 Δn','Amount change Δn','mol'],molality:['质量摩尔浓度','Molality','mol/kg H₂O'],activity:['活度','Activity',''],activity_coefficient:['活度系数','Activity coefficient',''],
+ pH:['pH','pH',''],Eh_V:['Eh','Eh','V'],ionic_strength_molal:['离子强度','Ionic strength','mol/kg H₂O'],water_activity:['水活度','Water activity',''],water_mass_kg:['水质量','Water mass','kg'],max_component_balance_error_mol:['最大组分守恒残差','Maximum component balance residual','mol'],max_element_balance_error_mol:['最大元素守恒残差','Maximum element balance residual','mol']
+};
+const fieldLabel = k => model?.fieldInfo?.[k]?.[language==='en'?1:0] || info[k]?.[language==='en'?1:0] || k;
+const fieldUnit = (k,fields=model?.fieldInfo) => fields?.[k]?.[2] ?? info[k]?.[2] ?? (k.endsWith('_molal')?'mol/kg H₂O':k.endsWith('_mol')?'mol':k.endsWith('_V')?'V':k.endsWith('_bar')?'bar':k.endsWith('_g_cm3')?'g/cm³':'');
+const label = k => model?.byAxis?.has(k)?(model.byAxis.get(k).species?model.byAxis.get(k).species.name+' · ':'')+fieldLabel(model.byAxis.get(k).key):model&&k===model.rowAxis?L('记录顺序','Record order'):fieldLabel(k);
+const unit = k => fieldUnit(model?.byAxis?.get(k)?.key || k);
+const withUnit = k => label(k)+(unit(k)?' / '+unit(k):'');
+const phaseLabel = p => ({aqueous:L('水相','Aqueous'),mineral:L('矿物','Mineral'),gas:L('气相','Gas')})[p] || p || L('未标明相','Unspecified phase');
+const keyCandidates=['scenario','simulation_mode','run_id','case_id','case','run_index','cycle','pass','step','step_index','point_id','state_id','record_index','temperature_c','pressure_bar','time','time_s'];
+const dimensionCandidates=['temperature_c','pressure_bar','cycle','pass','step','step_index','time','time_s'];
+const flags=['success','succeeded','converged','solver_success'];
+let rawPayload,model,state,slice=[],domain=[],rowsInFacet=[],allPaths=[],plotSpecs=[],changeMatches=[],hovering=null,playing=null;
+let hoverCurve=null;
+let pathCacheKey='',pathCacheKeys=[],viewSequence=0,chartSerial=0,pinSerial=0,toastTimer,pointerFrame,resizeTimer,resizeWidth=0,undoAction=null;
+const object = x => x && typeof x==='object' && !Array.isArray(x);
+
+// Strict CSV and identity joins. Never average or overwrite ambiguous states.
+function parseCSV(text){
+ text=text.replace(/^\uFEFF/,'');let rows=[],row=[],field='',quoted=false,closed=false;
+ for(let i=0;i<text.length;i++){
+  const c=text[i];
+  if(quoted){if(c==='"'){if(text[i+1]==='"'){field+='"';i++;}else{quoted=false;closed=true;}}else field+=c;}
+  else if(c==='"' && field===''&&!closed)quoted=true;
+  else if(c===','){row.push(field);field='';closed=false;}
+  else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(x=>x!==''))rows.push(row);row=[];field='';closed=false;}
+  else if(closed||c==='"')throw new Error(L('CSV 引号后的字符无效。','Invalid characters around CSV quotes.'));
+  else field+=c;
+ }
+ if(quoted)throw new Error(L('CSV 引号未闭合。','Unclosed CSV quote.'));
+ if(field!==''||row.length||closed){row.push(field);rows.push(row);}
+ const table={columns:rows.shift()||[],rows};validateTable(table);return table;
+}
+function validateTable(t){
+ if(!object(t)||!Array.isArray(t.columns)||!t.columns.length||t.columns.some(k=>typeof k!=='string'||!k)||unique(t.columns).length!==t.columns.length)throw new Error(L('表头为空、无效或含重复列名。','Table headers are empty, invalid or duplicated.'));
+ if(!Array.isArray(t.rows)||t.rows.some(r=>!Array.isArray(r)||r.length!==t.columns.length||r.some(v=>v!==null&&!['number','string','boolean'].includes(typeof v))))throw new Error(L('数据行与表头不一致，或含不支持的单元格。','Rows do not match the headers, or contain unsupported cells.'));
+}
+function recordKey(keys,get,extra){return JSON.stringify(keys.map(k=>[...dimensionCandidates,...extra].includes(k)&&finite(num(get(k)))?num(get(k)):String(get(k)??'')));}
+function buildModel(payload){
+ if(!object(payload)||payload.format!=='result-explorer-1')throw new Error(L('无法识别结果格式。','Unrecognized result format.'));
+ validateTable(payload.summary);const table=payload.summary,columns=table.columns;
+ const fieldInfo=Object.fromEntries(Object.entries(object(payload.metadata?.field_info)?payload.metadata.field_info:{}).filter(([k,v])=>columns.includes(k)&&Array.isArray(v)&&v.length===3&&v.every(x=>typeof x==='string'&&x.length<=500)).map(([k,v])=>{
+  // Translate only names emitted by older versions; keep actual variables and custom labels.
+  if(['inner_index','inner_value','step','step_index'].includes(k)&&v[0]==='内循环序号'&&v[1]==='Inner iteration')return [k,['路径位置','Path position',v[2]]];
+  if(['outer_index','outer_value','pass','cycle'].includes(k)&&v[0]==='外循环序号'&&v[1]==='Outer iteration')return [k,['反应轮次','Reaction round',v[2]]];
+  return [k,v];
+ }));
+ const loopAxes=object(payload.metadata?.loop_axes)?payload.metadata.loop_axes:null;
+ if(!table.rows.length)throw new Error(L('状态汇总没有数据行。','The state summary has no rows.'));
+ const extra=payload.dimension_columns||[],speciesTables=payload.species_tables||[];
+ if(!Array.isArray(extra)||extra.some(k=>typeof k!=='string'||!columns.includes(k))||!Array.isArray(speciesTables))throw new Error(L('自定义条件列或物种表定义无效。','Invalid dimension columns or species tables.'));
+ if(payload.key_columns&&(!Array.isArray(payload.key_columns)||!payload.key_columns.length||payload.key_columns.some(k=>typeof k!=='string')))throw new Error(L('匹配列定义无效。','Invalid join-key definition.'));
+ let rowAxis='record_index';while(columns.includes(rowAxis))rowAxis='_'+rowAxis;
+ const points=table.rows.map((r,i)=>({...Object.fromEntries(columns.map((k,j)=>[k,r[j]])),[rowAxis]:i+1}));
+ const dims=unique([...dimensionCandidates,...extra]).filter(k=>columns.includes(k)&&points.every(r=>finite(num(r[k]))));
+ const facets=['scenario','simulation_mode','run_id','case_id','case'].filter(k=>columns.includes(k));
+ // A missing preview slice must not silently replace the user's X quantity or
+ // discard selected Y quantities. Retain declared fields requested by the view,
+ // while their values remain NaN and are explicitly shown as missing.
+ const view=object(payload.view)?payload.view:{},viewCharts=Array.isArray(view.charts)?view.charts:[];
+ const requestedAxes=new Set([view.axis,...(Array.isArray(view.pins)?view.pins:[]).map(p=>p?.axis)]);
+ const requestedStates=new Set([...requestedAxes,...viewCharts.flatMap(c=>Array.isArray(c?.selectedStates)?c.selectedStates:[])]);
+ const requestedMeasures=new Set(viewCharts.map(c=>c?.measure));
+ for(const axis of requestedAxes)if(typeof axis==='string'&&axis.startsWith('x:')){try{const pair=JSON.parse(axis.slice(2));if(Array.isArray(pair)&&pair.length===2&&pair.every(k=>typeof k==='string'))requestedMeasures.add(pair[1]);}catch{}}
+ const numeric=columns.filter(k=>(points.some(r=>finite(num(r[k])))||requestedStates.has('state:'+k))&&points.every(r=>r[k]==null||String(r[k]).trim()===''||finite(num(r[k]))));
+ const statusKeys=numeric.filter(k=>!keyCandidates.includes(k)&&!extra.includes(k)&&!(payload.key_columns||[]).includes(k)&&!flags.includes(k));
+ const valid=points.map(r=>!flags.some(k=>k in r&&[false,'false','False',0,'0'].includes(r[k])));
+ const statuses=statusKeys.map((k,i)=>({id:'state:'+k,key:k,name:k,unit:fieldUnit(k,fieldInfo),styleIndex:i,values:Float64Array.from(points.map((r,j)=>valid[j]?num(r[k]):NaN))}));
+ const catalog=new Map(),measureSet=new Set(),identities=[];let unmatched=0,linked=0;
+ for(const st of speciesTables){
+  validateTable(st);if(!st.columns.includes('species'))throw new Error(L('物种表缺少 species 列。','Species table is missing its species column.'));
+  if(['rule','source','fraction','species'].every(k=>st.columns.includes(k)))throw new Error(L('物料转移表不能作为平衡后的物种结果。','Material transfers cannot be used as equilibrium species results.'));
+  const keys=payload.key_columns||(columns.includes('run_index')&&st.columns.includes('run_index')?[...facets.filter(k=>st.columns.includes(k)),'run_index']:unique([...keyCandidates,...extra]).filter(k=>columns.includes(k)&&st.columns.includes(k)));
+  if(!keys.length)throw new Error(L('两表没有共同的条件列，请指定匹配列。','No shared condition keys; please specify join columns.'));
+  if(keys.some(k=>!columns.includes(k)||!st.columns.includes(k)))throw new Error(L('匹配列在两表中不齐全。','Join columns are not present in both tables.'));
+  const lookup=new Map();points.forEach((r,i)=>{const key=recordKey(keys,k=>r[k],extra);if(lookup.has(key))throw new Error(L('状态匹配列重复，请加入区分条件：','Duplicate state join key; add identifying columns: ')+keys.join(', '));lookup.set(key,i);});identities.push(keys);
+  const ci=Object.fromEntries(st.columns.map((k,i)=>[k,i])),excluded=new Set([...keys,...keyCandidates,...extra,...flags,'species','phase','phase_type','charge','formula','inner_index','outer_index','inner_value','outer_value']);
+  const measures=st.columns.filter(k=>!excluded.has(k)&&(st.rows.some(r=>finite(num(r[ci[k]])))||requestedMeasures.has(k))&&st.rows.every(r=>r[ci[k]]==null||String(r[ci[k]]).trim()===''||finite(num(r[ci[k]]))));
+  for(const k of Object.keys(info))if(!excluded.has(k)&&!dimensionCandidates.includes(k)&&k!=='record_index'&&st.columns.includes(k)&&!measures.includes(k))measures.push(k);
+  measures.forEach(k=>measureSet.add(k));
+  for(const row of st.rows){
+   const i=lookup.get(recordKey(keys,k=>row[ci[k]],extra));if(i===undefined){unmatched++;continue;}linked++;
+   const name=String(row[ci.species]??'');if(!name)throw new Error(L('物种名称为空。','Empty species name.'));
+   const phase=String(row[ci.phase]??row[ci.phase_type]??''),id='species:'+JSON.stringify([phase,name]);
+   if(!catalog.has(id))catalog.set(id,{id,name,phase,measures:Object.create(null),seen:new Set()});const s=catalog.get(id);
+   if(s.seen.has(i))throw new Error(L('同一状态中的物种重复：','Duplicate species within a state: ')+name+' / '+phase);s.seen.add(i);
+   for(const k of measures){if(!s.measures[k])s.measures[k]=new Float64Array(points.length).fill(NaN);s.measures[k][i]=valid[i]?num(row[ci[k]]):NaN;}
+  }
+ }
+ if(unmatched)throw new Error(unmatched+L(' 行 species 无法匹配状态表；请使用配套文件。',' species rows have no matching state; use files from the same run.'));
+ const species=[...catalog.values()].sort((a,b)=>a.name.localeCompare(b.name)||a.phase.localeCompare(b.phase));species.forEach((s,i)=>{delete s.seen;s.styleIndex=i;s.axisMeasures=Object.keys(s.measures).filter(k=>s.measures[k].some(finite)||requestedAxes.has('x:'+JSON.stringify([s.id,k])));});
+ const metricAxes=[...statuses.filter(v=>v.values.some(finite)||requestedAxes.has(v.id)).map(v=>({id:v.id,key:v.key,values:v.values})),...species.flatMap(v=>v.axisMeasures.map(key=>({id:'x:'+JSON.stringify([v.id,key]),key,values:v.measures[key],species:v})))];
+ return {fieldInfo,loopAxes,points,statuses,species,measures:[...measureSet],dims,coordinateAxes:[...dims,rowAxis],byAxis:new Map(metricAxes.map(v=>[v.id,v])),axes:[...dims,rowAxis,...metricAxes.map(v=>v.id)],rowAxis,facets,valid,identities,linked,columns,bySpecies:new Map(species.map(s=>[s.id,s])),byState:new Map(statuses.map(s=>[s.id,s]))};
+}
+
+// View state only; the original payload and arrays are never changed by UI edits.
+function newChart(){return {id:'chart-'+(++chartSerial),title:'',copySuffix:false,selectedSpecies:[],selectedStates:[],measure:['amount_mol','outlet_amount_mol','molality','activity'].find(k=>model.measures.includes(k))||model.measures[0]||'',tab:'species',queries:{species:'',states:''},phase:'',selectedOnly:false,scales:{},hidden:[],scaleScope:'path',rangeMode:'context',displayMode:'overlay',markMode:'auto',size:'normal',collapsed:false};}
+function chart(){return state.charts.find(c=>c.id===state.activeChart)||state.charts[0];}
+function chartName(c){return (c.title||L('图 ','Figure ')+(state.charts.indexOf(c)+1))+(c.copySuffix?L(' · 副本',' · copy'):'');}
+function initialState(){
+ const facets=Object.fromEntries(model.facets.map(k=>{const vals=unique(model.points.map(p=>p[k]));return [k,k==='scenario'&&vals.includes('temperature_pressure_grid')?'temperature_pressure_grid':vals[0]];}));
+ // Choose an existing tuple, never manufacture an impossible facet combination.
+ const first=model.points.find(p=>model.facets.every(k=>same(p[k],facets[k])))||model.points[0];model.facets.forEach(k=>facets[k]=first[k]);
+ const eligible=model.points.filter(p=>model.facets.every(k=>same(p[k],facets[k]))),varying=k=>unique(eligible.map(p=>p[k])).length>1;
+ const loopAxis=['inner','outer'].find(k=>model.loopAxes?.[k]&&model.loopAxes[k].mode!=='repeat'&&model.byAxis.has('state:'+k+'_value')&&varying(k+'_value'));
+ const axis=loopAxis?'state:'+loopAxis+'_value':model.coordinateAxes.includes('pressure_bar')&&varying('pressure_bar')?'pressure_bar':model.coordinateAxes.find(varying)||model.rowAxis;
+ const pathAxis=loopAxis&&loopAxis==='outer'&&model.coordinateAxes.includes('pass')?'pass':defaultPathAxis()!==model.rowAxis?defaultPathAxis():loopAxis?defaultPathAxis():axis;
+ const c=newChart();return {version:2.2,language,charts:[c],activeChart:c.id,styles:{},axis,pathAxis,xDirection:'asc',xScale:'linear',plotScope:'current',facets,fixed:{},index:0,browseKey:'',direction:1,speed:600,loop:false,layout:'stack',pins:[],reference:null,bookmarks:[],zoom:null,interval:null,changeSeries:'',changeMethod:'absolute',changeScope:'path',threshold:0,changePage:0};
+}
+function restoreView(v){
+ if(!object(v))return;
+ if(['en','zh'].includes(v.language))language=v.language;
+ if(object(v.styles))state.styles=Object.fromEntries(Object.entries(v.styles).filter(([id,s])=>(model.bySpecies.has(id)||model.byState.has(id))&&object(s)&&roots.includes(s.color)&&dashes.includes(s.dash)));
+ if(model.axes.includes(v.axis))state.axis=v.axis;
+ state.pathAxis=model.coordinateAxes.includes(v.pathAxis)?v.pathAxis:metricAxis()||defaultPathAxis()!==model.rowAxis?defaultPathAxis():state.axis;
+ // Legacy workspaces have no X direction; preserve their ascending display.
+ state.xDirection=v.xDirection==='desc'?'desc':'asc';state.xScale=v.xScale==='log'?'log':'linear';state.plotScope=v.plotScope==='all'?'all':'current';
+ if(object(v.facets)){const p=model.points.find(p=>model.facets.every(k=>same(p[k],v.facets[k])));if(p)state.facets=Object.fromEntries(model.facets.map(k=>[k,p[k]]));}
+ if(object(v.fixed))state.fixed={...v.fixed};if(Number.isInteger(v.index)&&v.index>=0)state.index=v.index;
+ let charts=Array.isArray(v.charts)?v.charts:('selectedSpecies'in v?[v]:[]);
+ if(charts.length){state.charts=charts.filter(object).map(c=>{
+  const n=newChart();if(typeof c.id==='string'&&/^chart-\d+$/.test(c.id))n.id=c.id;
+  n.title=typeof c.title==='string'?c.title.slice(0,250):'';
+  n.copySuffix=c.copySuffix===true;
+  n.selectedSpecies=unique((Array.isArray(c.selectedSpecies)?c.selectedSpecies:[]).filter(id=>model.bySpecies.has(id)));
+  n.selectedStates=unique((Array.isArray(c.selectedStates)?c.selectedStates:[]).filter(id=>model.byState.has(id)));
+  if(model.measures.includes(c.measure))n.measure=c.measure;
+  n.tab=c.tab==='states'?'states':'species';for(const t of ['species','states'])if(typeof c.queries?.[t]==='string')n.queries[t]=c.queries[t];
+  if(typeof c.phase==='string')n.phase=c.phase;n.selectedOnly=c.selectedOnly===true;
+  if(object(c.scales))n.scales=Object.fromEntries(Object.entries(c.scales).filter(([k,val])=>(k==='species'||n.selectedStates.includes(k))&&['linear','log'].includes(val)));
+  n.hidden=Array.isArray(c.hidden)?c.hidden.filter(x=>typeof x==='string'):[];n.scaleScope=['path','global'].includes(c.scaleScope)?c.scaleScope:n.scaleScope;n.markMode=['auto','scatter','path'].includes(c.markMode)?c.markMode:'auto';n.rangeMode=c.rangeMode==='detail'?'detail':'context';n.displayMode=c.displayMode==='separate'?'separate':'overlay';n.size=['compact','normal','large'].includes(c.size)?c.size:'normal';n.collapsed=c.collapsed===true;return n;
+ });if(!state.charts.length)state.charts=[newChart()];}
+ const ids=new Set();state.charts.forEach(c=>{if(ids.has(c.id))c.id=newChart().id;ids.add(c.id);chartSerial=Math.max(chartSerial,Number(c.id.split('-')[1])||0);});
+ state.activeChart=state.charts.some(c=>c.id===v.activeChart)?v.activeChart:state.charts[0].id;
+ state.browseKey=typeof v.browseKey==='string'?v.browseKey:'';state.direction=v.direction===-1?-1:1;state.speed=[250,600,1200].includes(v.speed)?v.speed:600;state.loop=v.loop===true;state.layout=v.layout==='two'?'two':'stack';
+ const validId=i=>Number.isInteger(i)&&!!model.points[i];state.reference=validId(v.reference)?v.reference:null;state.bookmarks=unique((Array.isArray(v.bookmarks)?v.bookmarks:[]).filter(validId));
+ state.zoom=Array.isArray(v.zoom)&&v.zoom.length===2&&v.zoom.every(finite)&&v.zoom[0]<v.zoom[1]?v.zoom:null;
+ const seenPins=new Set();
+ state.pins=(Array.isArray(v.pins)?v.pins:[]).filter(p=>object(p)&&model.axes.includes(p.axis)&&object(p.fixed)).map(p=>{
+  let id=typeof p.id==='string'&&/^pin-\d+$/.test(p.id)&&!seenPins.has(p.id)?p.id:'pin-'+(++pinSerial);
+  while(seenPins.has(id))id='pin-'+(++pinSerial);seenPins.add(id);pinSerial=Math.max(pinSerial,Number(id.split('-')[1]));
+  return {id,axis:p.axis,pathAxis:model.coordinateAxes.includes(p.pathAxis)?p.pathAxis:(model.byAxis.has(p.axis)?defaultPathAxis():p.axis),fixed:{...p.fixed},facets:object(p.facets)?{...p.facets}:{...state.facets}};
+ });
+ if(['absolute','ratio','threshold'].includes(v.changeMethod))state.changeMethod=v.changeMethod;state.changeScope=v.changeScope==='all'?'all':'path';if(finite(v.threshold))state.threshold=v.threshold;
+ state.changeSeries=typeof v.changeSeries==='string'?v.changeSeries:'';
+ if(object(v.interval)&&validId(v.interval.a)&&validId(v.interval.b))state.interval={a:v.interval.a,b:v.interval.b};
+ state.language=language;
+}
+function install(payload){
+ const built=buildModel(payload);endHeldNavigation();stop();cancelPointer();model=built;rawPayload=payload;chartSerial=0;pinSerial=0;state=initialState();restoreView(payload.view);pathCacheKey='';hovering=null;undoAction=null;
+ buildShell();configurePaths();render();
+}
+// Save coverage describes the loaded table, never the filtered graph or planned-but-uncomputed points.
+function workspaceScope(payload=rawPayload){
+ const loaded=Array.isArray(payload?.summary?.rows)?payload.summary.rows.length:0,meta=object(payload?.metadata)?payload.metadata:{},saved=meta.workspace_scope;
+ const count=value=>Number.isSafeInteger(value)&&value>=loaded?value:null;
+ const recorded=object(saved)&&saved.version===1&&saved.loaded_points===loaded;
+ let source=recorded?count(saved.source_points):null;
+ const planned=count(meta.expected_points)??(recorded?count(saved.planned_points):null);
+ if(source===null&&meta.contains_all_planned_points===true&&planned===loaded)source=loaded;
+ return {version:1,loaded_points:loaded,source_points:source,planned_points:planned};
+}
+function workspaceScopeLabel(scope=workspaceScope()){
+ const loaded=scope.loaded_points.toLocaleString(),total=scope.source_points?.toLocaleString();
+ return total===undefined?L('已载入 '+loaded+' 点 · 总数未知','Loaded '+loaded+' points · total unknown'):scope.source_points===scope.loaded_points?L('全部 '+loaded+' 点','All '+loaded+' points'):L('已载入 '+loaded+' / '+total+' 点','Loaded '+loaded+' / '+total+' points');
+}
+function workspaceScopeDetail(scope=workspaceScope()){
+ const loaded=scope.loaded_points.toLocaleString();
+ const extent=scope.source_points===null?L('原结果总点数未记录。','The original result total was not recorded.'):scope.source_points>scope.loaded_points?L('原结果已有 '+scope.source_points.toLocaleString()+' 个完成点，另有 '+(scope.source_points-scope.loaded_points).toLocaleString()+' 点未载入，不包含在此工作区中。','The original result has '+scope.source_points.toLocaleString()+' completed points; '+(scope.source_points-scope.loaded_points).toLocaleString()+' unloaded points are not included.'):L('包含当前结果全部已完成点。','Includes all completed points in this result.');
+ const pending=scope.planned_points!==null&&scope.planned_points>(scope.source_points??scope.loaded_points)?L('原计划 '+scope.planned_points.toLocaleString()+' 点；计划点数不代表已有结果。','The plan contains '+scope.planned_points.toLocaleString()+' points; planned points are not necessarily completed results.'):'';
+ return L('保存当前载入的 '+loaded+' 点及图表设置，不随横轴、轮次筛选或缩放缩减。','Saves all '+loaded+' loaded points and figure settings, regardless of X-axis, round filters or zoom.')+' '+extent+(pending?' '+pending:'');
+}
+function renderWorkspaceScope(){
+ if(!$('save-workspace'))return;
+ const scope=workspaceScope(),detail=workspaceScopeDetail(scope),label=workspaceScopeLabel(scope);
+ $('save-workspace').innerHTML='<span>'+L('保存工作区','Save workspace')+'</span><small id="workspace-range">'+esc(label)+'</small>';
+ $('save-workspace').title=detail;$('save-workspace').setAttribute('aria-label',L('保存工作区，','Save workspace, ')+label);
+ if($('workspace-range-detail'))$('workspace-range-detail').textContent=detail;
+}
+function option(value,text,selected){return `<option value="${esc(value)}" ${same(value,selected)?'selected':''}>${esc(text)}</option>`;}
+function button(id,text,cls=''){return `<button id="${id}" class="${cls}">${text}</button>`;}
+function buildShell(){
+ document.documentElement.lang=language==='en'?'en':'zh-CN';document.title='Result Explorer for Reaktoro';
+ $('app').innerHTML=`
+ <header class="topbar"><div class="brand"><svg width="25" height="25" viewBox="0 0 30 30" aria-hidden="true"><path d="M3 25V5M3 25H28" fill="none" stroke="#b4c1cb"/><path d="M5 20L11 19L17 8L23 11L28 5" fill="none" stroke="#3376b9" stroke-width="2"/><circle cx="17" cy="8" r="3" fill="white" stroke="#3376b9" stroke-width="2"/></svg><h1>Result Explorer<span class="brand-sub">for Reaktoro</span></h1></div><div class="dataset grow"><strong id="dataset-name"></strong><span id="dataset-count"></span></div><select id="language" aria-label="${L('界面语言','Interface language')}">${option('zh','中文',language)}${option('en','English',language)}</select>${button('open-results',L('打开结果','Open results'))}${button('save-workspace',L('保存工作区','Save workspace'),'primary')}${button('source-button',L('数据来源','Source'),'quiet optional')}${button('help-button','?','quiet')}</header>
+ <div class="workspace"><aside class="library"><div class="library-head"><div class="row between"><span class="label">${L('正在编辑','Editing')}</span><span class="label" id="selected-count"></span></div><select id="active-chart" aria-label="${L('选择要编辑的图','Figure to edit')}"></select><input id="search" type="search" aria-label="${L('搜索物种或指标','Search fields or species')}" placeholder="${L('搜索物种或指标…','Search names or fields…')}"><div class="tabs" role="tablist"><button id="tab-species" role="tab">Species</button><button id="tab-states" role="tab">${L('系统状态','System state')}</button></div></div><div id="species-options" class="library-options"><select id="measure" aria-label="${L('Species 数值类型','Species quantity')}"></select><select id="phase-filter" aria-label="${L('筛选相','Filter by phase')}"></select></div><div class="library-actions"><label class="row note"><input id="selected-only" type="checkbox">${L('只看已选','Selected only')}</label><span id="match-count" class="label"></span><div class="row">${button('select-matches',L('选中筛选结果','Select matches'),'quiet small')}${button('clear-selection',L('清空此类','Clear tab'),'quiet small')}</div></div><div id="library-list" class="library-list"></div><div class="library-bottom">${L('仅修改正在编辑的图。切换图或条件不会丢失选择。','Changes apply to the active figure only. Selections stay when you switch figures or conditions.')}</div></aside>
+ <main class="center"><section class="navigation"><div class="row wrap"><label class="row note">${L('横轴','X axis')} <input id="x-search" type="search" placeholder="${L('搜索横轴','Find X axis')}" aria-label="${L('搜索横轴','Find X axis')}"><select id="x-axis" aria-label="${L('横轴指标','X-axis quantity')}"></select></label><label id="x-measure-wrap" class="row note">${L('数值','Quantity')} <select id="x-measure" aria-label="${L('横轴物种数值','X-axis species quantity')}"></select></label><label id="path-axis-wrap" class="row note" title="${L('左右键沿此顺序移动；选择连线时也沿此顺序。横轴与纵轴来自同一采样点。','Connect samples in this order within the selected conditions. X and Y always belong to the same saved sample.')}">${L('采样顺序','Sample sequence')} <select id="path-axis" aria-label="${L('比较的采样顺序','Sample sequence to compare')}"></select></label><label class="row note" title="${L('从左到右的刻度方向；不改变条件播放顺序','Tick direction from left to right; independent of condition playback')}">${L('方向','Direction')} <select id="x-direction" aria-label="${L('横轴刻度方向（从左到右）','X-axis direction (left to right)')}">${option('asc',L('小 → 大','Low → High'))}${option('desc',L('大 → 小','High → Low'))}</select></label><label class="row note">${L('刻度','Scale')} <select id="x-scale" aria-label="${L('横轴刻度','X-axis scale')}">${option('linear',L('线性','Linear'))}${option('log',L('对数','Log'))}</select></label><label class="row note">${L('展示','Show')} <select id="plot-scope" aria-label="${L('绘图采样范围','Samples shown in plots')}"></select></label><div id="facet-controls" class="row wrap"></div></div><div class="row between wrap"><div id="fixed-controls" class="row wrap"></div>${button('pin-path',L('＋ 叠加此条件','＋ Pin condition'),'small')}</div><div id="path-pins" class="path-pins"></div></section>
+ <section class="chart-scroll" id="chart-scroll"><div class="chart-toolbar row between wrap"><div class="row">${button('add-chart',L('＋ 添加图','＋ Add figure'),'small primary')}<select id="chart-layout" aria-label="${L('图布局','Figure layout')}">${option('stack',L('上下排列','Stacked'))}${option('two',L('并排比较','Side by side'))}</select></div><div class="row wrap">${button('zoom-near',L('放大附近','Zoom nearby'),'small quiet')}${button('reset-zoom',L('全程','Full path'),'small')}</div></div><div id="plots" class="figures"></div></section>
+ <section class="scrubber"><div class="scan-head"><label class="row">${L('连续浏览','Browse across')} <select id="browse-axis" aria-label="${L('连续浏览的条件维度','Condition dimension to browse')}"></select></label><span id="browse-position" class="scan-value"></span></div><div class="scan-track">${button('previous-condition','↑','icon')}<input id="browse-slider" type="range" min="0" max="0" value="0" aria-label="${L('条件或轮次进度条','Condition or cycle slider')}">${button('next-condition','↓','icon')}</div><div class="scan-tools">${button('play','▶ '+L('播放条件','Play conditions'),'small')}<select id="direction" aria-label="${L('播放方向','Playback direction')}">${option(1,L('正向','Forward'))}${option(-1,L('反向','Reverse'))}</select><select id="speed" aria-label="${L('播放速度','Playback speed')}">${option(1200,L('慢速 · 1.2秒','Slow · 1.2 s'))}${option(600,L('中速 · 0.6秒','Medium · 0.6 s'))}${option(250,L('快速 · 0.25秒','Fast · 0.25 s'))}</select><label class="row note"><input id="loop" type="checkbox">${L('循环','Loop')}</label><span id="browse-count" class="note"></span></div><div class="point-track"><span class="note">${L('图内位置','Point cursor')}</span>${button('previous-point','←','small')}<input id="point-slider" type="range" min="0" max="0" value="0" aria-label="${L('图内采样点','Sample point in the plot')}">${button('next-point','→','small')}<span id="position-label" class="number"></span><span id="position-index" class="note"></span></div><div class="key-hint">${L('↑ ↓ 切换上方浏览维度 · ← → 移动图内点 · 空格播放 / 暂停','↑ ↓ switch browse conditions · ← → move point cursor · Space play / pause')}</div></section></main>
+ <aside class="inspector"><div class="row between"><span id="point-mode" class="label"></span>${button('bookmark-point','☆ '+L('收藏','Bookmark'),'small quiet')}</div><div id="point-heading" class="point-heading">—</div><div id="coordinates" class="coordinates"></div><div class="row">${button('set-reference',L('设为参考点','Set reference'),'small')}${button('clear-reference',L('清除','Clear'),'small quiet')}</div><div id="reference-label" class="note" style="margin-top:7px"></div><div id="inspector-chart" class="label" style="margin-top:15px"></div><div id="values"></div><div class="locator"><hr class="section-separator"><h2>${L('定位变化','Find changes')}</h2><select id="change-series" aria-label="${L('定位变化的曲线','Series to scan')}"></select><select id="change-method" aria-label="${L('变化方式','Change measure')}">${option('absolute',L('相邻绝对变化 |Δy|','Absolute change |Δy|'))}${option('ratio',L('相邻倍数变化（仅正值）','Fold change (positive only)'))}${option('threshold',L('穿越指定阈值','Threshold crossing'))}</select><label id="threshold-wrap" class="row" style="margin-top:7px"><span class="note">${L('阈值','Threshold')}</span><input id="threshold" type="number" step="any"></label><select id="change-scope" aria-label="${L('变化搜索范围','Search scope')}">${option('path',L('当前条件','Current condition'))}${option('all',L('当前情景的全部条件','All conditions in this scenario'))}</select><div id="change-results"></div></div><details id="bookmarks-details"><summary>${L('书签','Bookmarks')} <span id="bookmark-count"></span></summary><div id="bookmarks"></div></details><details id="all-values-details"><summary>${L('当前点全部指标','All fields at this point')}</summary><div id="all-state-values"></div></details><hr class="section-separator">${button('export-csv',L('导出此图数据 CSV','Export figure data CSV'),'small')}<p class="note" style="margin-top:10px">${L('仅连接已有采样点，不插值、不平滑。变化区间不是精确相界。','Saved sample points only; no interpolation or smoothing. Change intervals are not exact phase boundaries.')}</p></aside></div>
+ <dialog id="import-dialog"><div class="row between"><h2>${L('打开一组结果','Open a result set')}</h2><button class="close-dialog quiet">×</button></div><p class="muted">${L('选择同一次运行的状态汇总和物种表；水相与矿物表可以一起选入。也可打开本工具的 JSON 或已保存的 HTML 工作区。','Select the state summary and species tables from one run. Aqueous and mineral tables can be combined. Explorer JSON and previously saved HTML workspaces are also supported.')}</p><label class="block" for="result-files">CSV / CSV.GZ + metadata.json · ${L('可多选','multiple files')}</label><input id="result-files" type="file" accept=".csv,.gz,.json,.html,.htm" multiple><details><summary>${L('自定义表结构','Custom table structure')}</summary><label class="block" for="custom-keys">${L('匹配列列名，逗号分隔；留空自动识别','Join columns, comma-separated; blank for automatic discovery')}</label><input id="custom-keys" style="width:100%"><label class="block" for="custom-dimensions">${L('额外数值条件列，逗号分隔','Additional numeric condition columns, comma-separated')}</label><input id="custom-dimensions" style="width:100%"></details><p id="import-status" class="note"></p><div class="dialog-footer"><button class="close-dialog">${L('取消','Cancel')}</button>${button('import-confirm',L('读取结果','Load results'),'primary')}</div></dialog>
+ <dialog id="save-dialog"><div class="row between"><h2>${L('保存单文件工作区','Save a single-file workspace')}</h2><button class="close-dialog quiet">×</button></div><p class="muted">${L('包括全部导入数据、所有图、语言、书签和位置；分享此文件也会分享全部数据。下载为新文件，不覆盖原始结果。','Includes all imported data, all figures, language, bookmarks and position. Downloads a new file; original results are not overwritten.')}</p><p id="workspace-range-detail" class="note"></p><label class="block" for="workspace-filename">${L('文件名','Filename')}</label><input id="workspace-filename" style="width:100%" value="Workspace for Reaktoro.html"><div class="dialog-footer"><button class="close-dialog">${L('取消','Cancel')}</button>${button('save-confirm',L('下载 HTML','Download HTML'),'primary')}</div></dialog>
+ <dialog id="source-dialog"><div class="row between"><h2>${L('数据来源','Data source')}</h2><button class="close-dialog quiet">${L('关闭','Close')}</button></div><div id="source-info"></div></dialog>
+ <dialog id="rename-dialog"><div class="row between"><h2>${L('图标题','Figure title')}</h2><button class="close-dialog quiet">×</button></div><label class="block" for="figure-title-input">${L('留空使用自动编号','Leave blank for automatic numbering')}</label><input id="figure-title-input" maxlength="250" style="width:100%"><div class="dialog-footer">${button('rename-confirm',L('应用','Apply'),'primary')}</div></dialog>
+ <dialog id="help-dialog"><div class="row between"><h2>${L('使用说明','Quick guide')}</h2><button class="close-dialog quiet">${L('关闭','Close')}</button></div><div id="help-content"></div></dialog>`;
+ renderWorkspaceScope();
+ $('help-button').setAttribute('aria-label',L('使用说明','Quick guide'));$('bookmark-point').title=L('保存当前位置书签','Bookmark this point');
+ for(const [id,title] of [['previous-condition',L('上一个条件（↑）','Previous condition (↑)')],['next-condition',L('下一个条件（↓）','Next condition (↓)')],['previous-point',L('向左移动采样点（←）','Move to the sample on the left (←)')],['next-point',L('向右移动采样点（→）','Move to the sample on the right (→)')]]){$(id).title=title;$(id).setAttribute('aria-label',title);}
+ if(!model){document.querySelectorAll('.workspace button,.workspace input,.workspace select,#save-workspace,#source-button').forEach(e=>e.disabled=true);$('dataset-name').textContent=L('尚未载入结果','No results loaded');$('dataset-count').textContent=L('打开文件后查看结果','Open a file to view results');$('plots').innerHTML=`<section class="empty blank-start" data-empty="true"><h2>${L('打开你的结果，开始探索','Open your results to start exploring')}</h2><p>${L('打开同一次计算的状态汇总与物种表，或导入已保存的工作区。','No model results are preloaded. Open a state summary with its species tables, or import a saved workspace.')}</p><div class="row wrap" style="justify-content:center;margin-top:22px">${button('open-empty',L('打开结果','Open results'),'primary')}${button('help-empty',L('格式与使用说明','Formats & help'))}</div><p class="note" style="margin-top:18px">CSV · CSV.GZ · JSON · HTML ${L('工作区','workspace')}</p></section>`;return;}
+ $('dataset-name').textContent=rawPayload.name||L('计算结果','Calculation results');$('dataset-name').title=$('dataset-name').textContent;
+ $('dataset-count').textContent=`${model.points.length.toLocaleString()} ${L('状态点','states')} · ${model.species.length} ${L('物种','species')}`;
+}
+
+// The displayed X quantity never changes the identity used to join X and Y.
+function metricAxis(){return model.byAxis.has(state.axis);}
+function correlationAxis(){return metricAxis()&&!['inner_value','outer_value'].includes(model.byAxis.get(state.axis).key);}
+function scatterChart(c){return c.markMode==='scatter'||(c.markMode==='auto'&&correlationAxis());}
+function drawableX(id){const v=xValue(id);return finite(v)&&(state.xScale!=='log'||v>0);}
+function shownPaths(){
+ if(state.plotScope==='all')return allPaths;
+ const current=allPaths.find(g=>g.indices===slice),out=current?[current]:[];
+ for(const p of matchingPins()){const g=allPaths.find(g=>fixedKeys().every(k=>same(g.fixed[k],p.fixed[k])));if(g&&!out.includes(g))out.push(g);}return out;
+}
+function shownPointIds(){return unique(shownPaths().flatMap(g=>g.indices));}
+function unavailableMeasure(s,key){return key==='molality'&&['mineral','gas','solid','solid_solution'].includes(s.phase)&&!s.axisMeasures.includes(key);}
+function alternativeMeasure(c){const selected=c.selectedSpecies.map(id=>model.bySpecies.get(id)).filter(Boolean);return ['amount_mol','outlet_amount_mol','activity',...model.measures].find(k=>k!==c.measure&&selected.length&&selected.every(s=>s.axisMeasures.includes(k)));}
+
+function defaultPathAxis(){return ['step','step_index','time_s','time'].find(k=>model.coordinateAxes.includes(k))||model.rowAxis;}
+function pathAxis(){return model.coordinateAxes.includes(state.pathAxis)?state.pathAxis:metricAxis()?defaultPathAxis():state.axis;}
+function sampleOrder(){return metricAxis()||pathAxis()!==state.axis;}
+function xValue(id,axis=state.axis){const a=model.byAxis.get(axis);return a?a.values[id]:num(model.points[id]?.[axis]);}
+function pathValue(id){return num(model.points[id]?.[pathAxis()]);}
+// Paths are cached by facet and sample sequence; scrubbing reuses the joins.
+function fixedKeys(){return pathCacheKeys;}
+function configurePaths(){
+ const cache=JSON.stringify([state.axis,pathAxis(),model.facets.map(k=>state.facets[k])]);
+ if(cache!==pathCacheKey){
+  rowsInFacet=model.points.map((_,i)=>i).filter(i=>model.facets.every(k=>same(model.points[i][k],state.facets[k])));
+  const axis=pathAxis(),process=['step','step_index','time','time_s'].includes(axis)||(metricAxis()&&axis===model.rowAxis);
+  pathCacheKeys=axis===model.rowAxis&&!metricAxis()?[]:model.dims.filter(k=>k!==axis&&!['step','step_index'].includes(k)&&!(process&&['temperature_c','pressure_bar'].includes(k))&&unique(rowsInFacet.map(i=>num(model.points[i][k]))).length>1);
+  const groups=new Map();for(const i of rowsInFacet){const p=model.points[i],key=JSON.stringify(pathCacheKeys.map(k=>num(p[k])));if(!groups.has(key))groups.set(key,{fixed:Object.fromEntries(pathCacheKeys.map(k=>[k,p[k]])),indices:[]});groups.get(key).indices.push(i);}
+  allPaths=[...groups.values()].sort((a,b)=>{for(const k of pathCacheKeys){const d=compare(a.fixed[k],b.fixed[k]);if(d)return d;}return 0;});for(const g of allPaths)g.indices.sort((a,b)=>pathValue(a)-pathValue(b)||a-b);
+  domain=unique(rowsInFacet.map(i=>xValue(i))).filter(finite).sort((a,b)=>a-b);pathCacheKey=cache;
+ }
+ let path=allPaths.find(g=>fixedKeys().every(k=>same(g.fixed[k],state.fixed[k])));
+ if(!path&&allPaths.length){path=allPaths[0];state.fixed={...path.fixed};}
+ slice=path?.indices||[];state.index=clamp(Math.round(num(state.index)||0),0,Math.max(0,slice.length-1));
+ if(![...fixedKeys(),'__point__'].includes(state.browseKey))state.browseKey=fixedKeys().find(k=>['cycle','pass'].includes(k))||fixedKeys()[0]||'__point__';
+ if(state.zoom&&(state.zoom[1]<domain[0]||state.zoom[0]>domain.at(-1)))state.zoom=null;
+}
+function fixedValues(k){return unique(allPaths.filter(g=>fixedKeys().every(other=>other===k||same(g.fixed[other],state.fixed[other]))).map(g=>g.fixed[k])).sort(compare);}
+function pathName(fixed=state.fixed){return Object.entries(fixed).map(([k,v])=>`${label(k)} ${nice(v)}${unit(k)?' '+unit(k):''}`).join(' · ')||L('当前路径','Current path');}
+function contextName(fixed=state.fixed,facets=state.facets){return [...Object.values(facets).filter(v=>v!=null&&String(v)!==''),pathName(fixed)].join(' · ');}
+function pointName(id){const p=model.points[id];if(!p)return '—';return [...model.facets.map(k=>String(p[k])),...model.dims.map(k=>`${label(k)} ${nice(num(p[k]))}${unit(k)?' '+unit(k):''}`),...(state.axis===model.rowAxis?[label(model.rowAxis)+' '+p[model.rowAxis]]:[])].join(' · ');}
+function activeId(){return hovering??slice[state.index];}
+function nearestIndex(indices,x){if(!indices.length||!finite(x))return 0;let best=0,distance=Infinity;indices.forEach((id,i)=>{const d=Math.abs(xValue(id)-x);if(finite(d)&&d<distance){best=i;distance=d;}});return best;}
+function cancelPointer(){if(pointerFrame)cancelAnimationFrame(pointerFrame);pointerFrame=null;hovering=null;clearCurveHover();}
+function setPoint(index){if(!slice.length)return;cancelPointer();state.interval=null;state.index=clamp(Math.round(index),0,slice.length-1);const x=xValue(slice[state.index]);if(state.zoom&&(x<state.zoom[0]||x>state.zoom[1]))zoomNear();else updatePoint();}
+// Keep source/path indices ascending. Only screen geometry and point navigation
+// are mirrored. This mapping is its own inverse (screen index <-> path index).
+function screenPointIndex(index){return !sampleOrder()&&state.xDirection==='desc'?Math.max(0,slice.length-1)-index:index;}
+function movePointOnScreen(delta){setPoint(state.index+delta*(!sampleOrder()&&state.xDirection==='desc'?-1:1));}
+function zoomNear(){if(slice.length<3)return;const width=Math.min(13,slice.length),lo=clamp(state.index-Math.floor(width/2),0,slice.length-width),hi=lo+width-1;const values=slice.slice(lo,hi+1).map(id=>xValue(id)).filter(finite),a=Math.min(...values),b=Math.max(...values);state.zoom=a<b?[a,b]:null;renderPlots();updatePoint();}
+function setFixed(k,v){
+ if(!fixedKeys().includes(k)||!fixedValues(k).some(x=>same(x,v)))return;
+ const id=slice[state.index],x=xValue(id),position=pathValue(id);cancelPointer();state.fixed[k]=v;state.interval=null;state.changePage=0;configurePaths();state.index=sampleOrder()?slice.reduce((best,id,j)=>Math.abs(pathValue(id)-position)<Math.abs(pathValue(slice[best])-position)?j:best,0):nearestIndex(slice,x);render(false);
+}
+function browseState(){if(state.browseKey==='__point__')return {values:slice.map((id,i)=>i),index:state.index};const values=fixedValues(state.browseKey);return {values,index:Math.max(0,values.findIndex(v=>same(v,state.fixed[state.browseKey])))};}
+function setBrowse(index){const b=browseState();index=clamp(index,0,b.values.length-1);if(state.browseKey==='__point__')setPoint(index);else setFixed(state.browseKey,b.values[index]);}
+function moveBrowse(delta,wrap=false){const b=browseState();if(b.values.length<2)return false;let next=b.index+delta;if(next<0||next>=b.values.length){if(!wrap)return false;next=(next+b.values.length)%b.values.length;}setBrowse(next);return true;}
+function updatePlay(){if(!$('play'))return;$('play').textContent=playing?'Ⅱ '+L('暂停','Pause'):'▶ '+(state?.browseKey==='__point__'?L('播放游标','Play cursor'):L('播放条件','Play conditions'));$('play').setAttribute('aria-label',playing?L('暂停播放','Pause playback'):L('播放所选浏览维度','Play selected browse dimension'));}
+function stop(){if(playing)clearInterval(playing);playing=null;updatePlay();}
+function play(){
+ if(playing){stop();return;}if(browseState().values.length<2)return;
+ const b=browseState();if(!state.loop&&(state.direction===1?b.index===b.values.length-1:b.index===0)){toast(L('已到边界，请切换反向、拖回起点，或开启循环。','At the boundary. Reverse direction, move the slider, or enable Loop.'));return;}
+ cancelPointer();playing=setInterval(()=>{if(!moveBrowse(state.direction,state.loop)){stop();return;}const b=browseState();if(!state.loop&&(state.direction===1?b.index===b.values.length-1:b.index===0))stop();},state.speed);updatePlay();updatePoint();
+}
+function matchingPins(){return state.pins.filter(p=>p.axis===state.axis&&p.pathAxis===pathAxis()&&model.facets.every(k=>same(p.facets[k],state.facets[k])));}
+function renderXAxisOptions(){
+ const query=$('x-search').value.trim().toLocaleLowerCase(),axis=model.byAxis.get(state.axis),selected=axis?.species?.id||state.axis;
+ const group=(title,items)=>{const matched=items.filter(([id,name])=>id===selected||!query||name.toLocaleLowerCase().includes(query));return matched.length?'<optgroup label="'+esc(title)+'">'+matched.map(([id,name])=>option(id,name,selected)).join('')+'</optgroup>':'';};
+ $('x-axis').innerHTML=group(L('计算条件','Conditions'),model.coordinateAxes.map(k=>[k,withUnit(k)]))+group(L('系统状态','System state'),model.statuses.filter(s=>model.byAxis.has(s.id)).map(s=>[s.id,withUnit(s.id)]))+group(L('物种','Species'),model.species.filter(s=>s.axisMeasures.length).map(s=>[s.id,s.name+' · '+phaseLabel(s.phase)]));
+}
+function setXAxis(axis,sequence){
+ const id=slice[state.index],p=model.points[id];stop();cancelPointer();
+ state.axis=axis;state.pathAxis=sequence||(sampleOrder()&&model.coordinateAxes.includes(state.pathAxis)?state.pathAxis:defaultPathAxis()!==model.rowAxis||metricAxis()?defaultPathAxis():axis);
+ state.zoom=null;state.xScale='linear';state.interval=null;state.browseKey='';state.changePage=0;configurePaths();state.fixed=Object.fromEntries(fixedKeys().map(k=>[k,p?.[k]]));configurePaths();state.index=slice.includes(id)?slice.indexOf(id):nearestIndex(slice,xValue(id));render(false);
+}
+function renderNavigation(){
+ renderXAxisOptions();
+ const ax=model.byAxis.get(state.axis);$('x-measure-wrap').hidden=!ax?.species;$('path-axis-wrap').hidden=!sampleOrder();
+ if(ax?.species)$('x-measure').innerHTML=ax.species.axisMeasures.map(k=>option(k,withUnit(k),ax.key)).join('');
+ $('path-axis').innerHTML=model.coordinateAxes.map(k=>option(k,withUnit(k),pathAxis())).join('');
+ $('x-direction').value=state.xDirection;$('x-scale').value=state.xScale;
+ const rounds=fixedKeys().some(k=>['cycle','pass','outer_index'].includes(k));
+ $('plot-scope').innerHTML=option('current',rounds?L('当前轮次（含叠加）','Current round + pinned'):L('当前条件（含叠加）','Current condition + pinned'),state.plotScope)+option('all',rounds?L('全部已载入轮次','All loaded rounds'):L('全部已载入条件','All loaded conditions'),state.plotScope);
+ $('plot-scope').disabled=allPaths.length<2;
+
+ $('point-slider').setAttribute('aria-label',sampleOrder()?L('按采样顺序移动','Move in sample sequence'):L('图内采样点','Sample point in the plot'));
+ if(sampleOrder()){
+  $('previous-point').setAttribute('aria-label',L('上一采样点（←）','Previous sample (←)'));$('next-point').setAttribute('aria-label',L('下一采样点（→）','Next sample (→)'));
+  document.querySelector('.point-track>span').textContent=L('采样顺序','Sample sequence');
+ }else{document.querySelector('.point-track>span').textContent=L('图内位置','Point cursor');$('previous-point').setAttribute('aria-label',L('向左移动采样点（←）','Move to the sample on the left (←)'));$('next-point').setAttribute('aria-label',L('向右移动采样点（→）','Move to the sample on the right (→)'));}
+ for(const id of ['previous-point','next-point'])$(id).title=$(id).getAttribute('aria-label');
+ // Facets cascade in source order. Each offered choice has at least one real row.
+ $('facet-controls').innerHTML=model.facets.map((k,j)=>{const pts=model.points.filter(p=>model.facets.slice(0,j).every(other=>same(p[other],state.facets[other])));return `<select data-facet="${esc(k)}" aria-label="${esc(k)}" title="${esc(k)}">${unique(pts.map(p=>p[k])).map(v=>option(v,v,state.facets[k])).join('')}</select>`;}).join('');
+ $('fixed-controls').innerHTML=fixedKeys().map(k=>`<label class="nav-group note">${esc(label(k))} <select data-fixed="${esc(k)}" aria-label="${L('当前','Current ')+esc(label(k))}">${fixedValues(k).map(v=>option(v,nice(v)+(unit(k)?' '+unit(k):''),state.fixed[k])).join('')}</select></label>`).join('')||`<span class="note">${L('当前情景 · 单一路径','Current scenario · single path')}</span>`;
+ $('path-pins').hidden=state.plotScope==='all';$('path-pins').innerHTML=matchingPins().map(p=>`<span class="path-chip" title="${esc(contextName(p.fixed,p.facets))}">${esc(pathName(p.fixed))}<button data-remove-pin="${p.id}" aria-label="${L('移除叠加条件','Remove pinned condition')}">×</button></span>`).join('');
+ $('pin-path').hidden=state.plotScope==='all';$('pin-path').disabled=!slice.length||!fixedKeys().length;
+ $('browse-axis').innerHTML=[...fixedKeys().map(k=>option(k,label(k),state.browseKey)),option('__point__',L('图内采样点（仅游标）','Sample point (cursor only)'),state.browseKey)].join('');
+ $('direction').value=state.direction;$('speed').value=state.speed;$('loop').checked=state.loop;$('chart-layout').value=state.layout;
+ updateBrowseControls();
+}
+function updateBrowseControls(){const b=browseState(),key=state.browseKey,isPoint=key==='__point__';$('browse-slider').max=Math.max(0,b.values.length-1);$('browse-slider').value=b.index;$('browse-slider').disabled=b.values.length<2;
+ $('previous-condition').disabled=b.index<=0;$('next-condition').disabled=b.index>=b.values.length-1;$('play').disabled=b.values.length<2;
+ const v=isPoint?xValue(slice[b.index]):b.values[b.index];$('browse-position').textContent=b.values.length?`${nice(v)} ${unit(isPoint?state.axis:key)}`:'—';
+ if($('browse-track-label'))$('browse-track-label').textContent=isPoint?L('采样点','Sample'):label(key);$('browse-count').textContent=`${b.values.length?b.index+1:0} / ${b.values.length}`;$('browse-slider').setAttribute('aria-valuetext',$('browse-position').textContent);updatePlay();}
+function selectedSeries(c=chart()){
+ const ss=c.selectedSpecies.map(id=>model.bySpecies.get(id)).filter(Boolean).map(s=>({...s,key:c.measure,unit:unit(c.measure),values:s.measures[c.measure]||new Float64Array(model.points.length).fill(NaN),kind:'species'}));
+ const st=c.selectedStates.map(id=>model.byState.get(id)).filter(Boolean).map(s=>({...s,kind:'state'}));
+ return [...ss,...st].map(s=>{if(!state.styles[s.id]){const i=Object.keys(state.styles).length;state.styles[s.id]={color:roots[i%roots.length],dash:dashes[Math.floor(i/roots.length)%dashes.length]};}return {...s,...state.styles[s.id],color:displayColor(state.styles[s.id].color)};});
+}
+function seriesName(s){return s.kind==='state'?label(s.key):model.species.some(p=>p.name===s.name&&p.phase!==s.phase)?s.name+' ['+phaseLabel(s.phase)+']':s.name;}
+function libraryMatches(){const c=chart(),query=c.queries[c.tab].trim().toLocaleLowerCase(),selected=c.tab==='species'?c.selectedSpecies:c.selectedStates;return (c.tab==='species'?model.species:model.statuses).filter(s=>(c.tab!=='species'||!c.phase||s.phase===c.phase)&&(!c.selectedOnly||selected.includes(s.id))&&(!query||[s.name,s.key,s.phase,c.tab==='states'?label(s.key):phaseLabel(s.phase)].join(' ').toLocaleLowerCase().includes(query)));}
+function renderLibrary(){
+ const c=chart();$('active-chart').innerHTML=state.charts.map(x=>option(x.id,chartName(x),c.id)).join('');$('selected-count').textContent=(c.selectedSpecies.length+c.selectedStates.length)+' '+L('已选','selected');
+ for(const tab of ['species','states']){$('tab-'+tab).classList.toggle('active',c.tab===tab);$('tab-'+tab).setAttribute('aria-selected',c.tab===tab);}
+ if($('search').value!==c.queries[c.tab])$('search').value=c.queries[c.tab];$('selected-only').checked=c.selectedOnly;
+ $('species-options').classList.toggle('hide',c.tab!=='species');$('measure').innerHTML=model.measures.map(k=>option(k,withUnit(k),c.measure)).join('');$('measure').disabled=!model.measures.length;
+ $('phase-filter').innerHTML=option('',L('全部相','All phases'),c.phase)+unique(model.species.map(s=>s.phase)).filter(Boolean).map(p=>option(p,phaseLabel(p),c.phase)).join('');
+ const items=libraryMatches(),selected=c.tab==='species'?c.selectedSpecies:c.selectedStates;$('match-count').textContent=items.length+' '+L('项','items');
+ $('select-matches').disabled=!items.length;$('clear-selection').disabled=!selected.length;
+ $('library-list').innerHTML=items.length?items.map(s=>`<label class="choice ${selected.includes(s.id)?'selected':''}"><input type="checkbox" data-select="${esc(s.id)}" ${selected.includes(s.id)?'checked':''}><span class="choice-text"><span class="choice-name">${esc(c.tab==='states'?label(s.key):s.name)}</span><span class="choice-sub">${esc(c.tab==='species'?phaseLabel(s.phase):(s.unit||''))}${c.tab==='species'&&unavailableMeasure(s,c.measure)?' · '+L('此指标仅用于水相','aqueous-only quantity'):''}</span></span></label>`).join(''):`<div class="empty" style="padding:22px 8px">${L('没有匹配项','No matches')}</div>`;
+}
+function selectChart(id){if(state.activeChart===id)return;const viewport=captureViewport();stop();cancelPointer();state.activeChart=id;state.changeSeries='';state.changePage=0;renderLibrary();document.querySelectorAll('.figure').forEach(e=>e.classList.toggle('active',e.dataset.figure===id));renderLocator();updatePoint();restoreViewport(viewport);}
+function addChart(duplicate=false){stop();const c=duplicate?copy(chart()):newChart();if(duplicate){c.id='chart-'+(++chartSerial);c.title=chart().title;c.copySuffix=!!c.title;}state.charts.push(c);state.activeChart=c.id;state.changeSeries='';state.changePage=0;render(false);document.querySelector(`[data-figure="${c.id}"]`)?.scrollIntoView({block:'nearest',behavior:'smooth'});}
+
+// Each custom figure can hold a multi-species lane plus separately scaled state
+// lanes. Different units never share a raw Y-axis. All figures share X and cursor.
+function yDomain(values,log,mode='context'){
+ let lo=Infinity,hi=-Infinity;for(const v of values)if(finite(v)&&(!log||v>0)){const w=log?Math.log10(v):v;lo=Math.min(lo,w);hi=Math.max(hi,w);}if(!finite(lo))return null;
+ if(mode==='context'){
+  if(log){if(hi-lo<1){const mid=lo/2+hi/2;lo=mid-.5;hi=mid+.5;}}
+  else{lo=Math.min(0,lo);hi=Math.max(0,hi);}
+ }
+ const span=hi-lo;let pad=finite(span)?span*.06:Math.max(Math.abs(lo),Math.abs(hi))*.06;
+ if(!pad)pad=log?.25:Math.abs(lo)*.03||.05;
+ const bound=v=>finite(v)?v:(v<0?-Number.MAX_VALUE:Number.MAX_VALUE);
+ return [bound(lo-pad),bound(hi+pad)];
+}
+function captureViewport(){
+ const scroller=$('chart-scroll'),box=scroller?.getBoundingClientRect();
+ const anchor=box?[...document.querySelectorAll('.figure')].find(e=>e.getBoundingClientRect().bottom>box.top+40):null;
+ return {openDetails:['bookmarks-details','all-values-details'].filter(id=>$(id)?.open),legendScroll:[...document.querySelectorAll('.legend')].map(e=>({figure:e.closest('.figure').dataset.figure,panel:e.closest('.lane').dataset.panel,top:e.scrollTop})),positions:['chart-scroll','library-list'].map(id=>({id,top:$(id)?.scrollTop||0,left:$(id)?.scrollLeft||0})),inspector:document.querySelector('.inspector')?.scrollTop||0,windowX:scrollX,windowY:scrollY,anchor:anchor?{id:anchor.dataset.figure,top:anchor.getBoundingClientRect().top-box.top}:null,details:[...document.querySelectorAll('.figure-settings[open]')].map(e=>e.closest('.figure').dataset.figure),plots:[...document.querySelectorAll('.plot-viewport')].map(e=>({key:e.dataset.viewkey,left:e.scrollLeft}))};
+}
+function restoreViewport(v){
+ for(const id of v.openDetails)if($(id))$(id).open=true;
+ for(const p of v.legendScroll){const e=[...document.querySelectorAll('.legend')].find(e=>e.closest('.figure').dataset.figure===p.figure&&e.closest('.lane').dataset.panel===p.panel);if(e)e.scrollTop=p.top;}
+ for(const id of v.details){const e=document.querySelector(`[data-figure="${id}"] .figure-settings`);if(e)e.open=true;}
+ for(const p of v.positions){const e=$(p.id);if(e){e.scrollTop=p.top;e.scrollLeft=p.left;}}
+ const a=v.anchor&&document.querySelector(`[data-figure="${v.anchor.id}"]`),s=$('chart-scroll');if(a&&s)s.scrollTop+=a.getBoundingClientRect().top-s.getBoundingClientRect().top-v.anchor.top;
+ const inspector=document.querySelector('.inspector');if(inspector)inspector.scrollTop=v.inspector;
+ for(const p of v.plots){const e=[...document.querySelectorAll('.plot-viewport')].find(e=>e.dataset.viewkey===p.key);if(e)e.scrollLeft=p.left;}
+ if(scrollX!==v.windowX||scrollY!==v.windowY)scrollTo(v.windowX,v.windowY);
+}
+function axisTicks(range,log=false){const [lo,hi]=range;if(log&&hi-lo>=1){const step=Math.max(1,Math.ceil((hi-lo)/6)),out=[];for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step)out.push(v);return out;}const raw=(hi-lo)/4,base=10**Math.floor(Math.log10(raw)),step=([1,2,2.5,5,10].find(v=>v*base>=raw)||10)*base;if(!finite(step)||step===0)return [lo,hi];const first=Math.ceil(lo/step)*step,out=[];for(let i=0;i<12;i++){const v=first+i*step;if(v>hi+step*1e-8)break;out.push(Math.abs(v)<step*1e-10?0:v);}return out;}
+function seriesPaths(series){
+ const groups=shownPaths();return groups.flatMap(g=>{const current=g.indices===slice,original=allPaths.indexOf(g),pin=matchingPins().find(p=>fixedKeys().every(k=>same(g.fixed[k],p.fixed[k]))),suffix=state.plotScope==='all'?'condition-'+original:current?'current':pin?.id||'condition-'+original;
+ return series.map(s=>({...s,indices:g.indices,curveId:s.id+'|'+suffix,pathLabel:current?L('当前','Current')+' · '+pathName(g.fixed):pathName(g.fixed),pathIndex:current?0:original+1,dash:current?s.dash:(s.dash?s.dash+' 1 ':'')+(dashes[(original+1)%dashes.length]||'10 3')}));});
+}
+
+function renderPlots(){
+ if(state.xScale==='log'&&state.zoom?.some(v=>v<=0))state.zoom=null;
+ const viewport=captureViewport();clearCurveHover();
+ plotSpecs=[];$('reset-zoom').disabled=!state.zoom;$('zoom-near').disabled=slice.length<3;$('plots').classList.toggle('two',state.layout==='two');
+ $('plots').innerHTML=state.charts.map(c=>`<article class="figure ${state.activeChart===c.id?'active':''}" data-figure="${c.id}"><header class="figure-head"><button class="figure-title" data-edit-chart="${c.id}" title="${L('选择此图进行编辑','Select this figure to edit')}">${esc(chartName(c))}</button><button class="quiet small" data-rename="${c.id}">${L('改名','Rename')}</button><button class="quiet small" data-duplicate="${c.id}">${L('复制','Copy')}</button><button class="quiet small" data-export-figure="${c.id}" title="${L('导出含标题、图例、条件的矢量图','Export vector figure with title, legend and conditions')}">SVG</button><button class="quiet small" data-collapse="${c.id}" aria-label="${c.collapsed?L('展开图','Expand figure'):L('收起图','Collapse figure')}">${c.collapsed?'▸':'▾'}</button></header><div class="figure-body ${c.collapsed?'hide':''}"><details class="figure-settings"><summary>${L('图设置','Figure settings')}</summary><div class="row wrap"><label class="row">${L('图内布局','Series layout')}<select data-display-mode="${c.id}" aria-label="${esc(chartName(c)+' · '+L('图内呈现方式','Display mode'))}">${option('overlay',L('同图叠加 · 原值多轴','Overlay · raw values / axes'),c.displayMode)}${option('separate',L('分行显示','Separate lanes'),c.displayMode)}</select></label><label class="row">${L('纵轴尺度','Y-axis scale')}<select data-range-mode="${c.id}" aria-label="${esc(chartName(c)+' · '+L('纵轴尺度策略','Y-range policy'))}">${option('context',L('基准尺度 · 保留数值背景','Context scale · retain magnitude'),c.rangeMode)}${option('detail',L('局部放大 · 查看细微变化','Detail scale · inspect small changes'),c.rangeMode)}</select></label><label class="row">${L('数据呈现','Marks')}<select data-mark-mode="${c.id}" aria-label="${esc(chartName(c)+' · '+L('数据呈现','Marks'))}">${option('auto',L('自动 · 性质关系用散点','Auto · scatter for properties'),c.markMode)}${option('scatter',L('散点 · 每点一组 X/Y','Scatter · paired X/Y'),c.markMode)}${option('path',L('按采样顺序连线','Connect in sample sequence'),c.markMode)}</select></label><label class="row">${L('高度','Height')}<select data-size="${c.id}">${option('compact',L('紧凑','Compact'),c.size)}${option('normal',L('常规','Normal'),c.size)}${option('large',L('加大','Large'),c.size)}</select></label><label class="row">${L('纵轴范围','Y range')}<select data-scope="${c.id}">${option('path',L('当前视野','Visible data'),c.scaleScope)}${option('global',L('当前情景全部条件','All scenario conditions'),c.scaleScope)}</select></label><button class="small" data-reorder="${c.id}" data-delta="-1" ${state.charts[0]===c?'disabled':''}>↑</button><button class="small" data-reorder="${c.id}" data-delta="1" ${state.charts.at(-1)===c?'disabled':''}>↓</button><button class="small quiet" data-delete-chart="${c.id}">${L('删除此图','Delete figure')}</button></div></details><div class="lanes"></div><div class="figure-context">${esc(scatterChart(c)?L('散点：每点的 X 与 Y 来自同一次计算。','Scatter: each X/Y pair is one saved calculation.'):L('沿采样顺序连线，不跨条件连接。','Connected in sample order, separately for each condition.'))} ${shownPointIds().length} ${L('个采样点','samples')} · ${state.plotScope==='all'?L('全部已载入条件；上下键切当前轮次，左右键沿当前路径','All loaded conditions; ↑ ↓ select a round, ← → follow its path'):esc(pathName())}${metricAxis()?' · '+esc(L('顺序：','Sequence: ')+label(pathAxis())):''}</div></div></article>`).join('');
+ for(const c of state.charts){const article=document.querySelector(`[data-figure="${c.id}"]`),target=article.querySelector('.lanes'),series=selectedSeries(c);if(c.collapsed)continue;
+  if(!series.length){target.innerHTML=`<div class="empty"><svg class="onboard-art" viewBox="0 0 180 70" aria-hidden="true"><path d="M3 61H177M3 61V5" fill="none" stroke="#d5dfe6"/><path d="M8 47L35 44L62 38L89 13L116 21L143 24L173 19" fill="none" stroke="#3376b9" stroke-width="2"/><path d="M8 17L35 21L62 28L89 36L116 38L143 47L173 48" fill="none" stroke="#c77943" stroke-width="2" stroke-dasharray="5 3"/></svg><h2>${L('把你关心的量放进来','Choose what you want to compare')}</h2><p>${L('点击此图任意空白处或绘图区，然后在左侧勾选 species 或系统状态。再添加一张图，可独立选择其他量。','Select this figure, then choose species or system states on the left. Add another figure to explore different quantities independently.')}</p></div>`;continue;}
+  const groups=[],ss=series.filter(s=>s.kind==='species'),st=series.filter(s=>s.kind==='state');if(ss.length)groups.push({id:'species',title:withUnit(c.measure),series:ss});st.forEach(s=>groups.push({id:s.id,title:withUnit(s.key),series:[s]}));
+  if(c.displayMode==='overlay'&&groups.length>2)article.style.gridColumn='1 / -1';
+  const unavailable=ss.filter(s=>unavailableMeasure(s,c.measure)),alternative=alternativeMeasure(c);
+  const quantityNote=unavailable.length?`<div class="plot-note quantity-note">${esc(unavailable.map(s=>s.name).join('、'))} · ${L('质量摩尔浓度仅用于水相；固相与气相请查看已输出的物质的量或活度。','Molality applies to aqueous species; use the recorded amount or activity for solids and gases.')}${alternative?` <button class="small" data-use-measure="${c.id}" data-measure="${esc(alternative)}">${L('改看','Show')} ${esc(withUnit(alternative))}</button>`:''}</div>`:'';
+  const W=Math.max(290,article.clientWidth-2),lanes=c.displayMode==='overlay'&&groups.length>1?[{id:'overlay',title:L('同图叠加','Overlaid quantities'),series,axes:groups}]:groups;
+  target.innerHTML=quantityNote+lanes.map(g=>drawLane(c,g,W,lanes.length)).join('');
+ }
+ restoreViewport(viewport);
+}
+function drawLane(c,g,containerWidth,count){
+ const gi=plotSpecs.length,groups=g.axes||[g],multi=groups.length>1;
+ // Additional raw quantities get additional, explicitly labelled axes.
+ // Keep a usable plot width; narrow cards scroll instead of crushing labels.
+ const Lft=70,R=multi?Math.max(1,groups.length-1)*76+8:18;
+ const W=Math.max(containerWidth,250+Lft+R),T=multi?28:14,B=43;
+ const factor=c.size==='compact'?.76:c.size==='large'?1.4:1;
+ const H=Math.round(Math.max(180,(count>1?(g.id==='species'?250:195):clamp(containerWidth*.46,260,Math.min(400,Math.max(260,$('chart-scroll').clientHeight-190))))*factor));
+ const xLog=state.xScale==='log',xValues=shownPointIds().filter(drawableX).map(i=>xValue(i)),extent=xValues.length?[Math.min(...xValues),Math.max(...xValues)]:(xLog?[1,10]:[0,1]);
+ let xlo=state.zoom?.[0]??extent[0],xhi=state.zoom?.[1]??extent[1];
+ if(xLog&&(xlo<=0||xhi<=0)){xlo=extent[0];xhi=extent[1];}
+ let txlo=xLog?Math.log10(xlo):xlo,txhi=xLog?Math.log10(xhi):xhi;
+ const xpad=(txhi-txlo)*.035||(xLog?.15:Math.abs(txlo)*.02||.5);txlo-=xpad;txhi+=xpad;
+ xlo=xLog?10**txlo:txlo;xhi=xLog?10**txhi:txhi;
+
+ const frac=(v,lo,hi)=>finite(hi-lo)?(v-lo)/(hi-lo):(v/2-lo/2)/(hi/2-lo/2);
+ const reversed=state.xDirection==='desc';
+ const xp=x=>Lft+(reversed?1-frac(xLog?Math.log10(x):x,txlo,txhi):frac(xLog?Math.log10(x):x,txlo,txhi))*(W-Lft-R),inView=i=>{const x=xValue(i);return drawableX(i)&&x>=xlo&&x<=xhi;};
+ const axes=groups.map((a,j)=>{
+  const log=c.scales[a.id]==='log',paths=seriesPaths(a.series),visible=paths.filter(s=>!c.hidden.includes(s.curveId));
+  const rawVisible=visible.flatMap(s=>s.indices.filter(inView).map(i=>s.values[i]));
+  const rangeValues=c.scaleScope==='global'?a.series.filter(s=>visible.some(p=>p.id===s.id)).flatMap(s=>rowsInFacet.map(i=>s.values[i])):rawVisible;
+  const yd=yDomain(rangeValues,log,c.rangeMode),yp=v=>H-B-frac(log?Math.log10(v):v,yd[0],yd[1])*(H-T-B);
+  const axis={...a,axisId:a.id,index:j,tag:multi?'Y'+(j+1):'',log,yd,yp,color:a.series.length===1?a.series[0].color:'#687b87',paths,visible,rawVisible};
+  paths.forEach(s=>{s.axis=axis;s.coords=new Map();});return axis;
+ });
+ const paths=axes.flatMap(a=>a.paths),visible=axes.flatMap(a=>a.visible);
+ const spec={...g,axes,chartId:c.id,W,H,L:Lft,R,T,B,xlo,xhi,txlo,txhi,xLog,xp,reversed,scatter:scatterChart(c),paths,gi,yd:axes[0].yd,log:axes[0].log,yp:axes[0].yp};plotSpecs.push(spec);
+ let svg=`<defs><clipPath id="clip-${gi}"><rect x="${Lft}" y="${T}" width="${W-Lft-R}" height="${H-T-B}"/></clipPath></defs>`;
+ for(const a of axes){
+  const axisX=a.index===0?Lft:W-R+(a.index-1)*76,anchor=a.index===0?'end':'start',dx=a.index===0?-9:9;
+  if(a.yd)for(const z of axisTicks(a.yd,a.log)){
+   const y=H-B-frac(z,a.yd[0],a.yd[1])*(H-T-B);
+   if(a.index===0)svg+=`<path d="M${Lft} ${y}H${W-R}" class="plot-grid" stroke="#edf0f3"/>`;
+   const tick=a.log&&(z>308||z<-323)?'10^'+nice(z,3):nice(a.log?10**z:z,5);
+   svg+=`<path d="M${axisX} ${y}h${a.index?4:-4}" stroke="${a.color}" opacity=".55"/><text x="${axisX+dx}" y="${y+3}" text-anchor="${anchor}" style="fill:${a.color}">${esc(tick)}</text>`;
+  }
+  svg+=`<path d="M${axisX} ${T}V${H-B}" fill="none" stroke="${a.color}" opacity=".55"/>`;
+  if(multi)svg+=`<text class="axis-title" x="${axisX+(a.index?9:-9)}" y="15" text-anchor="${anchor}" style="fill:${a.color};font-weight:600">${a.tag}</text>`;
+ }
+ for(const tick of axisTicks([txlo,txhi],xLog)){const x=xLog?10**tick:tick;svg+=`<text class="x-tick" x="${xp(x)}" y="${H-B+19}" text-anchor="middle">${esc(nice(x,5))}</text>`;}
+ svg+=`<path d="M${Lft} ${H-B}H${W-R}" fill="none" class="plot-axis" stroke="#b7c3cc"/><text class="axis-title" x="${Lft+(W-Lft-R)/2}" y="${H-4}" text-anchor="middle">${esc(withUnit(state.axis))}</text>`;
+ let missing=0,nonpositive=0;const duplicates=false;
+ spec.duplicates=duplicates;
+ if(!duplicates){svg+=`<g clip-path="url(#clip-${gi})">`;
+  for(const s of visible){
+   const a=s.axis,ordered=s.indices;s.pointPositions=new Map(ordered.map((id,j)=>[id,j]));let d='',pen=false;
+   for(const [at,i] of ordered.entries()){
+    const x=xValue(i),v=i===undefined?NaN:s.values[i];
+    if(!finite(v)||!finite(x)){if(!unavailableMeasure(s,s.key)&&(!finite(x)||inView(i)))missing++;pen=false;continue;}
+    if(xLog&&x<=0){nonpositive++;pen=false;continue;}
+    if(a.log&&v<=0){if(x>=xlo&&x<=xhi)nonpositive++;pen=false;continue;}
+    if(!a.yd)continue;const px=xp(x),py=a.yp(v);s.coords.set(at,{x:px,y:py,id:i});d+=(pen?'L':'M')+px.toFixed(3)+','+py.toFixed(3);pen=true;
+   }
+   svg+=`<g class="series-layer" data-series-curve="${esc(s.curveId)}">`;
+   if(d&&!spec.scatter)svg+=`<path data-curve="${esc(s.curveId)}" d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.pathIndex?1.45:1.8}" stroke-dasharray="${s.dash}" opacity="${s.pathIndex?.75:1}"/>`;
+   const ids=s.indices.filter(inView);
+   for(const i of ids){const at=s.pointPositions.get(i),p=s.coords.get(at);if(!p)continue;const isolated=!s.coords.has(at-1)&&!s.coords.has(at+1);
+    svg+=`<circle data-sample="${i}" cx="${p.x}" cy="${p.y}" r="${ids.length<180||isolated?2.8:1.7}" fill="${s.pathIndex?'white':s.color}" fill-opacity="${s.pathIndex?1:.8}" stroke="${s.color}" stroke-width=".7"/>`;
+   }svg+='</g>';
+  }svg+='</g>';
+ }
+ const messages=[];
+ if(missing)messages.push(missing+L(' 组 X/Y 缺失，未绘制',' X/Y pairs missing; omitted'));
+ if(nonpositive)messages.push(nonpositive+L(' 个非正值不适用于对数轴',' nonpositive values excluded from log scale'));
+ if(duplicates)messages.push(L('横轴值重复，未混接；请改用步骤或记录顺序。','Duplicate X values are not connected. Use steps or record order.'));
+ if(!axes.some(a=>a.yd)||duplicates)svg+=`<text class="axis-title" x="${Lft+(W-Lft-R)/2}" y="${H/2}" text-anchor="middle">${esc(!visible.length?L('曲线全部已隐藏','All curves hidden'):duplicates?L('横轴不能唯一标识这些点','Non-unique X coordinates'):L('没有可绘制数值','No plottable values'))}</text>`;
+ if(multi)for(const a of axes.filter(a=>!a.yd))messages.push(a.tag+' '+a.title+L('：无可绘制值或已隐藏',' — no plottable values or hidden'));
+ svg+=`<g class="focus-overlay" clip-path="url(#clip-${gi})"></g><rect class="hit-area" data-plot="${gi}" x="${Lft}" y="${T}" width="${W-Lft-R}" height="${H-T-B}" fill="transparent"/>`;
+ const legend=paths.map(s=>`<button data-legend="${esc(s.curveId)}" data-chart="${c.id}" data-gi="${gi}" class="${c.hidden.includes(s.curveId)?'off':''}" aria-pressed="${!c.hidden.includes(s.curveId)}" title="${L('悬停高亮；单击显示 / 隐藏','Hover to highlight; click to show / hide')}"><svg viewBox="0 0 24 8"><path d="M0 4H24" stroke="${s.color}" stroke-width="2" stroke-dasharray="${s.dash}"/></svg>${multi?'<span class="axis-tag">'+s.axis.tag+'</span>':''}${esc(seriesName(s))}${s.pathIndex?' · '+esc(s.pathLabel):''}</button>`).join('');
+ const controls=axes.map(a=>`<label class="axis-control"><span title="${esc(a.title)}">${multi?`<b>${a.tag}</b> · `:''}${esc(a.title)}</span><select data-scale="${esc(a.id)}" data-chart="${c.id}" aria-label="${esc(chartName(c)+' · '+a.title+' '+L('纵轴','Y scale'))}">${option('linear',L('线性','Linear'),a.log?'log':'linear')}${option('log',L('对数','Log'),a.log?'log':'linear')}</select></label>`).join('');
+ const scaleLabel=c.rangeMode==='detail'?L('局部放大纵轴：视觉起伏不等于变化幅度大','Detail scale: visual steepness does not imply a large change'):L('基准尺度：线性轴包含 0；对数轴至少显示一个数量级','Context scale: linear axes include 0; log axes show at least one decade');
+ const scopeLabel=c.scaleScope==='global'?L('跨条件统一范围','same range across conditions'):L('当前视野范围','visible-data range');
+ const axisNote=multi?L('原值多轴；Y1、Y2…各自有单位与刻度，曲线高度不能直接互相比数值。','Raw-value overlay: Y1, Y2… have separate units and scales; curve heights are not directly comparable.'):'';
+ return `<section class="lane" data-panel="${esc(g.id)}"><div class="axis-controls">${controls}</div><div class="legend">${legend}</div><div class="scale-note ${c.rangeMode==='detail'?'detail-scale':''}">${esc(scaleLabel)} · ${esc(scopeLabel)}</div>${axisNote?`<div class="axis-note">${axisNote}</div>`:''}<div class="plot-viewport" data-viewkey="${c.id}:${esc(g.id)}"><svg xmlns="http://www.w3.org/2000/svg" class="chart" role="img" aria-label="${esc(g.title+' / '+withUnit(state.axis))}" style="min-width:${W}px" viewBox="0 0 ${W} ${H}" data-gi="${gi}">${svg}</svg></div>${messages.length?`<div class="plot-note">${esc(messages.join(' · '))}. ${spec.scatter?L('重复横轴值保留；完全相同的 X/Y 会重叠。','Repeated X values are retained; identical X/Y pairs overlap.'):L('缺失处不连线。','Gaps are not connected.')}</div>`:''}</section>`;
+}
+
+// Cursor updates touch only the lightweight overlays and numeric inspector.
+function updatePoint(){
+ const id=activeId(),p=model.points[id],index=p?slice.indexOf(id):-1,x=xValue(id);
+ const screenIndex=screenPointIndex(index<0?state.index:index);
+ $('point-slider').max=Math.max(0,slice.length-1);$('point-slider').value=Math.max(0,screenIndex);$('point-slider').disabled=slice.length<2;
+ $('previous-point').disabled=screenIndex<=0;$('next-point').disabled=screenIndex<0||screenIndex>=slice.length-1;
+ $('position-label').textContent=p?nice(x)+' '+unit(state.axis):'—';$('position-index').textContent=`${screenIndex+1} / ${slice.length}`;
+ $('point-slider').setAttribute('aria-valuetext',$('position-label').textContent);updateBrowseControls();
+ $('point-mode').textContent=hovering===null?L('当前采样点','Current sample'):L('鼠标预览 · 单击固定','Hover preview · click to select');
+ $('point-heading').textContent=p?nice(x)+' '+unit(state.axis):'—';
+ $('coordinates').innerHTML=p?model.dims.filter(k=>k!==state.axis).map(k=>`<span><span class="muted">${esc(label(k))}</span> <span class="number">${esc(nice(num(p[k])))}</span> ${esc(unit(k))}</span>`).join(''):'';
+ $('set-reference').disabled=!p;$('bookmark-point').disabled=!p;$('clear-reference').classList.toggle('hide',state.reference===null);
+ const bookmarked=state.bookmarks.includes(id);$('bookmark-point').textContent=bookmarked?'★ '+L('已收藏','Saved'):'☆ '+L('收藏','Bookmark');$('bookmark-point').setAttribute('aria-pressed',String(bookmarked));$('bookmark-point').title=bookmarked?L('取消此点收藏','Remove this bookmark'):L('收藏当前点','Bookmark this point');
+ $('reference-label').textContent=state.reference!==null?L('参考：','Reference: ')+pointName(state.reference):sampleOrder()?L('Δ = 当前点 − 采样顺序中的上一点','Δ = current sample − previous sample in the sequence'):L('Δ = 当前点 − 横轴值相邻较小点','Δ = current sample − adjacent lower-X sample');
+ $('inspector-chart').textContent=chartName(chart());
+ const series=selectedSeries(),pointPath=allPaths.find(g=>g.indices.includes(id))?.indices||slice,pointIndex=pointPath.indexOf(id),ref=state.reference!==null?state.reference:pointIndex>0?pointPath[pointIndex-1]:null;
+ $('values').innerHTML=!p?`<p class="onboard-tip">${L('该条件下没有记录','No records for this condition')}</p>`:series.length?series.map(s=>{const v=s.values[id],base=ref===null?NaN:s.values[ref],delta=finite(v)&&finite(base)?v-base:NaN;return `<div class="value-row"><div class="value-label"><span class="dot" style="--series:${s.color};margin-top:4px"></span><span>${esc(s.name)}${s.kind==='species'?'<span class="choice-sub">'+esc(label(s.key))+'</span>':''}</span></div><div class="value-main number" title="${esc(finite(v)?v:unavailableMeasure(s,s.key)?L('此指标仅用于水相','Aqueous-only quantity'):L('源数据缺失','Missing in source'))}">${esc(nice(v,8))} <span class="unit">${esc(s.unit)}</span></div><div class="value-delta" title="${esc(finite(delta)?delta:L('没有比较值','No comparison value'))}">Δ ${esc(signed(delta))}${finite(v)&&v<=0&&chart().scales[s.kind==='species'?'species':s.id]==='log'?' · '+L('此值不显示在对数轴','not shown on log axis'):''}</div></div>`;}).join(''):`<p class="onboard-tip">${L('从左侧为此图选择数据，这里同步显示原值与差值。','Select data for this figure on the left. Raw values and differences appear here.')}</p>`;
+ if(p&&!drawableX(id))$('values').insertAdjacentHTML('afterbegin',`<p class="warning">${finite(x)?L('当前点的横轴值不大于 0，不能显示在对数轴上。','This sample’s X value is not positive and cannot appear on a log axis.'):L('当前点缺少横轴数值，因此未绘制；仍可沿采样顺序查看其他指标。','This sample has no X value and is not drawn; its other values remain available in sample order.')}</p>`);
+ if(p&&!model.valid[id])$('values').insertAdjacentHTML('afterbegin',`<p class="warning">${L('此点带有求解失败标记，不参与绘图或变化筛选。','This sample is marked as a solver failure and is excluded from plots and change scans.')}</p>`);
+ if($('all-values-details').open)renderAllValues();
+ for(const spec of plotSpecs){const overlay=document.querySelector(`svg[data-gi="${spec.gi}"] .focus-overlay`);if(!overlay)continue;let content='';
+  if(p&&drawableX(id)){const onPath=q=>q&&[...fixedKeys(),...model.facets].every(k=>same(q[k],p[k]));
+   if(state.interval){const a=model.points[state.interval.a],b=model.points[state.interval.b];if(onPath(a)&&onPath(b)&&finite(xValue(state.interval.a))&&finite(xValue(state.interval.b))){const x1=spec.xp(xValue(state.interval.a)),x2=spec.xp(xValue(state.interval.b));content+=`<rect x="${Math.min(x1,x2)}" y="${spec.T}" width="${Math.abs(x2-x1)}" height="${spec.H-spec.T-spec.B}" fill="#3376b9" opacity=".12"/>`;}}
+   content+=`<line x1="${spec.xp(x)}" x2="${spec.xp(x)}" y1="${spec.T}" y2="${spec.H-spec.B}" class="cursor-line"/>`;
+   if(state.reference!==null){const rp=model.points[state.reference];if(onPath(rp)&&finite(xValue(state.reference)))content+=`<line x1="${spec.xp(xValue(state.reference))}" x2="${spec.xp(xValue(state.reference))}" y1="${spec.T}" y2="${spec.H-spec.B}" stroke="#b28c35" stroke-width="1" stroke-dasharray="6 4"/>`;}
+   const c=state.charts.find(c=>c.id===spec.chartId);if(!spec.duplicates)for(const a of spec.axes){if(!a.yd)continue;for(const s of a.series){const v=s.values[id];if(finite(v)&&(!a.log||v>0)&&spec.paths.some(path=>path.id===s.id&&path.indices.includes(id)&&!c.hidden.includes(path.curveId)))content+=`<circle cx="${spec.xp(x)}" cy="${a.yp(v)}" r="4.4" fill="white" stroke="${s.color}" stroke-width="1.7"/>`;}}
+  }overlay.innerHTML=content;
+ }
+}
+function renderAllValues(){$('all-state-values').innerHTML=Object.entries(model.points[activeId()]||{}).map(([k,v])=>`<div class="value-row"><div class="note">${esc(k)}</div><div class="mono" style="overflow-wrap:anywhere" title="${esc(v)}">${esc(finite(num(v))?nice(num(v),9):v??'—')}</div></div>`).join('');}
+function findChanges(series,paths,method,threshold){
+ const result=[];let skipped=0;
+ for(const path of paths){const ordered=path.indices;
+  for(let j=1;j<ordered.length;j++){const a=ordered[j-1],b=ordered[j];if(a===undefined||b===undefined||!finite(xValue(a))||!finite(xValue(b))){skipped++;continue;}const va=series.values[a],vb=series.values[b];if(!finite(va)||!finite(vb)){skipped++;continue;}
+   let score;if(method==='ratio'){if(va<=0||vb<=0){skipped++;continue;}score=Math.abs(Math.log10(vb)-Math.log10(va));}
+   else if(method==='threshold'){if(!finite(threshold))continue;const cross=(va<threshold&&vb>=threshold)||(va>threshold&&vb<=threshold)||(va===threshold&&vb!==threshold);if(!cross)continue;score=Math.abs(vb-va);}
+   else score=Math.abs(vb-va);
+   if(method!=='threshold'&&score===0)continue;result.push({a,b,va,vb,score,fixed:path.fixed,x1:xValue(a),x2:xValue(b)});
+  }
+ }result.sort((a,b)=>b.score-a.score||a.a-b.a);return {items:result,skipped};
+}
+function renderLocator(){
+ const ss=selectedSeries();if(!ss.some(s=>s.id===state.changeSeries))state.changeSeries=ss[0]?.id||'';
+ $('change-series').innerHTML=ss.length?ss.map(s=>option(s.id,s.name+(s.kind==='species'?' · '+label(s.key):''),state.changeSeries)).join(''):option('',L('先为此图加入曲线','Add a series to this figure'));
+ $('change-method').value=state.changeMethod;$('change-scope').value=state.changeScope;$('threshold').value=state.threshold;$('threshold-wrap').classList.toggle('hide',state.changeMethod!=='threshold');
+ const focus=ss.find(s=>s.id===state.changeSeries);$('change-series').disabled=!focus;
+ if(!focus){changeMatches=[];$('change-results').innerHTML=`<p class="onboard-tip">${L('点击变化区间，所有图会一起跳到该条件与采样点。','Click a change interval to move all figures to its condition and sample.')}</p>`;return;}
+ const result=findChanges(focus,state.changeScope==='all'?allPaths:[{fixed:state.fixed,indices:slice}],state.changeMethod,num(state.threshold));changeMatches=result.items;
+ const pageSize=6,pageCount=Math.max(1,Math.ceil(changeMatches.length/pageSize));state.changePage=clamp(state.changePage,0,pageCount-1);const start=state.changePage*pageSize,shown=changeMatches.slice(start,start+pageSize);
+ const count=changeMatches.length?`${start+1}–${start+shown.length} / ${changeMatches.length} ${L('区间','intervals')}`:L('没有符合条件的相邻区间','No matching adjacent intervals');
+ $('change-results').innerHTML=`<div class="result-count">${count}</div>`+shown.map((r,j)=>`<button class="change-item" data-change="${start+j}"><div class="number">${esc(nice(r.x1))} → ${esc(nice(r.x2))} ${esc(unit(state.axis))}</div><div class="change-value">${state.changeScope==='all'?esc(pathName(r.fixed))+'<br>':''}${esc(nice(r.va,5))} → ${esc(nice(r.vb,5))}${state.changeMethod==='ratio'?' · '+(r.score>300?'10^'+nice(r.score,5):nice(10**r.score,4))+'×':''}</div></button>`).join('')+(pageCount>1?`<div class="pager"><button id="changes-prev" class="small" ${!state.changePage?'disabled':''}>‹ ${L('上一页','Prev')}</button><span class="note">${state.changePage+1} / ${pageCount}</span><button id="changes-next" class="small" ${state.changePage>=pageCount-1?'disabled':''}>${L('下一页','Next')} ›</button></div>`:'')+`<p class="note" style="margin-top:8px">${state.changeMethod==='ratio'?L('按 |Δlog₁₀ y| 排序；只比较两端正值。','Ranked by |Δlog₁₀ y|; positive endpoints only.'):state.changeMethod==='threshold'?L('跨越或接触阈值的采样区间。','Sample intervals crossing or touching the threshold.'):L('按 |Δy| 排序，不除以步长。','Ranked by |Δy|, not divided by step size.')}${result.skipped?' '+result.skipped+' '+L('个不适用区间已跳过。','unavailable intervals skipped.'):''}</p>`;
+}
+function renderBookmarks(){$('bookmark-count').textContent=state.bookmarks.length;$('bookmarks').innerHTML=state.bookmarks.map((id,j)=>`<div class="bookmark"><button class="jump" data-bookmark="${id}">${esc(pointName(id))}</button><button class="quiet small" data-remove-bookmark="${j}" aria-label="${L('删除书签','Delete bookmark')}">×</button></div>`).join('')||`<p class="note">${L('在感兴趣的点点击 ☆。','Click ☆ at a point of interest.')}</p>`;}
+function jumpTo(id){const p=model.points[id];if(!p)return;stop();cancelPointer();state.zoom=null;state.interval=null;model.facets.forEach(k=>state.facets[k]=p[k]);configurePaths();state.fixed=Object.fromEntries(fixedKeys().map(k=>[k,p[k]]));configurePaths();state.index=Math.max(0,slice.indexOf(id));state.changePage=0;render(false);}
+function render(reconfigure=true){const viewport=captureViewport();if(reconfigure)configurePaths();cancelPointer();renderNavigation();renderLibrary();renderPlots();renderLocator();renderBookmarks();updatePoint();restoreViewport(viewport);viewSequence++;}
+
+// File import is transactional: an invalid import never replaces the working data.
+function toast(message,undo=null){clearTimeout(toastTimer);undoAction=undo;$('toast').innerHTML=`<span>${esc(message)}</span>${undo?`<button id="undo">${L('撤销','Undo')}</button>`:''}`;$('toast').classList.remove('hide');toastTimer=setTimeout(()=>{$('toast').classList.add('hide');undoAction=null;},undo?15000:5500);}
+function showDialog(id){endHeldNavigation();stop();cancelPointer();if(model)updatePoint();$(id).showModal();}
+function safeName(name,ext){name=String(name).trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g,'_').slice(0,180)||'Result Explorer';return name.toLowerCase().endsWith('.'+ext)?name:name+'.'+ext;}
+function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+function csvCell(v){let s=String(v??'');if(typeof v==='string'&&/^[=+@\-\t\r]/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replaceAll('"','""')+'"':s;}
+async function exportCSV(){
+ const c=chart(),ss=selectedSeries(),keys=unique([...model.facets,...model.dims,model.rowAxis]),axis=model.byAxis.get(state.axis);
+ const xExtra=axis&&!ss.some(s=>axis.species?s.id===axis.species.id&&s.key===axis.key:s.id===axis.id);
+ const header=[...keys,...(xExtra?[axis.species?`${axis.species.name} [${axis.species.phase}] / ${axis.key}`:axis.key]:[]),...ss.map(s=>s.kind==='species'?`${s.name} [${s.phase}] / ${s.key}`:s.key)];
+ const rows=shownPointIds().map(id=>[...keys.map(k=>model.points[id][k]),...(xExtra?[finite(xValue(id))?xValue(id):'']:[]),...ss.map(s=>finite(s.values[id])?s.values[id]:'')]);
+ const saved=await download(new Blob(['\uFEFF'+[header,...rows].map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),safeName(chartName(c),'csv'));if(saved===false)return;
+ toast(L('已导出当前展示范围的全部采样点，包含横轴及图例隐藏的已选量。','Exported all samples in the shown conditions, including X values and selected quantities hidden in the legend.'));
+}
+function svgText(text,x,y,width,font=12,color='#233340'){
+ const max=Math.max(8,Math.floor(width/(font*.62))),lines=[];let current='',size=0;for(const ch of String(text)){const w=ch.charCodeAt(0)>255?1.7:1;if(size+w>max&&current){lines.push(current);current='';size=0;}current+=ch;size+=w;}if(current)lines.push(current);
+ return {height:Math.max(1,lines.length)*(font+5),svg:lines.map((line,i)=>`<text x="${x}" y="${y+i*(font+5)}" font-family="Arial, sans-serif" font-size="${font}" fill="${color}">${esc(line)}</text>`).join('')};
+}
+async function exportFigure(id){
+ stop();cancelPointer();const priorTheme=document.documentElement.dataset.theme;document.documentElement.dataset.theme='light';const c=state.charts.find(c=>c.id===id),wasCollapsed=c.collapsed;c.collapsed=false;renderPlots();updatePoint();
+ const specs=plotSpecs.filter(s=>s.chartId===id);if(!specs.length){document.documentElement.dataset.theme=priorTheme || 'system';c.collapsed=wasCollapsed;renderPlots();updatePoint();toast(L('先为此图选择数据。','Select data for this figure first.'));return;}
+ const W=specs[0].W;let y=24,body='';const add=(text,size=12,color='#233340',x=16)=>{const t=svgText(text,x,y,W-x-16,size,color);body+=t.svg;y+=t.height;};
+ add(chartName(c),16);add(contextName(),10,'#687b87');if(metricAxis())add(L('采样顺序：','Sample order: ')+withUnit(pathAxis()),10,'#687b87');y+=8;
+ for(const spec of specs){add(spec.title,12);for(const a of spec.axes)add((a.tag?a.tag+' · ':'')+a.title+' · '+(a.log?L('对数','Log'):L('线性','Linear')),10);add(c.rangeMode==='detail'?L('局部放大纵轴','Detail Y scale'):L('基准尺度','Context Y scale'),10,'#687b87');if(spec.axes.length>1)add(L('原值多轴；曲线高度不能直接互相比数值。','Raw values on separate axes; curve heights are not directly comparable.'),10,'#687b87');for(const s of spec.paths.filter(s=>!c.hidden.includes(s.curveId))){body+=`<path d="M16 ${y-4}H36" stroke="${s.color}" stroke-width="2" stroke-dasharray="${s.dash}"/>`;add((s.axis.tag?s.axis.tag+' · ':'')+seriesName(s)+(s.pathIndex?' · '+s.pathLabel:''),10,'#233340',43);}const svg=document.querySelector(`svg[data-gi="${spec.gi}"]`).cloneNode(true);svg.querySelectorAll('.hit-area').forEach(n=>n.remove());svg.setAttribute('x','0');svg.setAttribute('y',String(y));svg.setAttribute('width',W);svg.setAttribute('height',spec.H);body+=new XMLSerializer().serializeToString(svg);y+=spec.H+4;const note=document.querySelector(`svg[data-gi="${spec.gi}"]`).closest('.lane').querySelector('.plot-note');if(note)add(note.textContent,10,'#886127');y+=12;}
+ const styles='<style>.chart text{fill:#687b87;font-family:monospace;font-size:10.5px}.chart .axis-title{font-family:Arial,sans-serif;font-size:11px}.cursor-line{stroke:#486a80;stroke-width:1;stroke-dasharray:3 3}</style>';
+ const output=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${y+8}" viewBox="0 0 ${W} ${y+8}"><title>${esc(chartName(c))}</title><desc>${esc(contextName())}</desc>${styles}<rect width="100%" height="100%" fill="white"/>${body}</svg>`;
+ document.documentElement.dataset.theme=priorTheme || 'system';c.collapsed=wasCollapsed;renderPlots();updatePoint();await download(new Blob([output],{type:'image/svg+xml;charset=utf-8'}),safeName(chartName(c),'svg'));
+}
+async function fileText(f){if(f.name.toLowerCase().endsWith('.gz')){if(!globalThis.DecompressionStream)throw new Error(L('浏览器不支持 gzip，请先解压 CSV。','This browser cannot decompress gzip. Uncompress the CSV first.'));return new Response(f.stream().pipeThrough(new DecompressionStream('gzip'))).text();}return f.text();}
+async function decodePayload(text,encoding){
+ if(encoding==='json')return JSON.parse(text);
+ if(encoding!=='gzip-base64')throw new Error(L('工作区编码不受支持。','Unsupported workspace encoding.'));
+ if(!globalThis.DecompressionStream)throw new Error(L('浏览器缺少 gzip 解压功能。','This browser lacks gzip decompression.'));
+ const bytes=Uint8Array.from(atob(text.trim()),c=>c.charCodeAt(0));return JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+}
+async function readFiles(files){
+ if(!files.length)throw new Error(L('请先选择文件。','Choose files first.'));let summary=null,species=[],metadata={},sources=[],standalone=null;
+ for(const f of files){const text=await fileText(f);sources.push({name:f.name,size:f.size,last_modified:new Date(f.lastModified).toISOString()});
+  if(/\.html?$/i.test(f.name)){
+   // Extract only the inert payload; never evaluate scripts from an imported HTML.
+   const match=text.match(/<script\b([^>]*\bid=["']payload["'][^>]*)>([\s\S]*?)<\/script\s*>/i),encoding=match?.[1].match(/data-encoding=["']([^"']+)["']/i)?.[1]||'json';
+   if(!match||!match[2].trim())throw new Error(L('此 HTML 不含已保存的结果数据。','This HTML does not contain saved result data.'));
+   if(standalone)throw new Error(L('请一次只打开一个工作区。','Open one workspace at a time.'));standalone=await decodePayload(match[2],encoding);continue;
+  }
+  if(f.name.toLowerCase().endsWith('.json')){const p=JSON.parse(text);if(!object(p))throw new Error(L('文件内容无法识别，请选择结果文件或配套的数据说明文件。','Select a result file or its data description file.'));if(p.format==='result-explorer-1'){if(standalone)throw new Error(L('一次只能打开一组 JSON 结果。','Open one Explorer JSON result at a time.'));standalone=p;}else{if(Object.keys(metadata).length)throw new Error(L('每次只选择一份配套的数据说明文件。','Select only one data description file.'));metadata=p;}continue;}
+  const t=parseCSV(text);
+  if(/^transfers?\.csv(?:\.gz)?$/i.test(f.name)||['rule','source','fraction','species'].every(k=>t.columns.includes(k)))throw new Error(L('此文件记录反应前的物料转移，不是平衡后的物种结果。请选择水相、矿物或气相结果表：','This file records material transfers before reaction, not equilibrium species. Choose aqueous, mineral or gas result tables: ')+f.name);
+  if(/failure|audit|balance/i.test(f.name))throw new Error(L('此文件不是状态汇总或物种表：','Not a state summary or species table: ')+f.name);
+  if(t.columns.includes('species'))species.push(t);else{if(summary)throw new Error(L('请选择一个状态汇总文件。','Select only one state summary.'));summary=t;}
+ }
+ if(standalone){if(files.length!==1)throw new Error(L('工作区 / JSON 自带全部表，请单独打开。','Workspace / JSON contains all tables; open it alone.'));return standalone;}
+ if(!summary)throw new Error(L('缺少状态汇总 CSV。','Missing state summary CSV.'));
+ const split=id=>$(id).value.split(',').map(s=>s.trim()).filter(Boolean),keys=split('custom-keys'),dims=split('custom-dimensions');
+ return {format:'result-explorer-1',name:files.find(f=>/summary/i.test(f.name))?.name||files[0].name,summary,species_tables:species,metadata,sources,...(keys.length?{key_columns:keys}:{}),...(dims.length?{dimension_columns:dims}:{})};
+}
+async function encodePayload(payload){const text=JSON.stringify(payload);if(!globalThis.CompressionStream)return {encoding:'json',text};const compressed=new Uint8Array(await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());let binary='';for(let i=0;i<compressed.length;i+=32768)binary+=String.fromCharCode(...compressed.subarray(i,i+32768));return {encoding:'gzip-base64',text:btoa(binary)};}
+async function saveWorkspace(){
+ stop();const b=$('save-confirm');b.disabled=true;b.textContent=L('打包中…','Packing…');
+ try{state.language=language;const scope=workspaceScope(),view=copy(state),filename=safeName($('workspace-filename').value,'html'),encoded=await encodePayload({...rawPayload,metadata:{...(object(rawPayload.metadata)?rawPayload.metadata:{}),workspace_scope:scope},view}),clone=document.documentElement.cloneNode(true),node=clone.querySelector('#payload');
+  node.dataset.encoding=encoded.encoding;node.textContent=encoded.text.replace(/</g,'\\u003c');clone.querySelector('#app').innerHTML='';clone.querySelector('#loading').classList.remove('hide');clone.querySelector('#toast').innerHTML='';clone.querySelector('#toast').classList.add('hide');clone.querySelector('#curve-tooltip').innerHTML='';clone.querySelector('#curve-tooltip').classList.add('hide');
+  const saved=await download(new Blob(['<!doctype html>\n'+clone.outerHTML],{type:'text/html;charset=utf-8'}),filename);if(saved===false)return;$('save-dialog').close();toast(L('已保存工作区：','Saved workspace: ')+workspaceScopeLabel(scope)+L('；包含全部载入数据和图表设置。','; includes all loaded data and figure settings.'));
+ }catch(e){toast(L('保存失败：','Save failed: ')+e.message);}finally{b.disabled=false;b.textContent=L('下载 HTML','Download HTML');}
+}
+function showSource(){
+ const meta=object(rawPayload.metadata)?rawPayload.metadata:{},db=object(meta.database)?meta.database:{},config=object(meta.config)?meta.config:{};
+ const readable=value=>typeof value==='string'||typeof value==='number'&&Number.isFinite(value),label=(...values)=>values.find(value=>readable(value)&&value!=='');
+ const models={nacl_edh:'Extended Debye–Hückel',davies:'Davies',hkf:'HKF',phreeqc:'PHREEQC',ideal:L('理想模型','Ideal model'),peng_robinson:'Peng–Robinson'};
+ const facts=[[L('数据库','Database'),label(db.name,db.embedded_name)],[L('Reaktoro 版本','Reaktoro version'),label(db.runtime_version,meta.reaktoro_version)],[L('水相活度模型','Aqueous activity model'),models[config.activity_model]||config.activity_model],[L('气相模型','Gas model'),models[config.gas_model]||config.gas_model],[L('循环次数','Cycles'),config.cycles],[L('计算方式','Calculation method'),meta.execution?.mode==='custom'?L('自定义 Python 代码','Custom Python code'):meta.execution?.mode==='standard'?L('标准平衡计算','Standard equilibrium calculation'):null]].filter(([,value])=>readable(value)&&value!=='');
+ const files=Array.isArray(rawPayload.sources)?rawPayload.sources.filter(item=>typeof item==='string'||object(item)):[],ions=Array.isArray(meta.ion_size_audit)?meta.ion_size_audit.filter(object):[];
+ const rows=items=>'<dl class="source-facts">'+items.map(([name,value])=>'<div><dt>'+esc(name)+'</dt><dd>'+esc(String(value))+'</dd></div>').join('')+'</dl>';
+ const fileRows=files.map(item=>{const name=typeof item==='string'?item:label(item.name,item.path)||L('未命名文件','Unnamed file');const size=typeof item.size==='number'&&Number.isFinite(item.size)&&item.size>=0?(item.size/1024).toFixed(1)+' KB':'';return [name,size||L('大小未记录','Size not recorded')];});
+ $('source-info').innerHTML='<p><strong>'+esc(rawPayload.name||L('计算结果','Results'))+'</strong></p><p class="note">'+model.points.length+' '+L('计算点','calculation points')+' · '+model.linked.toLocaleString()+' '+L('条物种记录','species records')+' · '+model.valid.filter(x=>!x).length+' '+L('个未成功的计算点','unsuccessful points')+'</p>'+rows(facts)+'<h3>'+L('来源文件','Source files')+'</h3>'+(fileRows.length?rows(fileRows):'<p class="note">'+L('结果中未记录文件名称。','Filenames were not recorded in these results.')+'</p>')+'<h3>'+L('如何对应计算点','Matching calculation points')+'</h3><p class="note">'+L('状态和物种数据根据以下条件对应：','State and species data are matched using: ')+'</p><p>'+unique(model.identities.flat()).map(k=>esc(withUnit(k))).join(' · ')+'</p>'+(ions.length?'<details><summary>'+L('离子尺寸与来源','Ion sizes and sources')+'</summary>'+rows(ions.map(item=>[label(item.species,item.name)||'—',(label(item.a_angstrom)??'—')+' Å · '+(label(item.source,item.reference,item.reason)||L('来源未记录','Source not recorded'))]))+'</details>':'')+(Array.isArray(meta.warnings)?meta.warnings.filter(readable).map(note=>'<p class="note">'+esc(note)+'</p>').join(''):'')+'<p class="note">'+L('此处显示保存时记录的信息。完整设置随计算结果保存。','This information was recorded when the results were saved. Full settings are saved with the calculation results.')+'</p>';showDialog('source-dialog');
+}
+
+// The optional notebook adapter is documentation in the HTML, not a dependency.
+const notebookCode = `from pathlib import Path
+import json, math
+
+def explorer_table(frame):
+    def clean(value):
+        if hasattr(value, "item"):
+            value = value.item()
+        if value is None or (isinstance(value, float) and not math.isfinite(value)):
+            return None
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        return str(value)
+    return {
+        "columns": [str(c) for c in frame.columns],
+        "rows": [[clean(v) for v in row]
+                 for row in frame.itertuples(index=False, name=None)],
+    }
+
+# Replace these variable names with your existing result DataFrames.
+payload = {
+    "format": "result-explorer-1",
+    "name": "Simulation results",
+    "summary": explorer_table(summary_df),
+    "species_tables": [explorer_table(species_results_df)],
+    # For separate phase tables, include both in species_tables.
+    # Optional: "key_columns": ["cycle", "step"],
+    # Optional: "dimension_columns": ["reaction_progress"],
+}
+output = Path("results/explorer_results.json")
+output.parent.mkdir(parents=True, exist_ok=True)
+# Exclusive creation: change the filename if it already exists.
+with output.open("x", encoding="utf-8") as handle:
+    json.dump(payload, handle, ensure_ascii=False, allow_nan=False)
+print(output.resolve())`;
+function showHelp(){
+ $('help-content').innerHTML=`<p>${L('① <strong>添加图：</strong>每张图有自己的 species、数值类型和状态量。点击图内任意位置即可选中；在该图的“图设置”中选择叠加或分行。叠加时每个量使用独立且标明单位的纵轴。','① <strong>Add figures:</strong> each has independent species, quantity and state selections. Click anywhere in a figure to select it. Choose overlay or separate lanes in that figure’s settings; overlays give every quantity its own labelled axis.')}</p><p>${L('<strong>横轴与采样顺序：</strong>可用 pH、系统状态或物种数值作为横轴；“沿…比较”决定每条曲线包含哪些采样点。横纵轴始终配对同一个状态点，按采样顺序连线，允许回折和相同横轴值。此时图内播放与 Δ 都按该采样顺序，不会把重复值合并。<br><strong>横轴方向：</strong>在顶部选择“小 → 大”或“大 → 小”，所有图的曲线、刻度与悬停随之改变显示方向，不改变数据、当前点或纵轴范围。使用温度、压力等条件横轴时，左右键与细进度条也按屏幕方向移动，Δ 比较相邻较小横轴值；使用数值横轴时，采样顺序保持不变。指定参考点后，Δ 改为与该点比较。条件播放顺序独立设置。方向会保存在工作区中，并用于 SVG 导出。','<strong>X quantities and sample order:</strong> use pH, another system value or a species quantity on X. The Along selector defines each sample sequence. X and Y always share a state identity; lines follow sample order, retaining turns and duplicate X values. Point playback and Δ follow that sequence without merging repeated values.<br><strong>X-axis direction:</strong> choose Low → High or High → Low at the top. Every figure, tick and hover lookup follows the display direction without changing raw data, the selected sample or Y ranges. With a condition coordinate on X, left/right arrows and the point slider follow screen direction, and Δ compares the adjacent lower-X sample. With a measured quantity on X, sample navigation keeps the chosen sequence. An explicit reference overrides the Δ baseline. Condition playback has its own direction. Workspace saving and SVG export retain the direction.')}</p><p>${L('② <strong>连续浏览：</strong>底部选择温度、压力或轮次等维度，拖进度条或按 ↑ ↓ 切换整组条件。播放同样切换该维度；可反向、调速、循环。没有其他维度时，才退回“图内采样点”。','② <strong>Browse conditions:</strong> choose a dimension at the bottom, such as temperature, pressure or cycle. The main slider, ↑ ↓ and playback change that condition across every figure. Set direction, speed and looping. A single-path dataset falls back to “Sample point”.')}</p><p>${L('③ <strong>图内查看：</strong>悬停曲线显示物种、原始数值、条件和对应纵轴；重叠曲线会列出多个候选。图例悬停可单独高亮。单击图内固定采样点；← → 或细进度条移动采样点。切换条件时，条件横轴保持最近的横轴位置；数值横轴保持最近的采样顺序位置。','③ <strong>Inspect samples:</strong> hover near a curve to identify its species, raw value, condition and axis. Nearby overlapping curves are listed together. Hover a legend entry to highlight its curve. Click selects a sample. Use ← → or the smaller cursor slider. Changing conditions preserves the nearest X position for coordinate axes, or the nearest position in the chosen sample sequence for measured X quantities.')}</p><p>${L('④ <strong>比较：</strong>“叠加此条件”保留当前条件的曲线，再切换其他条件。图例可逐条隐藏。“图设置”可调高度、纵轴范围、顺序或删除；每张图可复制，宽窗口可并排。','④ <strong>Compare:</strong> pin a condition before switching to another. Click legend entries to hide individual curves. Figure settings control height, Y-range scope, order and deletion. Copy figures, or use side-by-side layout on wide windows.')}</p><p>${L('⑤ <strong>定位：</strong>右侧针对正在编辑的图寻找绝对变化、正值倍数变化或阈值区间，可扫描当前情景所有条件。结果可翻页，单击后全部图同步跳转。参考点与书签可以跨条件。收藏后按钮变为实心星号，并更新书签列表；再次点击取消。','⑤ <strong>Locate:</strong> scan a series from the active figure for absolute changes, positive fold changes or threshold crossings, optionally across all conditions in the scenario. Page through matches and click to move every figure together. References and bookmarks can span conditions. A saved point has a filled star and appears in the bookmark list; click again to remove it.')}</p><p>${L('⑥ <strong>保存：</strong>保存工作区下载一份包含当前载入数据、图、语言与位置的 HTML；保存按钮标明点数范围，未载入的轮次或点段不包含在内。原文件不变，刷新未保存的页面会丢失界面修改。SVG 包含标题、图例、条件和当前视野；CSV 输出此图当前条件的所有原始采样点。','⑥ <strong>Save:</strong> download one HTML with all currently loaded data, figures, language and position. The save button shows coverage; unloaded rounds or pages are not included. Originals stay unchanged; reloading without saving loses UI changes. SVG includes title, legend, conditions and the visible view. CSV contains all raw samples at this figure’s current condition.')}</p><hr class="section-separator"><h3>${L('尺度与叠加','Scales and overlays')}</h3><p class="note">${L('默认基准尺度：线性轴包含零，对数轴至少显示一个数量级，并在当前情景内跨条件统一。细小变化不会被自动铺满整个图；需要放大时在该图的“图设置”中选择“局部放大”，图上会明确提示。图设置可改为当前视野范围。多轴叠加便于对照变化位置，但各轴刻度独立，不能依据曲线高度或交点比较不同量的绝对数值。','Default context scale: linear axes include zero, log axes show at least one decade, and ranges stay consistent across conditions in the scenario. Small changes are not automatically expanded to fill the plot. Choose Detail scale explicitly when needed; the chart labels this magnification. Figure settings can limit the range to visible data. Multi-axis overlays align locations, but independent scales mean heights and crossings cannot compare absolute values across quantities.')}</p><h3>${L('数据与限制','Data and limits')}</h3><p class="note">${L('自动识别表中的 species、数值列和常用条件维度；不内置任何体系或元素预设。未知单位保留字段原名。自定义条件可在导入时填写。状态表没有 species 列；物种表必须含 species 和足以唯一匹配状态的匹配列。标识字符串（如 001）保持原义。','Species, numeric columns and common condition dimensions are discovered from the tables; no chemistry or element presets. Unknown units keep the raw field name. Specify custom dimensions at import. The summary has no species column. Species tables need species and join keys that uniquely identify each state. String identifiers such as 001 remain distinct.')}</p><p class="note">${L('保留双精度原值；缺失值与对数非正值不连线。相同情景的横轴采样点并集用于识别缺口；不规则路径可能显示断线，建议用步骤或记录顺序。求解失败标记 false / 0 会被排除；未导出的失败点无法恢复。全部为空、且未知含义的列不会被猜作数值列。','Double-precision values are preserved. Missing or log-incompatible values break lines. The union of sampled X values in a scenario identifies gaps; irregular paths may show breaks, so use steps or record order. Samples marked failed (false / 0) are excluded; unexported failures cannot be recovered. Unknown all-empty columns are not guessed to be numeric.')}</p><p class="note">${L('绝对变化不除以步长；倍数变化只用于正值。变化排名是导航辅助，不代表科学显著性或精确相界。本工具不检验原模型、不调用求解器、不自动监控 Notebook。重算后重新打开导出的结果。大规模数据受浏览器内存与绘图数量限制。','Absolute changes are not divided by step size; fold changes require positive values. Rankings aid navigation, not scientific significance or exact phase boundaries. This tool does not validate the model, call a solver, or watch a notebook. Reopen exported results after a new run. Large datasets are limited by browser memory and figure count.')}</p><details><summary>${L('Notebook 接入：不需要额外 Python 模块','Notebook integration: no extra Python module')}</summary><p class="note">${L('已有 CSV 时直接打开，无需运行下面代码。如需从内存中的 DataFrame 导出，修改变量名后运行，再用“打开结果”选择 JSON。此代码不调用 Reaktoro；文件存在时会停止以防覆盖。','Open existing CSV files directly. To export in-memory DataFrames, adapt the variable names below, run it and open the JSON using Open results. It does not call Reaktoro and refuses to overwrite existing files.')}</p><pre id="notebook-code">${esc(notebookCode)}</pre><button id="copy-notebook" class="small">${L('复制代码','Copy code')}</button></details><p class="note">Result Explorer for Reaktoro 2.2 · ${L('单文件 · 离线 · 本地只读 · 中文 / English','Single file · offline · local read-only · 中文 / English')}</p>`;showDialog('help-dialog');
+}
+
+// Delegated handlers survive language switches. Range keyboard behavior is
+// intercepted explicitly: ↑/↓ browse CONDITIONS, ←/→ move the POINT cursor.
+document.addEventListener('keydown',e=>{
+ if(!model||document.querySelector('.workspace')?.hidden||document.querySelector('dialog[open]')||e.altKey||e.ctrlKey||e.metaKey||e.target.closest('[role="separator"]'))return;
+ const tag=e.target.tagName,isRange=tag==='INPUT'&&e.target.type==='range';
+ if((['INPUT','SELECT','TEXTAREA'].includes(tag)&&!isRange)||e.target.isContentEditable)return;
+ if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();stop();if(e.key==='ArrowLeft'||e.key==='ArrowRight')movePointOnScreen(e.key==='ArrowRight'?1:-1);else moveBrowse(e.key==='ArrowDown'?1:-1);}
+ else if(e.code==='Space'&&tag!=='BUTTON'){e.preventDefault();play();}
+},true);
+const navigationButtons=new Set(['previous-condition','next-condition','previous-point','next-point']);
+let heldNavigation=null,heldClick=null;
+function endHeldNavigation(){if(heldNavigation){clearTimeout(heldNavigation.timer);heldNavigation=null;}}
+function consumeHeldClick(id){if(heldClick?.id===id&&Date.now()<heldClick.until){heldClick=null;return true;}return false;}
+function navigationStep(id){stop();if(id.endsWith('condition'))moveBrowse(id.startsWith('next')?1:-1);else movePointOnScreen(id.startsWith('next')?1:-1);}
+document.addEventListener('pointerdown',e=>{heldClick=null;const button=e.target.closest('button');if(!model||!button||button.disabled||!navigationButtons.has(button.id)||e.button>0)return;
+ endHeldNavigation();const id=button.id;heldClick={id,until:Date.now()+1200};navigationStep(id);const hold={id,timer:null};heldNavigation=hold;
+ const repeat=()=>{if(heldNavigation!==hold||$(id)?.disabled||document.hidden){endHeldNavigation();return;}heldClick={id,until:Date.now()+1200};navigationStep(id);hold.timer=setTimeout(repeat,85);};hold.timer=setTimeout(repeat,350);
+});
+for(const event of ['pointerup','pointercancel'])document.addEventListener(event,()=>{if(heldNavigation)heldClick={id:heldNavigation.id,until:Date.now()+700};endHeldNavigation();});
+document.addEventListener('pointerout',e=>{if(heldNavigation&&e.target.closest('button')?.id===heldNavigation.id&&!$(heldNavigation.id)?.contains(e.relatedTarget))endHeldNavigation();});
+window.addEventListener('blur',()=>{endHeldNavigation();heldClick=null;});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)endHeldNavigation();});
+document.addEventListener('input',e=>{if(model&&e.target.id==='x-search'){renderXAxisOptions();return;}
+ if(!model)return;const id=e.target.id;
+ if(id==='search'){chart().queries[chart().tab]=e.target.value;renderLibrary();}
+ if(id==='point-slider'){stop();setPoint(screenPointIndex(Number(e.target.value)));}
+ if(id==='browse-slider'){stop();setBrowse(Number(e.target.value));}
+});
+document.addEventListener('change',e=>{
+ const el=e.target,id=el.id;
+ if(id==='language'){const viewport=captureViewport();stop();cancelPointer();clearTimeout(toastTimer);$('toast').classList.add('hide');language=el.value;if(state)state.language=language;buildShell();if(model)render(false);restoreViewport(viewport);return;}
+ if(!model)return;
+ if(id==='x-search'){renderXAxisOptions();return;}
+ if(el.matches('[data-select]')){stop();const c=chart(),key=c.tab==='species'?'selectedSpecies':'selectedStates';c[key]=el.checked?unique([...c[key],el.dataset.select]):c[key].filter(x=>x!==el.dataset.select);if(el.checked)c.hidden=c.hidden.filter(id=>!id.startsWith(el.dataset.select+'|'));state.changePage=0;render(false);return;}
+ if(id==='active-chart'){selectChart(el.value);return;}
+ if(id==='measure'){stop();chart().measure=el.value;state.changePage=0;render(false);return;}
+ if(el.matches('[data-mark-mode]')){const c=state.charts.find(c=>c.id===el.dataset.markMode);c.markMode=el.value;renderPlots();updatePoint();return;}
+ if(id==='plot-scope'){stop();state.plotScope=el.value==='all'?'all':'current';state.zoom=null;render(false);return;}
+ if(id==='x-scale'){stop();state.xScale=el.value==='log'?'log':'linear';state.zoom=null;renderPlots();updatePoint();return;}
+ if(el.matches('[data-display-mode],[data-range-mode]')){stop();const c=state.charts.find(c=>c.id===(el.dataset.displayMode||el.dataset.rangeMode));if(c)c[el.dataset.displayMode?'displayMode':'rangeMode']=el.value;renderPlots();updatePoint();return;}
+ if(id==='phase-filter'){chart().phase=el.value;renderLibrary();return;}
+ if(id==='selected-only'){chart().selectedOnly=el.checked;renderLibrary();return;}
+ if(id==='x-axis'){
+  const species=model.bySpecies.get(el.value);let axis=el.value;
+  if(species){const measures=species.axisMeasures,previous=model.byAxis.get(state.axis)?.key;axis='x:'+JSON.stringify([species.id,measures.includes(previous)?previous:measures.includes(chart().measure)?chart().measure:measures[0]]);}
+  const wasMetric=metricAxis();setXAxis(axis,!wasMetric&&model.byAxis.has(axis)?defaultPathAxis():undefined);return;
+ }
+ if(id==='x-measure'){const a=model.byAxis.get(state.axis);if(a?.species)setXAxis('x:'+JSON.stringify([a.species.id,el.value]));return;}
+ if(id==='path-axis'){setXAxis(state.axis,el.value);return;}
+
+ if(id==='x-direction'){stop();cancelPointer();state.xDirection=el.value==='desc'?'desc':'asc';renderPlots();updatePoint();return;}
+ if(el.matches('[data-facet]')){stop();const j=model.facets.indexOf(el.dataset.facet),prefix=model.facets.slice(0,j),point=model.points.find(p=>same(p[el.dataset.facet],el.value)&&prefix.every(k=>same(p[k],state.facets[k])));if(point){model.facets.forEach(k=>state.facets[k]=point[k]);state.fixed={};state.index=0;state.zoom=null;state.interval=null;state.changePage=0;render();}return;}
+ if(el.matches('[data-fixed]')){stop();setFixed(el.dataset.fixed,el.value);return;}
+ if(id==='browse-axis'){stop();state.browseKey=el.value;updateBrowseControls();return;}
+ if(['direction','speed','loop'].includes(id)){stop();state[id]=id==='loop'?el.checked:Number(el.value);return;}
+ if(id==='chart-layout'){state.layout=el.value;renderPlots();updatePoint();return;}
+ if(el.matches('[data-scale]')){stop();const c=state.charts.find(c=>c.id===el.dataset.chart);c.scales[el.dataset.scale]=el.value;renderPlots();updatePoint();return;}
+ if(el.matches('[data-size],[data-scope]')){const c=state.charts.find(c=>c.id===(el.dataset.size||el.dataset.scope));c[el.dataset.size?'size':'scaleScope']=el.value;renderPlots();updatePoint();return;}
+ if(['change-series','change-method','change-scope','threshold'].includes(id)){stop();const key={'change-series':'changeSeries','change-method':'changeMethod','change-scope':'changeScope',threshold:'threshold'}[id];state[key]=id==='threshold'?num(el.value):el.value;state.changePage=0;renderLocator();}
+});
+document.addEventListener('click',async e=>{
+ const el=e.target.closest('button');if(!el)return;const id=el.id;
+ if(el.classList.contains('close-dialog')){el.closest('dialog').close();return;}
+ if(id==='open-results'||id==='open-empty'){$('import-status').textContent='';showDialog('import-dialog');return;}
+ if(id==='help-button'||id==='help-empty'){showHelp();return;}
+ if(id==='copy-notebook'){try{await navigator.clipboard.writeText(notebookCode);toast(L('代码已复制。','Code copied.'));}catch{const range=document.createRange();range.selectNodeContents($('notebook-code'));const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);toast(L('代码已选中，请按 ⌘C / Ctrl+C。','Code selected. Press ⌘C / Ctrl+C.'));}return;}
+ if(id==='import-confirm'){
+  el.disabled=true;$('import-status').textContent=L('正在读取并核对计算点…','Reading and matching calculation points…');
+  try{await new Promise(r=>setTimeout(r,30));const payload=await readFiles([...$('result-files').files]);install(payload);toast(L('已打开新结果；源文件未修改。','Opened results; source files unchanged.'));}
+  catch(error){$('import-status').textContent=error.message;}finally{if($('import-confirm'))$('import-confirm').disabled=false;}return;
+ }
+ if(!model)return;
+ if(id==='save-workspace'){showDialog('save-dialog');return;}if(id==='save-confirm'){await saveWorkspace();return;}if(id==='source-button'){showSource();return;}
+ if(id==='add-chart'){addChart();return;}
+ if(el.dataset.editChart){selectChart(el.dataset.editChart);return;}
+ if(el.dataset.duplicate){selectChart(el.dataset.duplicate);addChart(true);return;}
+ if(el.dataset.rename){selectChart(el.dataset.rename);$('figure-title-input').value=chart().title;showDialog('rename-dialog');$('figure-title-input').focus();return;}
+ if(id==='rename-confirm'){chart().title=$('figure-title-input').value.trim();chart().copySuffix=false;$('rename-dialog').close();render(false);return;}
+ if(el.dataset.collapse){const c=state.charts.find(c=>c.id===el.dataset.collapse);c.collapsed=!c.collapsed;renderPlots();updatePoint();return;}
+ if(el.dataset.reorder){const at=state.charts.findIndex(c=>c.id===el.dataset.reorder),to=at+Number(el.dataset.delta);if(to>=0&&to<state.charts.length){const [c]=state.charts.splice(at,1);state.charts.splice(to,0,c);render(false);}return;}
+ if(el.dataset.deleteChart){stop();const at=state.charts.findIndex(c=>c.id===el.dataset.deleteChart),old=copy(state.charts[at]);state.charts.splice(at,1);let placeholder=null;if(!state.charts.length){placeholder=newChart();state.charts.push(placeholder);}if(state.activeChart===old.id)state.activeChart=state.charts[Math.min(at,state.charts.length-1)].id;render(false);toast(L('图已删除。','Figure deleted.'),()=>{if(placeholder&&state.charts.length===1&&!selectedSeries(state.charts[0]).length)state.charts=[];state.charts.splice(at,0,old);state.activeChart=old.id;render(false);});return;}
+ if(id==='undo'&&undoAction){const action=undoAction;undoAction=null;action();$('toast').classList.add('hide');return;}
+ if(el.dataset.exportFigure){exportFigure(el.dataset.exportFigure);return;}
+ if(id==='tab-species'||id==='tab-states'){chart().tab=id.slice(4);renderLibrary();return;}
+ if(id==='select-matches'){stop();const c=chart(),key=c.tab==='species'?'selectedSpecies':'selectedStates';c[key]=unique([...c[key],...libraryMatches().map(s=>s.id)]);state.changePage=0;render(false);return;}
+ if(id==='clear-selection'){stop();chart()[chart().tab==='species'?'selectedSpecies':'selectedStates']=[];state.changePage=0;render(false);return;}
+ if(el.dataset.legend){stop();const c=state.charts.find(c=>c.id===el.dataset.chart),key=el.dataset.legend;c.hidden=c.hidden.includes(key)?c.hidden.filter(x=>x!==key):[...c.hidden,key];renderPlots();updatePoint();return;}
+ if(consumeHeldClick(id))return;
+ if(el.dataset.useMeasure){const c=state.charts.find(c=>c.id===el.dataset.useMeasure);if(c)c.measure=el.dataset.measure;render(false);return;}
+ if(id==='previous-condition'||id==='next-condition'){stop();moveBrowse(id==='next-condition'?1:-1);return;}
+ if(id==='previous-point'||id==='next-point'){stop();movePointOnScreen(id==='next-point'?1:-1);return;}
+ if(id==='play'){play();return;}if(id==='zoom-near'){stop();zoomNear();return;}if(id==='reset-zoom'){state.zoom=null;renderPlots();updatePoint();return;}
+ if(id==='pin-path'){stop();if(!matchingPins().some(p=>fixedKeys().every(k=>same(p.fixed[k],state.fixed[k]))))state.pins.push({id:'pin-'+(++pinSerial),axis:state.axis,pathAxis:pathAxis(),fixed:{...state.fixed},facets:{...state.facets}});else toast(L('此条件已叠加。','This condition is already pinned.'));render(false);return;}
+ if(el.dataset.removePin){const key=el.dataset.removePin;state.pins=state.pins.filter(p=>p.id!==key);state.charts.forEach(c=>c.hidden=c.hidden.filter(h=>!h.endsWith('|'+key)));render(false);return;}
+ if(id==='set-reference'){state.reference=activeId();updatePoint();return;}if(id==='clear-reference'){state.reference=null;updatePoint();return;}
+ if(id==='bookmark-point'){const at=activeId();if(at===undefined)return;const existed=state.bookmarks.includes(at);if(slice.includes(at))setPoint(slice.indexOf(at));else jumpTo(at);state.bookmarks=existed?state.bookmarks.filter(i=>i!==at):[...state.bookmarks,at];renderBookmarks();updatePoint();if(!existed&&$('bookmarks-details'))$('bookmarks-details').open=true;toast(existed?L('已取消此点收藏。','Bookmark removed.'):L('已收藏此点；右侧书签列表可直接跳转。','Point saved; use the bookmark list to return.'));return;}
+ if(el.dataset.bookmark!==undefined){jumpTo(Number(el.dataset.bookmark));return;}
+ if(el.dataset.removeBookmark!==undefined){state.bookmarks.splice(Number(el.dataset.removeBookmark),1);renderBookmarks();updatePoint();toast(L('已删除书签。','Bookmark deleted.'));return;}
+ if(el.dataset.change!==undefined){const r=changeMatches[Number(el.dataset.change)];if(r){jumpTo(r.b);state.interval={a:r.a,b:r.b};updatePoint();}return;}
+ if(id==='changes-prev'||id==='changes-next'){state.changePage+=id==='changes-next'?1:-1;renderLocator();return;}
+ if(id==='export-csv'){stop();exportCSV();}
+});
+function pointerInfo(e){const hit=e.target.closest('.hit-area');if(!hit||!slice.length)return null;const spec=plotSpecs[Number(hit.dataset.plot)],svg=hit.closest('svg'),box=svg.getBoundingClientRect(),px=(e.clientX-box.x)/box.width*spec.W,py=(e.clientY-box.y)/box.height*spec.H,f=(px-spec.L)/(spec.W-spec.L-spec.R),t=spec.reversed?1-f:f,x=spec.xLog?10**((1-t)*spec.txlo+t*spec.txhi):(1-t)*spec.xlo+t*spec.xhi;const p={spec,svg,px,py,x,id:slice[nearestIndex(slice,x)]};if(sampleOrder()||spec.scatter||state.plotScope==='all'){const hit=curveHits(p)[0];if(hit)p.id=hit.id;else return null;}return p;}
+function clearCurveHover(){hoverCurve=null;const tip=$('curve-tooltip');if(tip)tip.classList.add('hide');document.querySelectorAll('.series-layer.dimmed,.series-layer.highlighted').forEach(e=>{e.classList.remove('dimmed','highlighted');});}
+function highlightCurves(gi,ids){document.querySelectorAll('.series-layer').forEach(e=>{const here=e.closest('svg').dataset.gi===String(gi);e.classList.toggle('highlighted',here&&ids.includes(e.dataset.seriesCurve));e.classList.toggle('dimmed',here&&!ids.includes(e.dataset.seriesCurve));});}
+function lowerBound(values,x){let lo=0,hi=values.length;while(lo<hi){const m=(lo+hi)>>1;if(values[m]<x)lo=m+1;else hi=m;}return lo;}
+function curveHits(p){
+ if(p.spec.duplicates)return [];const spec=p.spec,tol=10,dx=(spec.xhi-spec.xlo)/(spec.W-spec.L-spec.R)*tol,lo=Math.max(0,lowerBound(domain,p.x-dx)-1),hi=Math.min(domain.length-1,lowerBound(domain,p.x+dx)+1),out=[];
+ for(const s of spec.paths){if(!s.coords.size)continue;let best=null;
+  const consider=(distance,id)=>{if(distance<=tol&&(!best||distance<best.distance))best={distance,id,path:s};};
+  const keys=[...s.coords.keys()];
+  for(const j of keys){const a=s.coords.get(j);if(!a||a.x<spec.L||a.x>spec.W-spec.R||a.y<spec.T||a.y>spec.H-spec.B)continue;consider(Math.hypot(p.px-a.x,p.py-a.y),a.id);const b=s.coords.get(j+1);if(spec.scatter||!b||p.px<Math.min(a.x,b.x)-tol||p.px>Math.max(a.x,b.x)+tol)continue;const len=Math.hypot(b.x-a.x,b.y-a.y);if(!len)continue;const ux=(b.x-a.x)/len,uy=(b.y-a.y)/len,t=clamp((p.px-a.x)*ux+(p.py-a.y)*uy,0,len);consider(Math.hypot(p.px-a.x-t*ux,p.py-a.y-t*uy),t/len>.5?b.id:a.id);}
+  if(best)out.push(best);
+ }out.sort((a,b)=>a.distance-b.distance);return out.filter(v=>v.distance<=Math.min(10,(out[0]?.distance||0)+2));
+}
+function showCurveTooltip(p,e){
+ const hits=curveHits(p);if(!hits.length){clearCurveHover();return;}const shown=hits.slice(0,6);highlightCurves(p.spec.gi,shown.map(h=>h.path.curveId));hoverCurve={chartId:p.spec.chartId,gi:p.spec.gi,matches:hits.map(h=>({id:h.id,curveId:h.path.curveId,name:h.path.name,key:h.path.key,value:h.path.values[h.id],pathLabel:h.path.pathLabel,axis:h.path.axis.tag}))};
+ const tip=$('curve-tooltip');tip.innerHTML=(hits.length>1?`<div class="note">${L('此处附近曲线','Nearby curves')}: ${hits.length}${hits.length>shown.length?' · '+L('显示前 6 条','showing first 6'):''}</div>`:'')+shown.map(h=>{const s=h.path,point=model.points[h.id];return `<div class="hover-entry"><strong style="color:${s.color}">${esc(seriesName(s))}</strong><div class="note">${esc((s.axis.tag?s.axis.tag+' · ':'')+withUnit(s.key))}${s.phase?' · '+esc(s.phase):''} · ${esc(s.pathLabel)}</div><div class="number">${esc(nice(s.values[h.id],10))} <span class="unit">${esc(s.unit)}</span></div><div class="note">${L('附近采样点','Nearby saved sample')}: ${esc(label(state.axis))} ${esc(nice(xValue(h.id)))} ${esc(unit(state.axis))}</div></div>`;}).join('');tip.classList.remove('hide');
+ let left=e.clientX+15,top=e.clientY+15;tip.style.left='0px';tip.style.top='0px';const box=tip.getBoundingClientRect();if(left+box.width>innerWidth-8)left=e.clientX-box.width-15;if(top+box.height>innerHeight-8)top=e.clientY-box.height-15;tip.style.left=Math.max(8,left)+'px';tip.style.top=Math.max(8,top)+'px';
+}
+document.addEventListener('pointermove',e=>{
+ if(!model||playing||e.pointerType==='touch')return;const legend=e.target.closest('[data-legend]');
+ if(legend){if(pointerFrame)cancelAnimationFrame(pointerFrame);pointerFrame=null;hovering=null;hoverCurve=null;$('curve-tooltip').classList.add('hide');highlightCurves(Number(legend.dataset.gi),[legend.dataset.legend]);updatePoint();return;}
+ const p=pointerInfo(e);if(!p){
+  // Moving from a curve to its inspector must not silently change the point
+  // that Set reference / Bookmark will act on.
+  if(hovering!==null&&e.target.closest('.inspector')){if(pointerFrame)cancelAnimationFrame(pointerFrame);pointerFrame=null;clearCurveHover();return;}
+  if(hovering!==null){cancelPointer();updatePoint();}else clearCurveHover();return;
+ }
+ if(pointerFrame)cancelAnimationFrame(pointerFrame);pointerFrame=requestAnimationFrame(()=>{pointerFrame=null;hovering=p.id;updatePoint();showCurveTooltip(p,e);});
+});
+document.addEventListener('pointerleave',()=>{if(model){cancelPointer();updatePoint();}});
+document.addEventListener('click',e=>{if(!model)return;const fig=e.target.closest('.figure');if(fig)selectChart(fig.dataset.figure);},true);
+document.addEventListener('click',e=>{if(!model)return;const p=pointerInfo(e);if(p){stop();if(slice.includes(p.id))setPoint(slice.indexOf(p.id));else jumpTo(p.id);}});
+document.addEventListener('toggle',e=>{if(model&&e.target.id==='all-values-details'&&e.target.open)renderAllValues();},true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();cancelPointer();}});
+document.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();document.body.classList.add('drop-active');}});
+document.addEventListener('dragleave',e=>{if(!e.relatedTarget)document.body.classList.remove('drop-active');});
+document.addEventListener('drop',e=>{e.preventDefault();document.body.classList.remove('drop-active');if(e.dataTransfer.files.length){$('result-files').files=e.dataTransfer.files;$('import-status').textContent=L('已选入文件，点击“读取结果”。','Files selected. Click Load results.');if(!$('import-dialog').open)showDialog('import-dialog');}});
+new ResizeObserver(()=>{const width=$('plots')?.clientWidth||0;if(width===resizeWidth)return;resizeWidth=width;clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(model){renderPlots();updatePoint();}},150);}).observe(document.body);
+window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(model){renderPlots();updatePoint();}},150);});
+
+async function boot(){
+ buildShell();try{const node=$('payload');if(!node.textContent.trim()){$('loading').classList.add('hide');return;}let text;
+  if(node.dataset.encoding==='gzip-base64'){if(!globalThis.DecompressionStream)throw new Error(L('需要支持 gzip 解压的现代浏览器。','A modern browser with gzip decompression is required.'));const bytes=Uint8Array.from(atob(node.textContent.trim()),c=>c.charCodeAt(0));text=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();}else text=node.textContent;
+  await new Promise(r=>setTimeout(r,10));install(JSON.parse(text));$('loading').classList.add('hide');
+ }catch(e){$('loading').classList.add('hide');$('import-status').textContent=e.message;showDialog('import-dialog');}
+}
+// Read-only diagnostic snapshots for reproducible UI tests; no state mutation API.
+window.ResultExplorer={parseCSV,buildModel,getSnapshot:()=>model?{version:'2.2',language,state:copy(state),pointCount:model.points.length,speciesCount:model.species.length,stateKeys:model.statuses.map(s=>s.key),xValues:slice.map(id=>({id,value:finite(xValue(id))?xValue(id):null})),slice:[...slice],activeId:activeId(),activePoint:{...model.points[activeId()]},series:selectedSeries().map(s=>({id:s.id,name:s.name,key:s.key,value:finite(s.values[activeId()])?s.values[activeId()]:null})),changes:changeMatches.slice(0,100),changeCount:changeMatches.length,yDomains:plotSpecs.flatMap(s=>s.axes.map(a=>({id:a.id,chartId:s.chartId,log:a.log,range:a.yd}))),hoverCurve:hoverCurve?copy(hoverCurve):null,playing:!!playing,browse:browseState(),viewSequence}:null};
+boot();
+
+</script>
+</body>
+</html>

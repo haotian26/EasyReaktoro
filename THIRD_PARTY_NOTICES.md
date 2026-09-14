@@ -10,6 +10,14 @@
 - 许可证：MIT，完整原文随源码保留于 [src-tauri/vendor/rfd/LICENSE](src-tauri/vendor/rfd/LICENSE)。
 - 本项目修改：macOS 保存面板调用 `setShowsTagField(false)`，隐藏与数据库保存无关的 Finder Tags。通过 Cargo patch 使用这份源码。
 
+## 数学公式排版
+
+KaTeX 0.18.7 由 npm 锁文件固定，采用 MIT 许可，Copyright (c) 2013-2020 Khan Academy and other contributors。完整许可保留于 [third_party/KaTeX-LICENSE.txt](third_party/KaTeX-LICENSE.txt)，并随应用资源打包。公式和字体本地加载。
+
+## Python 参数编辑器
+
+CodeMirror 6、Lezer 及其编辑器辅助包采用 MIT 许可，实际版本由 npm 锁文件固定。完整上游通知保留于 [third_party/CodeMirror-LICENSES.txt](third_party/CodeMirror-LICENSES.txt)，并随应用打包。编辑器与 Python 语法支持均本地加载。
+
 ## 构建依赖
 
 React、Tauri、Lucide、SQLite/rusqlite 及其他依赖由 npm/Cargo 按锁文件获取，不作为完整依赖源码复制进本仓库；各组件保留其上游许可证。实际版本见 `package-lock.json` 和 `src-tauri/Cargo.lock`。自行再分发构建产物时，应同时遵守构建时所含依赖的通知和许可要求。

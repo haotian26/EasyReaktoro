@@ -10,12 +10,13 @@ use std::{
     time::Duration,
 };
 use tauri::{Emitter, Manager, State};
+mod simulation_history;
 #[cfg(target_os = "macos")]
 mod termination;
 
 struct Bridge {
     child: Child,
-    stdin: ChildStdin,
+    stdin: Option<ChildStdin>,
     replies: mpsc::Receiver<Result<String, String>>,
     diagnostics: Arc<Mutex<String>>,
     next_id: u64,
@@ -62,7 +63,7 @@ impl Bridge {
         }
         Ok(Self {
             child,
-            stdin,
+            stdin: Some(stdin),
             replies,
             diagnostics,
             next_id: 1,
@@ -76,9 +77,10 @@ impl Bridge {
         let id = format!("req-{}", self.next_id);
         self.next_id += 1;
         args["request_id"] = Value::String(id.clone());
-        serde_json::to_writer(&mut self.stdin, &args).map_err(|e| e.to_string())?;
-        self.stdin.write_all(b"\n").map_err(|e| e.to_string())?;
-        self.stdin.flush().map_err(|e| e.to_string())?;
+        let stdin = self.stdin.as_mut().ok_or("bridge stdin closed")?;
+        serde_json::to_writer(&mut *stdin, &args).map_err(|e| e.to_string())?;
+        stdin.write_all(b"\n").map_err(|e| e.to_string())?;
+        stdin.flush().map_err(|e| e.to_string())?;
         let seconds = match args["op"].as_str().unwrap_or("") {
             "runtime.probe" => 8,
             "export.interpolation" => 300,
@@ -118,6 +120,16 @@ impl Bridge {
 }
 impl Drop for Bridge {
     fn drop(&mut self) {
+        // EOF lets Python release completed simulation snapshots through atexit.
+        self.stdin.take();
+        if self.failure.is_none() {
+            for _ in 0..100 {
+                if matches!(self.child.try_wait(), Ok(Some(_))) {
+                    return;
+                }
+                thread::sleep(Duration::from_millis(20));
+            }
+        }
         let _ = self.child.kill();
         let _ = self.child.wait();
     }
@@ -317,22 +329,44 @@ where
         .map_err(|error| error.to_string())?
 }
 
+// A healthy probe keeps all open databases. Only a dead/failed connection is replaced.
+fn probe_connection(bridge: &mut Bridge, python: &Path, script: &Path) -> Result<Value, String> {
+    match bridge.request(json!({"op":"runtime.probe"})) {
+        Ok(value) => Ok(value),
+        Err(error) => {
+            let exited = matches!(bridge.child.try_wait(), Ok(Some(_)));
+            if bridge.failure.is_none() && !exited {
+                return Err(error);
+            }
+            let (replacement, mut value) = probe_python(python, script)?;
+            *bridge = replacement;
+            value["reconnected"] = Value::Bool(true);
+            Ok(value)
+        }
+    }
+}
+
 #[tauri::command]
 async fn runtime_probe(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<Value, String> {
     let shared = state.inner().clone();
-    blocking(
-        move || match request(&app, &shared, json!({"op":"runtime.probe"})) {
-            Ok(mut value) => {
-                if let Some(path) = shared.python.lock().ok().and_then(|path| path.clone()) {
-                    value["python"] = Value::String(path.display().to_string());
-                }
-                Ok(value)
-            }
+    blocking(move || {
+        let probe = || -> Result<Value, String> {
+            ensure_bridge(&app, &shared)?;
+            let python = shared.python.lock().map_err(|_| "python lock poisoned")?
+                .clone().ok_or("Python path unavailable")?;
+            let mut current = shared.bridge.lock().map_err(|_| "bridge lock poisoned")?;
+            let bridge = current.as_mut().ok_or("bridge unavailable")?;
+            let mut value = probe_connection(bridge, &python, &find_script(&app)?)?;
+            value["python"] = Value::String(python.display().to_string());
+            Ok(value)
+        };
+        match probe() {
+            Ok(value) => Ok(value),
             Err(error) => Ok(json!({"status":"error","available":false,"diagnostic":error})),
-        },
-    )
-    .await
+        }
+    }).await
 }
+
 #[tauri::command]
 async fn runtime_discover(app: tauri::AppHandle) -> Result<Value, String> {
     blocking(move || {
@@ -367,8 +401,16 @@ async fn runtime_discover(app: tauri::AppHandle) -> Result<Value, String> {
     .await
 }
 
+fn initialized_settings_directory(directory: Option<Result<PathBuf, String>>) -> Result<PathBuf, String> {
+    directory.ok_or_else(|| "Application paths are not initialized yet".to_string())?
+}
 fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    // Builder menu callbacks precede core plugin initialization. Never use
+    // Manager::path() here: it panics while PathResolver is not yet managed.
+    let dir = initialized_settings_directory(
+        app.try_state::<tauri::path::PathResolver<tauri::Wry>>()
+            .map(|resolver| resolver.app_config_dir().map_err(|error| error.to_string())),
+    )?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir.join("settings.json"))
 }
@@ -385,6 +427,124 @@ fn settings_load(app: tauri::AppHandle) -> Result<Value, String> {
     serde_json::from_str(&text).map_err(|e| e.to_string())
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum MenuLanguage {
+    Chinese,
+    English,
+}
+impl MenuLanguage {
+    fn from_settings(settings: &Value) -> Self {
+        if settings.get("language").and_then(Value::as_str)
+            .is_some_and(|value| value.to_ascii_lowercase().starts_with("en")) {
+            Self::English
+        } else {
+            Self::Chinese
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct MenuText(&'static str, &'static str);
+impl MenuText {
+    fn in_language(self, language: MenuLanguage) -> &'static str {
+        match language {
+            MenuLanguage::Chinese => self.0,
+            MenuLanguage::English => self.1,
+        }
+    }
+}
+
+// Keep the original native objects: changing only their text preserves Cocoa
+// selectors, accelerators, menu IDs, and the guarded close/quit event handlers.
+struct NativeMenuLabels {
+    language: Mutex<MenuLanguage>,
+    items: Vec<(MenuText, tauri::menu::MenuItemKind<tauri::Wry>)>,
+}
+fn update_menu_text<T, E>(
+    language: &mut MenuLanguage,
+    next: MenuLanguage,
+    items: &[(MenuText, T)],
+    mut set_text: impl FnMut(&T, &str) -> Result<(), E>,
+) -> Result<(), E> {
+    if *language != next {
+        for (label, item) in items {
+            set_text(item, label.in_language(next))?;
+        }
+        // Failed updates remain retryable, including a partially relabeled menu.
+        *language = next;
+    }
+    Ok(())
+}
+fn apply_native_menu(app: &tauri::AppHandle, settings: &Value) -> Result<(), String> {
+    let Some(menu) = app.try_state::<NativeMenuLabels>() else { return Ok(()); };
+    // Do not hold a lock across native calls. Tauri sends these to the main
+    // thread; another settings command may be waiting to run there as well.
+    let mut language = *menu.language.lock().map_err(|_| "menu language lock poisoned")?;
+    update_menu_text(&mut language, MenuLanguage::from_settings(settings), &menu.items,
+        |item, text| {
+            use tauri::menu::MenuItemKind;
+            match item {
+                MenuItemKind::MenuItem(item) => item.set_text(text),
+                MenuItemKind::Predefined(item) => item.set_text(text),
+                MenuItemKind::Submenu(item) => item.set_text(text),
+                MenuItemKind::Check(item) => item.set_text(text),
+                MenuItemKind::Icon(item) => item.set_text(text),
+            }.map_err(|error| error.to_string())
+        })?;
+    *menu.language.lock().map_err(|_| "menu language lock poisoned")? = language;
+    Ok(())
+}
+fn update_native_menu(app: &tauri::AppHandle) -> Result<(), String> {
+    let handle = app.clone();
+    let (sender, receiver) = mpsc::sync_channel(1);
+    app.run_on_main_thread(move || {
+        // Read the latest atomically saved file on the main thread, so a late
+        // command cannot put the menu back into an older saved language.
+        let result = settings_load(handle.clone()).and_then(|settings| apply_native_menu(&handle, &settings));
+        let _ = sender.send(result);
+    }).map_err(|error| error.to_string())?;
+    receiver.recv().map_err(|error| error.to_string())?
+}
+
+fn native_menu(app: &tauri::AppHandle) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
+    use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem as Item, Submenu};
+    // Tauri builds menus before registering PathResolver. Create native objects
+    // without reading settings; setup applies the saved language once paths exist.
+    let language = MenuLanguage::Chinese;
+    let mut items = Vec::new();
+    macro_rules! localized {
+        ($zh:literal, $en:literal, $make:expr) => {{
+            let label = MenuText($zh, $en);
+            let item = ($make)(label.in_language(language))?;
+            items.push((label, item.kind()));
+            item
+        }};
+    }
+    let about = localized!("关于 EasyReaktoro", "About EasyReaktoro", |text| Item::about(app, Some(text), None));
+    let hide = localized!("隐藏 EasyReaktoro", "Hide EasyReaktoro", |text| Item::hide(app, Some(text)));
+    let hide_others = localized!("隐藏其他应用", "Hide Others", |text| Item::hide_others(app, Some(text)));
+    let show_all = localized!("全部显示", "Show All", |text| Item::show_all(app, Some(text)));
+    let quit = localized!("退出 EasyReaktoro", "Quit EasyReaktoro", |text| MenuItem::with_id(app, "guarded-quit", text, true, Some("CmdOrCtrl+Q")));
+    let undo = localized!("撤销", "Undo", |text| Item::undo(app, Some(text)));
+    let redo = localized!("重做", "Redo", |text| Item::redo(app, Some(text)));
+    let cut = localized!("剪切", "Cut", |text| Item::cut(app, Some(text)));
+    let copy = localized!("复制", "Copy", |text| Item::copy(app, Some(text)));
+    let paste = localized!("粘贴", "Paste", |text| Item::paste(app, Some(text)));
+    let select_all = localized!("全选", "Select All", |text| Item::select_all(app, Some(text)));
+    let minimize = localized!("最小化", "Minimize", |text| Item::minimize(app, Some(text)));
+    let close = localized!("关闭窗口", "Close Window", |text| MenuItem::with_id(app, "guarded-close", text, true, Some("CmdOrCtrl+W")));
+    let application_menu = Submenu::with_id_and_items(app, "application-menu", "EasyReaktoro", true,
+        &[&about, &Item::separator(app)?, &hide, &hide_others, &show_all, &Item::separator(app)?, &quit])?;
+    let edit_menu = localized!("编辑", "Edit", |text| Submenu::with_id_and_items(app, "edit-menu", text, true,
+        &[&undo, &redo, &Item::separator(app)?, &cut, &copy, &paste, &select_all]));
+    let window_menu = localized!("窗口", "Window", |text| Submenu::with_id_and_items(app, "window-menu", text, true,
+        &[&minimize, &close]));
+    let menu = Menu::with_items(app, &[&application_menu, &edit_menu, &window_menu])?;
+    let registered = app.manage(NativeMenuLabels { language: Mutex::new(language), items });
+    assert!(registered, "native menu labels must be initialized once");
+    Ok(menu)
+}
+
 #[tauri::command]
 fn settings_save(app: tauri::AppHandle, settings: Value) -> Result<Value, String> {
     static SETTINGS_WRITE: Mutex<()> = Mutex::new(());
@@ -399,6 +559,8 @@ fn settings_save(app: tauri::AppHandle, settings: Value) -> Result<Value, String
     )
     .map_err(|e| e.to_string())?;
     fs::rename(&temporary, &path).map_err(|e| e.to_string())?;
+    drop(_guard);
+    update_native_menu(&app)?;
     Ok(json!({"success":true,"path":path}))
 }
 
@@ -412,6 +574,13 @@ fn paths_exist(paths: Vec<String>) -> Value {
     )
 }
 
+#[tauri::command]
+fn open_reference(url:String)->Result<Value,String>{
+    let parsed=tauri::Url::parse(&url).map_err(|_|"文献链接无效。")?;
+    if !matches!(parsed.scheme(),"http"|"https")||parsed.host_str().is_none(){return Err("只支持网页文献链接。".into());}
+    Command::new("/usr/bin/open").arg(parsed.as_str()).spawn().map_err(|e|e.to_string())?;
+    Ok(json!({"success":true}))
+}
 #[tauri::command]
 fn reveal_path(path: String) -> Result<Value, String> {
     if !Path::new(&path).exists() {
@@ -684,6 +853,14 @@ async fn rtdb_open(
     dispatch(app, state, "rtdb.open", json!({"path":path})).await
 }
 #[tauri::command]
+async fn rtdb_list_info(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    paths: Vec<String>,
+) -> Result<Value, String> {
+    dispatch(app, state, "rtdb.list_info", json!({"paths":paths})).await
+}
+#[tauri::command]
 async fn rtdb_save(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
@@ -806,73 +983,29 @@ async fn runtime_diagnostics(
     dispatch(app, state, "runtime.diagnostics", json!({})).await
 }
 
+#[tauri::command]
+async fn simulation_call(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    payload: Value,
+) -> Result<Value, String> {
+    dispatch(app, state, "simulation.request", payload).await
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            // Core plugins (including PathResolver) are available at this stage.
+            // Unreadable settings remain visible through the normal UI load error.
+            if let Ok(settings) = settings_load(app.handle().clone()) {
+                apply_native_menu(app.handle(), &settings).map_err(std::io::Error::other)?;
+            }
             #[cfg(target_os = "macos")]
             termination::install(app.handle()).map_err(std::io::Error::other)?;
             Ok(())
         })
-        .menu(|app| {
-            use tauri::menu::{Menu, MenuItem, PredefinedMenuItem as Item, Submenu};
-            // The Cocoa predefined Quit item invokes terminate: directly. Route
-            // Cmd-Q through the same frontend save/discard/cancel guard as closing.
-            Menu::with_items(
-                app,
-                &[
-                    &Submenu::with_items(
-                        app,
-                        "EasyReaktoro",
-                        true,
-                        &[
-                            &Item::about(app, Some("关于 EasyReaktoro"), None)?,
-                            &Item::separator(app)?,
-                            &Item::hide(app, Some("隐藏 EasyReaktoro"))?,
-                            &Item::hide_others(app, Some("隐藏其他应用"))?,
-                            &Item::show_all(app, Some("全部显示"))?,
-                            &Item::separator(app)?,
-                            &MenuItem::with_id(
-                                app,
-                                "guarded-quit",
-                                "退出 EasyReaktoro",
-                                true,
-                                Some("CmdOrCtrl+Q"),
-                            )?,
-                        ],
-                    )?,
-                    &Submenu::with_items(
-                        app,
-                        "编辑",
-                        true,
-                        &[
-                            &Item::undo(app, Some("撤销"))?,
-                            &Item::redo(app, Some("重做"))?,
-                            &Item::separator(app)?,
-                            &Item::cut(app, Some("剪切"))?,
-                            &Item::copy(app, Some("复制"))?,
-                            &Item::paste(app, Some("粘贴"))?,
-                            &Item::select_all(app, Some("全选"))?,
-                        ],
-                    )?,
-                    &Submenu::with_items(
-                        app,
-                        "窗口",
-                        true,
-                        &[
-                            &Item::minimize(app, Some("最小化"))?,
-                            &MenuItem::with_id(
-                                app,
-                                "guarded-close",
-                                "关闭窗口",
-                                true,
-                                Some("CmdOrCtrl+W"),
-                            )?,
-                        ],
-                    )?,
-                ],
-            )
-        })
+        .menu(native_menu)
         .on_menu_event(|app, event| {
             if matches!(event.id().as_ref(), "guarded-quit" | "guarded-close") {
                 let _ = app.emit("easyreaktoro:request-exit", ());
@@ -887,10 +1020,13 @@ pub fn run() {
             settings_save,
             paths_exist,
             reveal_path,
+            open_reference,
             runtime_probe,
             runtime_discover,
             runtime_select,
             runtime_diagnostics,
+            simulation_call,
+            simulation_history::simulation_history,
             catalog_list,
             catalog_entry_details,
             database_open,
@@ -907,6 +1043,7 @@ pub fn run() {
             species_delete,
             rtdb_create,
             rtdb_open,
+            rtdb_list_info,
             rtdb_save,
             rtdb_save_as,
             compose_preview,
@@ -920,6 +1057,11 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building EasyReaktoro")
         .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                if let Ok(mut bridge) = app.state::<AppState>().bridge.lock() {
+                    bridge.take();
+                }
+            }
             if let tauri::RunEvent::ExitRequested { api, .. } = event {
                 if app.get_webview_window("main").is_some() {
                     api.prevent_exit();
@@ -932,6 +1074,71 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn settings_access_before_path_initialization_returns_an_error_instead_of_panicking() {
+        // The real settings_path adapter receives None from try_state during
+        // Builder::menu, then a directory result after the path plugin initializes.
+        assert_eq!(initialized_settings_directory(None).unwrap_err(), "Application paths are not initialized yet");
+        assert_eq!(initialized_settings_directory(Some(Ok(PathBuf::from("/example/app"))))
+            .unwrap(), PathBuf::from("/example/app"));
+        assert_eq!(initialized_settings_directory(Some(Err("configuration folder unavailable".into())))
+            .unwrap_err(), "configuration folder unavailable");
+    }
+    #[test]
+    fn native_menu_language_matches_saved_application_settings() {
+        for value in ["en", "en-US", "EN-gb", "English"] {
+            let saved = serde_json::to_vec(&json!({"language":value,"theme":"dark"})).unwrap();
+            let restored: Value = serde_json::from_slice(&saved).unwrap();
+            assert_eq!(MenuLanguage::from_settings(&restored), MenuLanguage::English);
+        }
+        for saved in [json!({"language":"zh-CN"}), json!({}), json!({"language":null}), json!({"language":42}), Value::Null] {
+            assert_eq!(MenuLanguage::from_settings(&saved), MenuLanguage::Chinese);
+        }
+    }
+    #[test]
+    fn relabeling_preserves_command_identity_shortcuts_and_native_actions() {
+        use std::cell::RefCell;
+        let items = [
+            (MenuText("退出 EasyReaktoro", "Quit EasyReaktoro"), ("guarded-quit", "CmdOrCtrl+Q", "request-exit", RefCell::new(String::new()))),
+            (MenuText("关闭窗口", "Close Window"), ("guarded-close", "CmdOrCtrl+W", "request-exit", RefCell::new(String::new()))),
+            (MenuText("复制", "Copy"), ("native-copy", "CmdOrCtrl+C", "copy:", RefCell::new(String::new()))),
+            (MenuText("粘贴", "Paste"), ("native-paste", "CmdOrCtrl+V", "paste:", RefCell::new(String::new()))),
+            (MenuText("全选", "Select All"), ("native-select-all", "CmdOrCtrl+A", "selectAll:", RefCell::new(String::new()))),
+        ];
+        let identity: Vec<_> = items.iter().map(|(_, item)| (item.0, item.1, item.2)).collect();
+        let mut language = MenuLanguage::Chinese;
+        for next in [MenuLanguage::English, MenuLanguage::Chinese] {
+            update_menu_text(&mut language, next, &items, |item, text| {
+                *item.3.borrow_mut() = text.to_owned();
+                Ok::<_, ()>(())
+            }).unwrap();
+            assert_eq!(language, next);
+            assert_eq!(items.iter().map(|(_, item)| (item.0, item.1, item.2)).collect::<Vec<_>>(), identity);
+            assert!(items.iter().all(|(label, item)| *item.3.borrow() == label.in_language(next)));
+        }
+    }
+    #[test]
+    fn unrelated_settings_do_not_touch_native_menu_items() {
+        let mut language = MenuLanguage::English;
+        let items = [(MenuText("编辑", "Edit"), ())];
+        update_menu_text(&mut language, MenuLanguage::from_settings(&json!({"language":"en","theme":"light"})), &items,
+            |_, _| -> Result<(), ()> { panic!("unchanged language must not update menu objects"); }).unwrap();
+    }
+    #[test]
+    fn failed_menu_update_can_retry_every_label() {
+        let items = [(MenuText("编辑", "Edit"), 1), (MenuText("窗口", "Window"), 2)];
+        let mut language = MenuLanguage::Chinese;
+        let failure = update_menu_text(&mut language, MenuLanguage::English, &items,
+            |item, _| if *item == 2 { Err("native item unavailable") } else { Ok(()) });
+        assert!(failure.is_err());
+        assert_eq!(language, MenuLanguage::Chinese);
+        let mut applied = Vec::new();
+        update_menu_text(&mut language, MenuLanguage::English, &items, |item, text| {
+            applied.push((*item, text.to_owned())); Ok::<_, ()>(())
+        }).unwrap();
+        assert_eq!(applied, [(1, "Edit".into()), (2, "Window".into())]);
+        assert_eq!(language, MenuLanguage::English);
+    }
     #[test]
     fn venv_symlinks_keep_environment_identity() {
         let root =
@@ -966,5 +1173,32 @@ mod tests {
         let start = std::time::Instant::now();
         assert!(bridge.request(json!({"op":"exit"})).is_err());
         assert!(start.elapsed().as_secs() < 8);
+    }
+    #[test]
+    fn reconnect_probe_preserves_healthy_process_and_replaces_failed_process() {
+        let script = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../tests/bridge_fixture.py");
+        let python = Path::new("/usr/bin/python3");
+        let mut bridge = Bridge::start(python, &script).unwrap();
+        let original_pid = bridge.child.id();
+        let healthy = probe_connection(&mut bridge, python, &script).unwrap();
+        assert_eq!(bridge.child.id(), original_pid);
+        assert!(healthy.get("reconnected").is_none());
+        assert!(bridge.request(json!({"op":"exit"})).is_err());
+        let recovered = probe_connection(&mut bridge, python, &script).unwrap();
+        assert_eq!(recovered["reconnected"], true);
+        assert_ne!(bridge.child.id(), original_pid);
+        assert!(bridge.failure.is_none());
+        assert_eq!(bridge.request(json!({"op":"noisy"})).unwrap()["result"], 42);
+    }
+    #[test]
+    fn bridge_drop_allows_python_cleanup() {
+        let script = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../tests/bridge_fixture.py");
+        let marker = std::env::temp_dir().join(format!("easyreaktoro-cleanup-{}", std::process::id()));
+        let _ = fs::remove_file(&marker);
+        let mut bridge = Bridge::start(Path::new("/usr/bin/python3"), &script).unwrap();
+        bridge.request(json!({"op":"cleanup_marker", "path":marker})).unwrap();
+        drop(bridge);
+        assert_eq!(fs::read_to_string(&marker).unwrap(), "cleaned");
+        fs::remove_file(marker).unwrap();
     }
 }

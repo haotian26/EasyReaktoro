@@ -1,4 +1,6 @@
+import {t,useLanguage} from './i18n';
 import React from 'react'
+import {createPortal} from 'react-dom'
 
 export type ElementInfo = { symbol:string; zh:string; en:string; group:number; period:number; series?:'lanthanide'|'actinide' }
 
@@ -44,18 +46,34 @@ export function parseFormula(value:string) {
 }
 
 export function ChemicalFormula({ value, className='' }:{value:string;className?:string}) {
+  useLanguage();
   const parsed = parseFormula(value)
   return <span className={`chemical-formula ${className}`}>{parsed.tokens.map((token,index) => token.sub ? <sub key={index}>{token.text}</sub> : <React.Fragment key={index}>{token.text}</React.Fragment>)}{parsed.charge && <sup>{parsed.charge}</sup>}{parsed.phase && <span className="phase">{parsed.phase}</span>}</span>
 }
 
 export function PeriodicTable({ selected, onChange }:{selected:string[];onChange:(next:string[])=>void}) {
+  useLanguage();
   const [query,setQuery]=React.useState('')
   const [focused,setFocused]=React.useState<ElementInfo | null>(null)
-  const matches=ELEMENTS.filter(e => `${e.symbol} ${e.zh} ${e.en}`.toLowerCase().includes(query.trim().toLowerCase()))
+  const matches=ELEMENTS.filter(e => (e.symbol+' '+e.zh+' '+e.en).toLowerCase().includes(query.trim().toLowerCase()))
   const toggle = (symbol:string) => onChange(selected.includes(symbol) ? selected.filter(x => x !== symbol) : [...selected,symbol])
+  const block=(e:ElementInfo)=>e.series?'f':e.group<=2||e.symbol==='He'?'s':e.group<=12?'d':'p'
+  const move=(event:React.KeyboardEvent<HTMLButtonElement>,element:ElementInfo)=>{
+    const directions:Record<string,number[]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]},d=directions[event.key];if(!d)return;
+    event.preventDefault();const candidates=ELEMENTS.filter(e=>d[0]?e.period===element.period&&(e.group-element.group)*d[0]>0:e.group===element.group&&(e.period-element.period)*d[1]>0).sort((a,b)=>Math.abs(a.group-element.group)+Math.abs(a.period-element.period)-Math.abs(b.group-element.group)-Math.abs(b.period-element.period));
+    event.currentTarget.closest('.periodic-grid')?.querySelector<HTMLButtonElement>('[data-element="'+candidates[0]?.symbol+'"]')?.focus();
+  }
   return <div className="periodic-table">
-    <div className="periodic-tools"><input aria-label="查找元素" placeholder="查找元素：符号 / 中文 / English" value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter' && matches.length===1){e.preventDefault();toggle(matches[0].symbol);}}}/><span aria-live="polite">{query ? `${matches.length} 个匹配` : `已选 ${selected.length} 个元素`}</span>{query && <button type="button" className="secondary" onClick={()=>setQuery('')}>清除搜索</button>}</div>
-    <div className="periodic-scroll"><div className="periodic-grid full-periodic">{ELEMENTS.map(element => <button type="button" key={element.symbol} aria-pressed={selected.includes(element.symbol)} title={`${element.zh} · ${element.en} · ${element.symbol}`} className={`${selected.includes(element.symbol) ? 'selected' : ''} ${!matches.includes(element) ? 'not-matched' : ''}`} style={{gridColumn:element.group,gridRow:element.period}} onMouseEnter={()=>setFocused(element)} onFocus={()=>setFocused(element)} onClick={() => toggle(element.symbol)}><strong>{element.symbol}</strong><span>{element.zh}</span><small>{element.en}</small></button>)}</div></div>
-    <div className="periodic-caption" aria-live="polite"><span>{focused ? `${focused.symbol} · ${focused.zh} · ${focused.en}` : '点击元素选择或取消；精确搜索后可按 Enter 选择。'}</span><span>{selected.length ? selected.join(' · ') : '未选择元素'}</span></div>
+    <div className="periodic-tools"><input aria-label={t("查找元素", "Find elements")} placeholder={t("元素符号 / 中文 / English", "Element symbol / name")} value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter' && matches.length===1){e.preventDefault();toggle(matches[0].symbol);}}}/><span aria-live="polite">{query ? matches.length+t(" 个匹配", " matches") : t("已选 ", "Selected ")+selected.length+t(" 个元素", " elements")}</span>{query && <button type="button" className="text-button" onClick={()=>setQuery('')}>{t("清除搜索", "Clear search")}</button>}<button type="button" className="text-button" disabled={!selected.length} onClick={()=>onChange([])}>{t("清除已选元素", "Clear selected elements")}</button></div>
+    <div className="periodic-scroll"><div className="periodic-grid full-periodic">{ELEMENTS.map(element => <button type="button" key={element.symbol} data-element={element.symbol} data-block={block(element)} aria-label={element.symbol+' '+t(element.zh,element.en)} aria-pressed={selected.includes(element.symbol)} title={t(element.zh+' · '+element.en+' · '+element.symbol,element.en+' · '+element.symbol)} className={(selected.includes(element.symbol) ? 'selected ' : '')+(!matches.includes(element) ? 'not-matched' : '')} style={{gridColumn:element.group,gridRow:element.period}} onMouseEnter={()=>setFocused(element)} onFocus={()=>setFocused(element)} onKeyDown={e=>move(e,element)} onClick={() => toggle(element.symbol)}><strong>{element.symbol}</strong><span style={{maxWidth:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t(element.zh,element.en)}</span></button>)}</div></div>
+    <div className="periodic-caption"><span>{focused ? t(focused.symbol+' · '+focused.zh+' · '+focused.en,focused.symbol+' · '+focused.en) : t("点击选择或取消；方向键移动，空格选择。", "Click to select or deselect. Use arrow keys to move and Space to select.")}</span><span>{t("镧系 / 锕系见下方两行", "Lanthanides / actinides are in the bottom two rows")}</span></div>
+    {selected.length>0 && <div className="periodic-selected" aria-label={t("已选元素", "Selected elements")}>{selected.map(symbol=><button type="button" key={symbol} onClick={()=>toggle(symbol)} aria-label={t("移除元素 ", "Remove element ")+symbol}>{symbol}<span aria-hidden="true">×</span></button>)}</div>}
   </div>
+}
+
+export function ElementChooser({selected,onApply,onClose}:{selected:string[];onApply:(symbols:string[])=>void;onClose:()=>void}){
+  useLanguage();
+ const [draft,setDraft]=React.useState([...selected]);const panel=React.useRef<HTMLDivElement>(null);
+ React.useEffect(()=>{const previous=document.activeElement as HTMLElement|null;panel.current?.querySelector<HTMLInputElement>('input')?.focus();return()=>previous?.focus();},[]);
+ return createPortal(<div className="element-chooser-backdrop" onKeyDown={e=>{e.stopPropagation();if(e.key==='Escape')onClose();if(e.key==='Tab'){const nodes=[...panel.current!.querySelectorAll<HTMLElement>('button:not(:disabled),input')];if(e.shiftKey&&document.activeElement===nodes[0]){e.preventDefault();nodes.at(-1)?.focus();}else if(!e.shiftKey&&document.activeElement===nodes.at(-1)){e.preventDefault();nodes[0]?.focus();}}}}><div className="element-chooser" role="dialog" aria-modal="true" aria-label={t("选择组成元素", "Choose constituent elements")} ref={panel}><header><div><h2>{t("选择组成元素", "Choose constituent elements")}</h2><p>{t("选择元素后返回表单填写化学计量数。", "Choose elements, then enter stoichiometric coefficients in the form.")}</p></div><button type="button" className="text-button" aria-label={t("关闭组成元素选择", "Close element selection")} onClick={onClose}>×</button></header><div className="element-chooser-body"><PeriodicTable selected={draft} onChange={setDraft}/></div><footer><span>{t("已选 ", "Selected ")}{draft.length}{t(" 个元素", " elements")}</span><button type="button" className="secondary" onClick={onClose}>{t("取消", "Cancel")}</button><button type="button" className="primary" onClick={()=>{onApply(draft);onClose();}}>{t("使用这些元素", "Use these elements")}</button></footer></div></div>,document.body);
 }

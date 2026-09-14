@@ -154,7 +154,17 @@ def _rename_conflicts(records: list[dict[str, Any]]) -> tuple[list[dict[str, Any
     for record in records: by_name.setdefault(record["name"], []).append(record)
     output = []; decisions = []; used: set[str] = set(by_name)
     for original in sorted(by_name, key=str.casefold):
-        unique = {x["fingerprint"]: x for x in by_name[original]}
+        unique = {}
+        for record in by_name[original]:
+            signature = repository.calculation_signature(record)
+            if signature in unique:
+                first = unique[signature]
+                merged = repository.merge_supplemental(first, record)
+                # Keep the source identity while resolving dependent names below.
+                merged["fingerprint"] = first["fingerprint"]
+                unique[signature] = merged
+            else:
+                unique[signature] = record
         variants = sorted(unique.values(), key=lambda x: (x.get("provenance", {}).get("provider", ""), x.get("provenance", {}).get("database", ""), x["fingerprint"]))
         for record in variants:
             item = dict(record)
@@ -192,7 +202,26 @@ def _rename_conflicts(records: list[dict[str, Any]]) -> tuple[list[dict[str, Any
                 chosen = options[0] if len(options) == 1 else None
                 rewritten[chosen["name"] if chosen else dependency] = coefficient
             reaction["reactants"] = rewritten; item["reaction"] = reaction
+        refs = item.get("model", {}).get("reference_evaluators", {})
+        if refs:
+            rewritten_refs = {}
+            for dependency, convention in refs.items():
+                options = _dependency_options(item, name_targets.get(dependency, []))
+                rewritten_refs[options[0]["name"] if len(options) == 1 else dependency] = convention
+            item["model"] = {**item["model"], "reference_evaluators": rewritten_refs}
     return output, decisions
+
+
+def _order_native_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Place formation reactants before products for Reaktoro's YAML reader."""
+    pending = {x["name"]: x for x in records}; ordered = []; seen = set()
+    require(len(pending) == len(records), "DUPLICATE_NAME", "error.duplicateName", "原生记录名称重复")
+    while pending:
+        ready = [x for x in pending.values() if set(x.get("dependencies", [])).issubset(seen)]
+        require(bool(ready), "NATIVE_DEPENDENCY_ORDER", "error.nativeDependencyOrder", "原生 YAML 存在缺失、循环或非原生依赖，无法独立重新加载")
+        for item in ready:
+            ordered.append(item); seen.add(item["name"]); pending.pop(item["name"])
+    return ordered
 
 
 def _yaml_species(record: dict[str, Any], interpolation: dict[str, Any] | None = None) -> list[str]:
@@ -243,6 +272,8 @@ class Service:
         self.handles: dict[str, dict[str, Any]] = {}
         self.native_databases: dict[tuple[str, str], Any] = {}
         self.verified_native: dict[tuple, Any] = {}
+        from .simulation_jobs import Jobs
+        self.simulation_jobs = Jobs()
 
     def probe(self) -> dict[str, Any]:
         if not reaktoro:
@@ -327,12 +358,8 @@ class Service:
         return handle
 
     def page(self, handle: dict[str, Any], args: dict[str, Any]) -> dict[str, Any]:
-        rows = handle["records"][:]; query = str(args.get("query", "")).casefold().strip(); state = str(args.get("state", "All")); model = str(args.get("model", "All")).casefold(); elements = set(str(x) for x in args.get("elements", []) if x)
-        query = query.translate(str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789"))
-        if query: rows = [x for x in rows if query in " ".join((x["name"], x["formula"], str(x.get("model", {}).get("native_type", x.get("model", {}).get("type", ""))))).casefold()]
-        if state != "All": rows = [x for x in rows if x["state"] == state]
-        if model != "all": rows = [x for x in rows if model in str(x.get("model", {})).casefold()]
-        if elements: rows = [x for x in rows if elements.issubset(x.get("composition", {}).keys())]
+        from .species_search import search_records
+        rows = search_records(handle['records'], args)
         offset = max(0, int(args.get("offset", 0))); limit = min(500, max(1, int(args.get("limit", 100))))
         compact = [{"id": x.get("id"), "name": x["name"], "original_name": x.get("original_name"), "formula": x["formula"], "state": x["state"], "charge": x["charge"], "model": x.get("model", {}).get("native_type", x.get("model", {}).get("type", "Unknown")), "elements": sorted(x.get("composition", {})), "provider": x.get("provenance", {}).get("provider", handle.get("provider")), "read_only": handle["read_only"], "disabled": x.get("disabled", False), "fingerprint": x.get("fingerprint", "")} for x in rows[offset:offset + limit]]
         return {"items": compact, "total": len(rows), "offset": offset, "limit": limit, "models": sorted({x.get("model", {}).get("native_type") or x.get("model", {}).get("type", "Unknown") for x in handle["records"]}), "states": sorted({x["state"] for x in handle["records"]})}
@@ -348,6 +375,8 @@ class Service:
 
     def native_species(self, handle: dict[str, Any], record: dict[str, Any]) -> Any:
         require(reaktoro is not None, "RUNTIME_UNAVAILABLE", "error.runtimeUnavailable", IMPORT_ERROR)
+        if any(x.get("model", {}).get("type") == "converted-standard-state" for x in handle["records"]):
+            return self.rtdb_runtime(handle).species(record["name"])
         provenance = record.get("provenance") or {}
         group, database_name = str(provenance.get("group") or ""), str(provenance.get("database") or "")
         original_name = str(record.get("original_name") or provenance.get("original_name") or record["name"])
@@ -378,9 +407,17 @@ class Service:
             except Exception as exc: raise BridgeError("NATIVE_SOURCE_SPECIES_MISSING", "error.nativeSourceSpeciesMissing", f"{group}/{database_name}: {original_name}: {exc}") from exc
         native_records = [item for item in handle["records"] if not item.get("disabled") and item.get("model", {}).get("type") == "reaktoro-native" and (item.get("model", {}).get("parameters_yaml") or (item.get("reaction") or {}).get("model_parameters_yaml"))]
         require(bool(native_records), "NATIVE_SOURCE_UNAVAILABLE", "error.nativeSourceUnavailable", "原生记录没有可重新加载的来源数据库或模型参数")
-        text = "# EasyReaktoro in-memory native database\nSpecies:\n" + "\n".join(line for item in native_records for line in _yaml_species(item)) + "\n"
+        text = "# EasyReaktoro in-memory native database\nSpecies:\n" + "\n".join(line for item in _order_native_records(native_records) for line in _yaml_species(item)) + "\n"
         try: return reaktoro.Database.fromStringYAML(text).species(record["name"])
         except Exception as exc: raise BridgeError("NATIVE_RELOAD_FAILED", "error.nativeReloadFailed", str(exc)) from exc
+
+    def rtdb_runtime(self, handle: dict[str, Any]) -> Any:
+        from .loader import build_database
+        key = tuple((x.get("id"), x.get("fingerprint"), x.get("disabled")) for x in handle["records"])
+        if handle.get("_runtime_key") != key:
+            database = build_database(handle["records"], runtime_version=handle.get("meta", {}).get("required_reaktoro_version"))
+            handle.update({"_runtime_key": key, "_runtime_database": database})
+        return handle["_runtime_database"]
 
     @staticmethod
     def thermo_result(name: str, species: Any, temperature: float, pressure: float, model: str | None = None) -> dict[str, Any]:
@@ -408,6 +445,8 @@ class Service:
             if species is None: species = handle["species_objects"][record["name"]]
             return self.thermo_result(record["name"], species, temperature, pressure)
         model = record.get("model", {})
+        if model.get("type") == "converted-standard-state":
+            return self.thermo_result(record["name"], self.rtdb_runtime(handle).species(record["name"]), temperature, pressure, model.get("native_type"))
         if model.get("type") == "reaktoro-native":
             return self.thermo_result(record["name"], self.native_species(handle, record), temperature, pressure, model.get("native_type") or "Reaktoro native")
         if model.get("type") == "modified-ryzhenko-bryzgalin":
@@ -437,8 +476,18 @@ class Service:
             proposed.append(record)
         elif action == "update":
             current = self.species(handle, args); record = repository.normalize_species({**args["species"], "id": current["id"]})
-            if current.get("model", {}).get("type") == "reaktoro-native":
-                require(all(record.get(k) == current.get(k) for k in ("formula", "composition", "charge", "state", "model", "reaction", "dependencies")), "NATIVE_RECORD_IMMUTABLE", "error.nativeRecordImmutable", "原生记录的热力学身份和模型不能直接改写；可编辑名称、来源、参考文献、活度参数和备注。自定义模型请新建物种。")
+            if current.get("model", {}).get("type") in ("reaktoro-native", "converted-standard-state"):
+                require(all(record.get(k) == current.get(k) for k in ("formula", "composition", "charge", "state", "model", "reaction", "dependencies")), "NATIVE_RECORD_IMMUTABLE", "error.nativeRecordImmutable", "来源记录的热力学身份和模型不能直接改写；可编辑名称、来源、参考文献、活度参数和备注。自定义模型请新建物种。")
+            old_activity, new_activity = current.get("activity_parameters", {}), record.get("activity_parameters", {})
+            if (old_activity.get("model") == new_activity.get("model") == "extended-debye-huckel"
+                and old_activity.get("ion_size_angstrom") != new_activity.get("ion_size_angstrom")
+                and old_activity.get("source") == new_activity.get("source")):
+                # Changing a number must not keep claiming the original citation
+                # or fallback rule supplied that new number.
+                record["activity_parameters"] = {**new_activity, "source": "", "reference": "", "source_entry": None,
+                    "is_default": False, "resolution": "用户指定", "reason": "手动修改离子尺寸；原赋值保留在 original_assignment。",
+                    "original_assignment": copy.deepcopy(old_activity.get("original_assignment", old_activity))}
+                record = repository.normalize_species(record)
             issues = models.validate_model(record.get("model") or {}, record.get("disabled", False)); require(not issues, "MODEL_INVALID", "error.modelInvalid", "; ".join(item["message"] for item in issues))
             proposed[handle["records"].index(current)] = record
             if record["name"] != current["name"]:
@@ -446,6 +495,8 @@ class Service:
                     other["dependencies"] = [record["name"] if x == current["name"] else x for x in other.get("dependencies", [])]
                     reactants = other.get("reaction", {}).get("reactants", {})
                     if current["name"] in reactants: reactants[record["name"]] = reactants.pop(current["name"])
+                    refs = other.get("model", {}).get("reference_evaluators", {})
+                    if current["name"] in refs: refs[record["name"]] = refs.pop(current["name"])
                     other["fingerprint"] = repository.normalize_species(other)["fingerprint"]
         else:
             current = self.species(handle, args)
@@ -522,7 +573,7 @@ class Service:
     def compose_preview(self, args: dict[str, Any]) -> dict[str, Any]:
         selections = args.get("selections") or []
         source_handles = [self.handle(str(item["handle_id"])) for item in selections]
-        require(all(x["kind"] == "official" for x in source_handles), "COMPOSE_SOURCE", "error.composeSource", "Compose sources must be live Reaktoro databases")
+        require(all(x["kind"] in ("official", "rtdb") for x in source_handles), "COMPOSE_SOURCE", "error.composeSource", "请选择已打开的系统数据库或个人数据库")
         index: dict[str, list[dict[str, Any]]] = {}; seeds = []
         for selection, handle in zip(selections, source_handles):
             for record in handle["records"]: index.setdefault(record["name"], []).append(record)
@@ -530,7 +581,7 @@ class Service:
             seeds.extend(handle["records"] if selection.get("all") else (x for x in handle["records"] if x["name"] in names))
         require(bool(seeds), "COMPOSE_EMPTY", "error.composeEmpty", "Select at least one species")
         closure, missing, cycles = _closure(index, seeds); renamed, decisions = _rename_conflicts(closure)
-        preview = {"preview_id": uuid.uuid4().hex, "selected_count": len(seeds), "dependency_count": len(closure) - len({x['fingerprint'] for x in seeds}), "records": renamed, "rename_decisions": decisions, "missing_dependencies": missing, "cycles": cycles, "can_commit": not missing and not cycles, "source_databases": [{"group": h["group"], "name": h["name"]} for h in source_handles]}
+        preview = {"preview_id": uuid.uuid4().hex, "selected_count": len(seeds), "dependency_count": len(closure) - len({x['fingerprint'] for x in seeds}), "records": renamed, "rename_decisions": decisions, "missing_dependencies": missing, "cycles": cycles, "can_commit": not missing and not cycles, "source_databases": [{"kind": h["kind"], "group": h.get("group", "RTDB"), "name": h["name"]} for h in source_handles]}
         if args.get("target_handle_id"):
             merged = self.merge_preview(self.handle(args["target_handle_id"]), renamed, {})
             preview.update({"can_commit": preview["can_commit"] and merged["can_commit"], "rename_decisions": merged["rename_decisions"], "issues": merged["issues"]})
@@ -544,7 +595,7 @@ class Service:
             merged = self.merge_preview(target, preview["records"], {})
             require(merged["can_commit"], "IMPORT_BLOCKED", "error.importBlocked", json.dumps(merged["issues"], ensure_ascii=False))
             self.commit_merge(target, merged, "compose.commit")
-            return {"success": True, "summary": self.summary(target), "import_count": len(merged["items"])}
+            return {"success": True, "summary": self.summary(target), "import_count": merged["import_count"], "update_count": merged.get("update_count", 0)}
         base = {"provider": "Reaktoro", "name": ", ".join(x["name"] for x in preview["source_databases"]), "fingerprint": repository.fingerprint(preview["source_databases"])}
         records = [{**record, "id": uuid.uuid4().hex} for record in preview["records"]]
         repository.create(str(args["path"]), str(args.get("name") or Path(args["path"]).stem), VERSION or "", base, records)
@@ -604,44 +655,65 @@ class Service:
 
     def merge_preview(self, handle: dict[str, Any], records: list[dict[str, Any]], args: dict[str, Any]) -> dict[str, Any]:
         require(not handle["read_only"], "READ_ONLY", "error.readOnly", "需要可编辑数据库")
-        def signature(item: dict) -> str:
-            return repository.fingerprint({k: item.get(k) for k in ("name", "formula", "composition", "charge", "state", "model", "reaction", "dependencies", "activity_parameters", "disabled")})
-        existing_signatures = {signature(x) for x in handle["records"]}
-        additions = []
-        for record in records:
-            sig = signature(record)
-            if sig not in existing_signatures: additions.append({**record, "id": uuid.uuid4().hex}); existing_signatures.add(sig)
+        signature = repository.calculation_signature
+        existing = {signature(x): x for x in handle["records"]}
+        incoming = {}
+        for raw in records:
+            record = repository.normalize_species(raw)
+            key = signature(record)
+            incoming[key] = repository.merge_supplemental(incoming[key], record) if key in incoming else record
+        additions, updates = [], []
+        labels = {"references": "文献", "notes": "备注", "tags": "标签", "valid_tp": "适用温压", "provenance": "来源记录"}
+        for sig, record in incoming.items():
+            if sig not in existing:
+                additions.append({**record, "id": uuid.uuid4().hex})
+                continue
+            target = existing[sig]
+            updated = repository.merge_supplemental(target, record)
+            fields = [label for key, label in labels.items() if updated.get(key) != target.get(key)]
+            if fields:
+                # Selection identity is stable across preview and commit, independent of UUIDs.
+                updates.append({**updated, "fingerprint": repository.fingerprint({"target": target["id"], "updated": updated["fingerprint"]}),
+                    "merge_kind": "metadata", "merge_fields": fields,
+                    "range_conflict": updated.get("provenance", {}).get("valid_tp_alternatives") != target.get("provenance", {}).get("valid_tp_alternatives")})
         combined, decisions = _rename_conflicts(handle["records"] + additions)
         imported_fingerprints = {x["fingerprint"] for x in additions}
         imported = [x for x in combined if x["fingerprint"] in imported_fingerprints]
         graph: dict[str, list[dict[str, Any]]] = {}
         for record in combined: graph.setdefault(record["name"], []).append(record)
-        selected = set(args["fingerprints"]) if "fingerprints" in args else imported_fingerprints
-        require(selected.issubset(imported_fingerprints), "IMPORT_SOURCE_CHANGED", "error.importSourceChanged", "源文件或选择已经改变，请重新预览")
+        selectable = imported_fingerprints | {x["fingerprint"] for x in updates}
+        selected = set(args["fingerprints"]) if "fingerprints" in args else selectable
+        require(selected.issubset(selectable), "IMPORT_SOURCE_CHANGED", "error.importSourceChanged", "源文件或选择已经改变，请重新预览")
         seeds = [x for x in imported if x["fingerprint"] in selected]
         closure, missing, cycles = _closure(graph, seeds)
         required = {x["fingerprint"] for x in closure}
         chosen = [x for x in imported if x["fingerprint"] in required]
-        # Re-resolve only selected records so unchecked conflicts do not rename
-        # existing database entries as a side effect.
+        chosen_updates = [x for x in updates if x["fingerprint"] in selected]
+        by_id = {x["id"]: repository.normalize_species(x) for x in chosen_updates}
+        originals = [by_id.get(x["id"], x) for x in handle["records"]]
         chosen_sources = [x for x in additions if x["fingerprint"] in required]
-        final, decisions = _rename_conflicts(handle["records"] + chosen_sources)
+        final, decisions = _rename_conflicts(originals + chosen_sources)
         issues = self.record_issues(final)
-        return {"items": imported, "selected_count": len(seeds), "import_count": len(chosen), "dependency_count": len(chosen)-len(seeds), "combined_records": final, "rename_decisions": decisions, "missing_dependencies": missing, "cycles": cycles, "issues": issues, "can_commit": not missing and not cycles and not any(x["severity"] == "error" for x in issues), "reused_count": len(records)-len(additions)}
+        return {"items": imported + updates, "new_count": len(imported), "update_count": len(chosen_updates),
+                "selected_count": len(seeds) + len(chosen_updates), "import_count": len(chosen),
+                "dependency_count": len(chosen)-len(seeds), "combined_records": final, "rename_decisions": decisions,
+                "missing_dependencies": missing, "cycles": cycles, "issues": issues,
+                "can_commit": not missing and not cycles and not any(x["severity"] == "error" for x in issues),
+                "reused_count": len(records)-len(additions)}
 
     def commit_merge(self, handle: dict[str, Any], preview: dict[str, Any], action: str) -> None:
-        if preview["import_count"] == 0: return
+        if preview["import_count"] == 0 and preview.get("update_count", 0) == 0: return
         handle["records"] = [repository.normalize_species({**x, "id": x.get("id") or uuid.uuid4().hex}) for x in preview["combined_records"]]
         handle["dirty"] = True
         handle.pop("validation", None)
-        handle.setdefault("pending_audit", []).append({"action": action, "count": preview["import_count"], "renames": preview["rename_decisions"]})
+        handle.setdefault("pending_audit", []).append({"action": action, "count": preview["import_count"], "updated": preview.get("update_count", 0), "renames": preview["rename_decisions"]})
 
     def import_commit(self, handle: dict[str, Any], args: dict[str, Any]) -> dict[str, Any]:
         preview = self.import_preview(handle, args)
         require(not args.get("source_revision") or preview["source_revision"] == args["source_revision"], "IMPORT_SOURCE_CHANGED", "error.importSourceChanged", "源文件已改变，请重新预览")
         require(preview["can_commit"], "IMPORT_BLOCKED", "error.importBlocked", json.dumps(preview["issues"] + preview["missing_dependencies"], ensure_ascii=False))
         self.commit_merge(handle, preview, "import.commit")
-        return {"success": True, "import_count": preview["import_count"], "summary": self.summary(handle)}
+        return {"success": True, "import_count": preview["import_count"], "update_count": preview.get("update_count", 0), "summary": self.summary(handle)}
 
     def export_native(self, handle: dict[str, Any], args: dict[str, Any]) -> dict[str, Any]:
         require(all(path.suffix.lower() in (".yaml", ".yml") for path in (Path(str(args.get("path", ""))), Path(str(args.get("path", ""))).expanduser().resolve())), "EXPORT_EXTENSION", "error.exportExtension", "导出路径及其实际目标必须使用 YAML 扩展名（.yaml 或 .yml），不能覆盖数据库文件。")
@@ -670,7 +742,7 @@ class Service:
             lines.append("Elements:")
             for element in handle["custom_elements"]: lines.extend([f"- Symbol: {element['symbol']}", f"  MolarMass: {element['molar_mass']}"])
         lines.append("Species:")
-        for record in included: lines.extend(_yaml_species(record))
+        for record in _order_native_records(included): lines.extend(_yaml_species(record))
         text = "\n".join(lines) + "\n"; path = Path(args["path"])
         try:
             loaded = reaktoro.Database.fromStringYAML(text)
@@ -740,6 +812,7 @@ class Service:
 
     def dispatch(self, args: dict[str, Any]) -> dict[str, Any]:
         op = args.get("op")
+        if op == "simulation.request": return self.simulation_jobs.dispatch(self, args)
         if op == "runtime.probe": return self.probe()
         if op == "runtime.can_switch":
             require(not any(x["dirty"] for x in self.handles.values()), "DIRTY_DATABASE", "error.dirtyDatabase", "请先保存或关闭未保存的数据库")
@@ -755,6 +828,16 @@ class Service:
         if op == "rtdb.create":
             repository.create(str(args["path"]), str(args.get("name") or Path(args["path"]).stem), VERSION or "", args.get("base"), args.get("records")); return {"summary": self.open_rtdb(str(args["path"]))}
         if op == "rtdb.open": return {"summary": self.open_rtdb(str(args["path"]))}
+        if op == "rtdb.list_info":
+            paths = args.get("paths", [])
+            require(isinstance(paths, list) and len(paths) <= 200 and all(isinstance(p, str) for p in paths), "RTDB_PATHS_INVALID", "error.rtdbPathsInvalid", "数据库列表无法读取，请重新打开数据库页面。")
+            items = []
+            for path in dict.fromkeys(paths):
+                try:
+                    items.append({"path": path, "status": "ready", **repository.database_info(path)})
+                except BridgeError as exc:
+                    items.append({"path": path, "status": "error", "message": exc.diagnostic})
+            return {"items": items}
         if op == "database.close":
             handle = self.handle(str(args["handle_id"])); require(not handle["dirty"] or bool(args.get("discard")), "DIRTY_DATABASE", "error.dirtyDatabase", "Save or discard changes before closing"); self.handles.pop(handle["id"]); return {"closed": True, "handle_id": handle["id"]}
         handle = self.handle(str(args.get("handle_id", "")))
@@ -763,7 +846,13 @@ class Service:
         if op == "database.species_options": return self.species_options(handle)
         if op == "species.details":
             details = copy.deepcopy(self.species(handle, args))
+            mass = details.get("provenance", {}).get("molar_mass_kg_mol")
+            if isinstance(mass, (int, float)) and math.isfinite(mass): details["molar_mass_kg_mol"] = mass
             details["model_definition"] = next((item for item in models.definitions() if item["id"] == details.get("model", {}).get("type")), None)
+            if details.get("model", {}).get("type") == "converted-standard-state":
+                from .converted import parameter_definition, visible_parameters
+                details["model_definition"] = parameter_definition(details["model"])
+                details["model_parameters"] = visible_parameters(details["model"])
             raw = details.get("model", {}).get("parameters_yaml")
             if raw:
                 try:

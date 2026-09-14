@@ -1,6 +1,6 @@
 [package]
 name = "easyreaktoro"
-version = "0.2.0"
+version = "0.16.0"
 license = "MIT"
 description = "EasyReaktoro thermodynamic database workbench"
 authors = ["EasyReaktoro"]

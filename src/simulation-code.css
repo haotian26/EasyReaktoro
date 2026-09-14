@@ -1,0 +1,38 @@
+.sim-editor-switch{display:flex;gap:2px;padding:3px;margin:3px 10px 3px 0;border:1px solid var(--line);border-radius:6px;background:var(--surface-soft);align-self:center;flex-shrink:0}
+.sim-editor-switch button{display:flex;align-items:center;gap:5px;border:0;background:transparent;border-radius:4px;color:var(--muted);padding:4px 9px;font-size:11px;line-height:1.4}
+.sim-editor-switch button[aria-pressed=true]{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px #0000000d}
+.sim-stepbar .sim-code-step-label{flex:1;display:flex;align-items:center;gap:8px;padding:0 18px;font-size:12px;color:var(--muted)}
+.sim-code-panel{padding:0;min-height:0;overflow:auto;overscroll-behavior:contain}
+.sim-notebook{--code-keyword:#7953bb;--code-string:#287654;--code-number:#ad5a20;--code-comment:#788295;--code-active:#f2f5fb;--code-selection:#cbd8f3;min-height:100%;padding:0 16px 24px;background:var(--surface-soft)}
+:root[data-theme=dark] .sim-notebook{--code-keyword:#c6a6ff;--code-string:#93cfac;--code-number:#edbb86;--code-comment:#91a0b6;--code-active:#293345;--code-selection:#3d4d70}
+@media(prefers-color-scheme:dark){:root[data-theme=system] .sim-notebook{--code-keyword:#c6a6ff;--code-string:#93cfac;--code-number:#edbb86;--code-comment:#91a0b6;--code-active:#293345;--code-selection:#3d4d70}}
+.sim-code-tools{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 0 7px;font-size:11px}
+.sim-code-tools>div{display:flex;align-items:center;gap:9px}.sim-code-tools strong{font-size:12px;font-weight:600}.sim-code-tools span{color:var(--muted)}.sim-code-tools .text-btn{display:flex;align-items:center;gap:5px;font-size:11px}
+.sim-code-nav{display:flex;flex-wrap:wrap;gap:7px;padding:7px 0 12px;position:sticky;top:0;z-index:3;background:var(--surface-soft)}
+.sim-code-nav button{border:1px solid var(--line);border-radius:5px;padding:5px 10px;background:var(--surface);font-size:11px;color:var(--muted)}
+.sim-code-nav button:hover{color:var(--accent);border-color:var(--accent)}
+.sim-code-cells{display:flex;flex-direction:column;gap:13px}.sim-code-cell{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;scroll-margin-top:55px}
+.sim-code-cell:focus-within{border-color:var(--accent)}.sim-code-cell.has-error{border-color:var(--danger)}
+.sim-code-cell>header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:7px 12px;border-bottom:1px solid var(--line)}
+.sim-cell-heading{display:flex;align-items:center;gap:9px;background:none;border:0;padding:2px 0;color:var(--text)}.sim-cell-heading strong{font-size:12px;font-weight:600}.sim-cell-index{font:11px ui-monospace,SFMono-Regular,monospace;color:var(--muted)}.sim-cell-heading svg{color:var(--muted);transition:transform .15s}.sim-cell-heading svg.collapsed{transform:rotate(-90deg)}.sim-code-cell>header p{font-size:11px;line-height:1.7;color:var(--muted);margin:0}
+.sim-code-error{display:block;width:100%;border:0;border-top:1px solid var(--line);background:var(--surface-soft);color:var(--danger);padding:8px 14px;text-align:left;font-size:11px;white-space:normal;line-height:1.7}
+.sim-python-editor .cm-tooltip{background:var(--surface);color:var(--text);border:1px solid var(--line)}.sim-python-editor .cm-foldGutter{min-width:12px}.sim-python-editor .cm-matchingBracket{background:var(--code-selection)!important;color:var(--text)!important}
+@media(max-width:1100px){.sim-notebook{padding-left:10px;padding-right:10px}.sim-code-cell>header{gap:6px}.sim-code-cell>header p{font-size:10px}.sim-editor-switch{margin-right:5px}}
+
+.sim-code-recovery{display:flex;align-items:center;gap:12px;padding:5px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);background:var(--surface)}
+.sim-stepbar .sim-tabs[hidden]{display:none}
+.sim-range-note{padding:0 0 8px;margin:0;color:var(--muted);font-size:11px;line-height:1.65}
+
+.sim-code-layout{display:grid;grid-template-columns:164px minmax(0,1fr);gap:14px;align-items:start}
+.sim-code-layout .sim-code-nav{display:block;position:sticky;top:0;padding:0 0 12px;max-height:calc(100vh - 155px);overflow:auto}
+.sim-code-nav small{display:block;padding:10px 7px 6px;color:var(--muted);font-size:10px}
+.sim-code-nav button{display:flex;align-items:center;gap:7px;width:100%;text-align:left;padding:7px;margin:2px 0;border-color:transparent;background:transparent;white-space:nowrap}
+.sim-code-nav button span{font:10px ui-monospace,monospace;opacity:.65}.sim-code-nav button i{color:var(--accent);margin-left:auto}
+.sim-code-nav button:hover,.sim-code-nav button:focus-visible{background:var(--surface);border-color:var(--line)}
+.sim-code-cell{scroll-margin-top:10px}
+.sim-custom-banner{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:5px 16px;border-bottom:1px solid var(--line);background:var(--accent-soft);font-size:11px;color:var(--text)}
+.sim-custom-banner>span{flex:1}.sim-custom-banner .text-btn{font-size:11px}
+@media(max-width:1000px){.sim-code-layout{grid-template-columns:140px minmax(0,1fr);gap:8px}.sim-code-nav button{font-size:10px;gap:5px}}
+/* Module names stay readable in both languages without sideways navigation. */
+.sim-code-nav button{white-space:normal;align-items:flex-start;line-height:1.45;overflow-wrap:anywhere}
+.sim-code-nav button span{flex-shrink:0;padding-top:2px}
