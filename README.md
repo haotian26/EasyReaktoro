@@ -6,11 +6,11 @@ EasyReaktoro 是面向 Reaktoro 的非官方 macOS 图形界面。v0.16.0 提供
 
 应用依赖用户自行安装的外部 Reaktoro Python 环境，不打包 Python、Reaktoro、官方数据库或个人数据库。
 
-源码仓库：[haotian26/EasyReaktoro](https://github.com/haotian26/EasyReaktoro)。项目代码采用 [MIT 许可证](LICENSE)；第三方代码和品牌标识的边界见 [第三方说明](THIRD_PARTY_NOTICES.md)。当前仅公开源码，不提供 GitHub Release 或安装包下载。
+源码仓库：[haotian26/EasyReaktoro](https://github.com/haotian26/EasyReaktoro)。项目代码采用 [MIT 许可证](LICENSE)；第三方代码和品牌标识的边界见 [第三方说明](THIRD_PARTY_NOTICES.md)。可从 [GitHub Releases](https://github.com/haotian26/EasyReaktoro/releases) 下载 macOS 安装包。
 
 ## 运行
 
-支持 Apple Silicon macOS 13 及以上；已在独立用户的 Apple Silicon macOS 虚拟机验收；Intel Mac 与 Windows 尚未验收。Git 仓库不包含 `.app`，克隆后请先按下文构建。已有本地交付包的用户可在 Finder 双击 `release/EasyReaktoro-v0.16.0.app`，或运行：
+支持 Apple Silicon macOS 13 及以上；已在独立用户的 Apple Silicon macOS 虚拟机验收；Intel Mac 与 Windows 尚未验收。从 [v0.16.0 Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.16.0) 下载 `EasyReaktoro-v0.16.0.dmg`，打开后将 EasyReaktoro 拖入 Applications。安装包采用 ad-hoc 签名，未经 Apple 公证；仍需自行安装外部 Reaktoro Python 环境。Git 仓库不包含 `.app`，从源码运行请按下文构建。已有本地构建包的用户可在 Finder 双击 `release/EasyReaktoro-v0.16.0.app`，或运行：
 
 ```bash
 open release/EasyReaktoro-v0.16.0.app

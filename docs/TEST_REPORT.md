@@ -1,3 +1,14 @@
+# v0.16.0 安装包发布验证 — 2026-09-21
+
+沿用 v0.16.0 标签（5dd52ca）的已验收应用，未修改应用代码。可执行文件 SHA-256 与下方记录一致，28 项运行资源与当前源码一致。
+
+- UDBZ DMG 校验与只读挂载通过；包内 EasyReaktoro.app 的所有文件、符号链接及权限与原应用一致，Applications 链接指向 /Applications；已显式卸载映像。
+- 本机 /Applications/EasyReaktoro.app 安装后启动正常、连接外部 Reaktoro 2.13.0，既有数据库和模拟历史保留。未改写用户数据库或模拟数据。
+- DMG 归档到 Software Release/2026-09-21/EasyReaktoro-v0.16.0.dmg，大小 6,546,362 字节，SHA-256 为 `3ac5ca9a5b67affedd089f863283df79e5c96b0388f58f9a90c58b3c15f0d0b7`。
+- 应用为 Apple Silicon arm64、macOS 13+、ad-hoc 签名，未经 Apple 公证；不包含 Python、Reaktoro 或数据库。下方测试总数为该应用的既有验证，本次仅增加安装与分发核验。
+
+---
+
 # EasyReaktoro v0.16.0 双语界面验证记录
 
 日期：2026-09-14。本轮验证简体中文与 English 界面切换、编辑状态保留，以及独立 macOS 环境中的实际操作。下方历史记录原样保留。
