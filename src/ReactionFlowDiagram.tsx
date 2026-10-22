@@ -7,7 +7,7 @@ import {flowWindow,type FlowAnnotation} from './reaction-flow-overview';
 import './reaction-flow-diagram.css';
 
 type Point={temperature_c:number;pressure_bar:number;pressure_mode?:string};
-type Props={active?:(i:number,o:number)=>boolean;runIndex?:(i:number,o:number)=>number;positions:number;rounds:number;selected:FlowCoordinate;materials:DiagramMaterialStages;point:(i:number,o:number)=>Point;onSelect:(i:number,o:number)=>void;showConditions?:boolean;onAdjust?:()=>void;annotations?:FlowAnnotation[]};
+type Props={active?:(i:number,o:number)=>boolean;runIndex?:(i:number,o:number)=>number;positions:number;rounds:number;selected:FlowCoordinate;materials:DiagramMaterialStages;point:(i:number,o:number)=>Point;onSelect:(i:number,o:number)=>void;showConditions?:boolean;onAdjust?:()=>void;annotations?:FlowAnnotation[];onEditOverride?:(id:string)=>void};
 type FlowNode=FlowCoordinate&{key:string;x:number;y:number;height:number;point:Point;sources:FlowSource[];fresh:string[];external:boolean};
 type FlowEdge={key:string;from:FlowNode;to:FlowNode;group:FlowSource;lines:string[]};
 const NODE_WIDTH=116, COLUMN=252, LEFT=88, TOP=44;
@@ -29,19 +29,19 @@ export function ReactionFlowDiagram(props:Props){
  const [expanded,setExpanded]=useState(selected.inner!==0||selected.outer!==0);
  const previous=useRef(selected);
  useEffect(()=>{if(previous.current.inner!==selected.inner||previous.current.outer!==selected.outer)setExpanded(true);previous.current=selected;},[selected.inner,selected.outer]);
- if(!large)return <><PointFlowDiagram {...props}/><FlowAnnotations annotations={props.annotations} onSelect={props.onSelect}/></>;
+ if(!large)return <><PointFlowDiagram {...props}/><FlowAnnotations onEditOverride={props.onEditOverride} annotations={props.annotations} onSelect={props.onSelect}/></>;
  const explore=(p:FlowCoordinate)=>{props.onSelect(p.inner,p.outer);setExpanded(true);};
  return <section className="reaction-flow reaction-flow--overview" aria-label={tr('完整反应流程','Complete reaction flow')}>
   <ReactionFlowOverview {...props} active={props.active??alwaysActive} onExplore={explore}/>
-  <FlowAnnotations annotations={props.annotations} onSelect={(inner,outer)=>explore({inner,outer})}/>
+  <FlowAnnotations onEditOverride={props.onEditOverride} annotations={props.annotations} onSelect={(inner,outer)=>explore({inner,outer})}/>
   <div className="reaction-flow__expand"><button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?tr('收起附近步骤','Hide nearby steps'):tr('查看所选位置附近的步骤','Show steps near the selected position')}</button><span>{coordinate(selected)}</span>{!expanded&&props.onAdjust&&<button type="button" onClick={()=>{setExpanded(true);props.onAdjust?.();}}>{tr('单独调整此处','Adjust this point')}</button>}</div>
   {expanded&&<PointFlowDiagram {...props} windowed/>}
  </section>;
 }
 
-function FlowAnnotations({annotations=[],onSelect}:{annotations?:FlowAnnotation[];onSelect:(inner:number,outer:number)=>void}){
+function FlowAnnotations({annotations=[],onSelect,onEditOverride}:{annotations?:FlowAnnotation[];onSelect:(inner:number,outer:number)=>void;onEditOverride?:(id:string)=>void}){
  useLanguage();if(!annotations.length)return null;
- return <div className="flow-overview__exceptions reaction-flow__local-conditions"><details open={annotations.length<=4}><summary>{tr(`${annotations.length} 组单独条件`,englishCount(annotations.length,'set of local conditions','sets of local conditions'))}</summary><ul>{annotations.map(annotation=><li key={annotation.id}>{annotation.at?<button type="button" onClick={()=>onSelect(annotation.at!.inner,annotation.at!.outer)}><span>{annotation.label}</span><small>{annotation.detail}</small></button>:<div className="reaction-flow__inactive-condition"><span>{annotation.label}</span><small>{annotation.detail}</small><small>{tr('本次不生效 · 条件已保留','Not applied in this run · condition retained')}</small></div>}</li>)}</ul></details></div>;
+ return <div className="flow-overview__exceptions reaction-flow__local-conditions"><details open={annotations.length<=4}><summary>{tr(`${annotations.length} 组单独条件`,englishCount(annotations.length,'set of local conditions','sets of local conditions'))}</summary><ul>{annotations.map(annotation=><li key={annotation.id}>{annotation.at?<button type="button" onClick={()=>onSelect(annotation.at!.inner,annotation.at!.outer)}><span>{annotation.label}</span><small>{annotation.detail}</small></button>:onEditOverride?<button type="button" className="reaction-flow__inactive-condition" onClick={()=>onEditOverride(annotation.id)}><span>{annotation.label}</span><small>{annotation.detail}</small><small>{tr('本次不生效 · 条件已保留','Not applied in this run · condition retained')}</small><b>{tr('编辑条件','Edit conditions')}</b></button>:<div className="reaction-flow__inactive-condition"><span>{annotation.label}</span><small>{annotation.detail}</small><small>{tr('本次不生效 · 条件已保留','Not applied in this run · condition retained')}</small></div>}</li>)}</ul></details></div>;
 }
 
 function PointFlowDiagram({positions,rounds,selected,materials,point,onSelect,onAdjust,showConditions=true,active=alwaysActive,runIndex=(i,o)=>o*positions+i,windowed=false}:Props&{windowed?:boolean}){

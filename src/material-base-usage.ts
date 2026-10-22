@@ -23,6 +23,7 @@ export function materialBaseUsage(config:Config,target:MaterialTarget,items?:rea
   const candidates=Object.fromEntries(Object.entries(stages).map(([key,routes])=>[key,routes.filter(route=>route.source==='material'&&route.material_id===target.material_id&&(route.phase==='all'||route.phase==='species'?(route.phase==='all'||route.species?.includes(target.species)):!phase||route.phase===phase))]));
   let used=0,firstUse:[number,number]|undefined;
   for(let oi=0;oi<plan.counts.outer;oi++)for(let ii=0;ii<plan.counts.inner;ii++){
+   if(!plan.active(ii,oi))continue;
    const added=candidates[stageAt(ii,oi)].some(route=>{const amount=plan.valueAt({kind:'route_fraction',route_id:route.id!,field:'fraction'},ii,oi,route.fraction);if(!Number.isFinite(amount)||amount<0)throw new Error(t('物料份数尚未填完整',"Enter the number of material portions"));return amount>0;});
    if(!added)continue;used++;firstUse??=[ii,oi];
    if(!plan.hasSetting(target,ii,oi))return remember({known:true,used,baseRequired:true,firstUse,firstBase:[ii,oi]});

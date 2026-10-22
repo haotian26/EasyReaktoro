@@ -77,7 +77,7 @@ describe('usable workstation',()=>{
 describe('setup guidance and first-result feedback',()=>{
  it('jumps from a missing setting to the right panel and follows the next step',async()=>{
   render(<Simulation summary={summary} runtime={runtime} onDatabases={()=>{}}/>);await screen.findByRole('button',{name:'参与平衡 solvent'});
-  fireEvent.click(screen.getByRole('button',{name:'填写初始投料及其数量'}));expect(screen.getByRole('tab',{name:/初始物质/}).getAttribute('aria-selected')).toBe('true');
+  fireEvent.click(await screen.findByRole('button',{name:'填写初始投料及其数量'}));expect(screen.getByRole('tab',{name:/初始物质/}).getAttribute('aria-selected')).toBe('true');
   fireEvent.click(screen.getByRole('button',{name:'下一步：计算流程'}));expect(screen.getByRole('tab',{name:/计算流程/}).getAttribute('aria-selected')).toBe('true');
   fireEvent.click(screen.getByRole('button',{name:'设置摘要'}));fireEvent.click(screen.getByRole('button',{name:/活度模型 Extended Debye/}));expect(screen.getByRole('tab',{name:/活度模型/}).getAttribute('aria-selected')).toBe('true');
   expect(screen.getByText('2 个 species 的尺寸参数待设置')).toBeTruthy();

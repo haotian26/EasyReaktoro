@@ -4,7 +4,7 @@ import {pointConditions} from './process-layout';
 import {materialBaseUsage} from './material-base-usage';
 import {Config,DatabaseSummary,SimSpecies} from './simulation-types';
 import {stageKeys,stageInfo,stageAt,toStageConfig} from './reaction-stages';
-import {compileSchedule,scheduleCounts,scheduleIssue,type CompiledSchedule} from './simulation-schedule';
+import {compileSchedule,scheduleIssue,type CompiledSchedule} from './simulation-schedule';
 import {evaluatedRecipeInputs,recipeInputs} from './ReactionStageEditor';
 
 export type SetupStep={id:string;title:string;detail:string;issue?:string};
@@ -31,7 +31,7 @@ export function setupSteps(config:Config,items:SimSpecies[],summary:DatabaseSumm
   const rows=config.materials.flatMap(m=>m.inputs);let filled=config.materials.filter(m=>m.inputs.some(r=>Number.isFinite(r.amount) && r.amount>0));
   let plan:CompiledSchedule|undefined,effective=config;
   try{if(config.schedule){effective=toStageConfig(config);plan=compileSchedule(effective);}}catch{}
-  const counts=config.schedule?scheduleCounts(config.schedule):loopCounts(config),total=counts.total;
+  const counts=plan?.counts??loopCounts(config),total=counts.total;
   if(plan&&effective.reaction_stages){
    const candidates=Object.fromEntries(stageKeys.map(key=>[key,effective.reaction_stages![key].filter(route=>route.source==='material'&&(route.fraction>0||plan!.hasSetting({kind:'route_fraction',route_id:route.id!,field:'fraction'}))&&recipeInputs(effective,route,items).some(row=>row.amount>0||plan!.hasSetting({kind:'material_amount',material_id:route.material_id,species:row.species})))]));
    const possible=new Set(Object.values(candidates).flat().map(route=>route.material_id)),used=new Set<string>();

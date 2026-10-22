@@ -14,7 +14,7 @@ import {constraintActiveAt} from './equilibrium-constraints';
 import './schedule-preview.css';
 
 export type ScheduleSelection={inner:number;outer:number};
-export type SchedulePreviewProps={config:Config;items:SimSpecies[];selected:ScheduleSelection;onSelect:(inner:number,outer:number)=>void;onAdjust:(inner:number,outer:number)=>void;onLocateIssue?:()=>void};
+export type SchedulePreviewProps={config:Config;items:SimSpecies[];selected:ScheduleSelection;onSelect:(inner:number,outer:number)=>void;onAdjust:(inner:number,outer:number)=>void;onLocateIssue?:()=>void;onEditOverride?:(id:string)=>void};
 const finite=Number.isFinite;
 const clamped=(value:number,count:number)=>Math.max(0,Math.min(count-1,Number.isInteger(value)?value:0));
 const fraction=(plan:CompiledSchedule,route:Route,ii:number,oi:number)=>plan.valueAt({kind:'route_fraction',route_id:route.id!,field:'fraction'},ii,oi,route.fraction);
@@ -23,7 +23,7 @@ function PointNumber({value,count,label,onChange}:{value:number;count:number;lab
  useLanguage();
  const [text,setText]=useState(String(value+1));useEffect(()=>setText(String(value+1)),[value,count]);
  const valid=/^\d+$/.test(text)&&Number(text)>=1&&Number(text)<=count;
- return <label className="schedule-preview__coordinate"><span>{label}</span><input type="number" min={1} max={count} step={1} aria-label={tr(`预览${label}`, `Preview ${label}`)} aria-invalid={!valid} value={text} onChange={e=>{setText(e.target.value);const next=Number(e.target.value);if(e.target.value.trim()&&Number.isInteger(next)&&next>=1&&next<=count)onChange(next-1);}} onBlur={()=>setText(String(value+1))}/><small>/ {count}</small></label>;
+ return <label className="schedule-preview__coordinate"><span>{label}</span><input data-local-undo type="number" min={1} max={count} step={1} aria-label={tr(`预览${label}`, `Preview ${label}`)} aria-invalid={!valid} value={text} onChange={e=>{setText(e.target.value);const next=Number(e.target.value);if(e.target.value.trim()&&Number.isInteger(next)&&next>=1&&next<=count)onChange(next-1);}} onBlur={()=>setText(String(value+1))}/><small>/ {count}</small></label>;
 }
 function sourceCoordinate(route:Route,ii:number,oi:number,config:Config,positions?:number):{inner:number;outer:number}|null{
  if(route.source==='previous_point')return ii>0?{inner:ii-1,outer:oi}:null;
@@ -49,7 +49,7 @@ function diagramMaterials(effective:Config,plan:CompiledSchedule,items:SimSpecie
  return materialStages;
 }
 
-export function SchedulePreview({config,items,selected,onSelect,onAdjust,onLocateIssue}:SchedulePreviewProps){
+export function SchedulePreview({config,items,selected,onSelect,onAdjust,onLocateIssue,onEditOverride}:SchedulePreviewProps){
  const language=useLanguage();
  const [view,setView]=useState<'diagram'|'table'>('diagram');
  const previewElement=useRef<HTMLElement>(null),validHeight=useRef(0);
@@ -83,7 +83,7 @@ export function SchedulePreview({config,items,selected,onSelect,onAdjust,onLocat
    <div><button type="button" className="sim-icon-btn" aria-label={tr("预览上一轮次", "Preview previous round")} disabled={oi===0} onClick={()=>onSelect(ii,oi-1)}><ArrowUp size={14}/></button><PointNumber label={tr("反应轮次", "Round")} value={oi} count={counts.outer} onChange={index=>onSelect(ii,index)}/><button type="button" className="sim-icon-btn" aria-label={tr("预览下一轮次", "Preview next round")} disabled={oi===counts.outer-1} onClick={()=>onSelect(ii,oi+1)}><ArrowDown size={14}/></button></div>
   </div>
   <div className="schedule-preview__views" role="tablist" aria-label={tr("核对反应设置", "Review reaction settings")}><button type="button" role="tab" aria-selected={view==='diagram'} onClick={()=>setView('diagram')}>{tr("物料传递图", "Material flow")}</button><button type="button" role="tab" aria-selected={view==='table'} onClick={()=>setView('table')}>{tr("逐点条件表", "Point values")}</button></div>
-  {view==='diagram'?<ReactionFlowDiagram active={plan.active} runIndex={plan.runIndex} annotations={annotations} showConditions={true} positions={counts.inner} rounds={counts.outer} materials={materialStages} selected={{inner:ii,outer:oi}} point={plan.point} onSelect={onSelect} onAdjust={()=>onAdjust(ii,oi)}/>:<PointTable config={effective} plan={plan} inner={ii} outer={oi} onSelect={onSelect} onAdjust={onAdjust}/>}
+  {view==='diagram'?<ReactionFlowDiagram active={plan.active} runIndex={plan.runIndex} annotations={annotations} onEditOverride={onEditOverride} showConditions={true} positions={counts.inner} rounds={counts.outer} materials={materialStages} selected={{inner:ii,outer:oi}} point={plan.point} onSelect={onSelect} onAdjust={()=>onAdjust(ii,oi)}/>:<PointTable config={effective} plan={plan} inner={ii} outer={oi} onSelect={onSelect} onAdjust={onAdjust}/>}
   {view==='diagram'&&counts.total>1&&<div className="schedule-preview__directions" aria-label={tr("实际参数变化", "Actual parameter changes")}>{counts.inner>1&&<section data-reaction-axis="path"><h4><ArrowRight size={14}/>{tr("沿路径 ", "Along the path ")}<small>{tr(`第 ${oi+1} 轮`, `Round ${oi+1}`)}</small></h4><dl>{variations.path.map(row=><div key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></section>}{counts.outer>1&&<section data-reaction-axis="round"><h4><ArrowDown size={14}/>{tr("轮次之间 ", "Between rounds ")}<small>{tr("位置 ", "Position ")}{ii+1}</small></h4><dl>{variations.rounds.map(row=><div key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></section>}</div>}
   {(view==='table'||!!effective.equilibrium_constraints?.length)&&<section className="schedule-preview__point" aria-label={tr(`第 ${oi+1} 轮位置 ${ii+1} 的实际设置`, `Actual settings at round ${oi+1}, position ${ii+1}`)}>
    <header><div><strong>{tr("第 ", "Round ")}{oi+1} {tr("轮 · 位置 ", "· position ")}{ii+1}</strong><small>{tr(`第 ${plan.runIndex(ii,oi)+1} 次反应`, `Reaction ${plan.runIndex(ii,oi)+1}`)}</small></div>{view==='table'&&<button type="button" className="text-btn" onClick={()=>onAdjust(ii,oi)}><SlidersHorizontal size={14}/>{tr("单独调整此处", "Adjust this point")}</button>}</header>

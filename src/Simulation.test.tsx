@@ -88,7 +88,7 @@ describe('equilibrium workbench',()=>{
  it('preserves an unfinished numeric edit as a blank in history',async()=>{await selectWater();fireEvent.change(screen.getByLabelText('water 投料量'),{target:{value:''}});await act(flushHistory);expect(currentHistory().config.materials[0].inputs[0].amount).toEqual({easyreaktoro_empty_number:true});});
  it('shows a real backend failure',async()=>{handler=a=>a==='catalog'?{items}:a==='validate'?Promise.reject(JSON.stringify({diagnostic:'净电荷不平衡'})):{};await selectWater();fireEvent.click(start());await screen.findByText('净电荷不平衡');expect(mocks.open).not.toHaveBeenCalled();});
  it('ignores a late catalog response from the previous database',async()=>{let old:any;handler=(a,p)=>a==='catalog'?(p.handle_id==='db'?new Promise(resolve=>old=resolve):{items:[sodium]}):{};const view=render(<Simulation summary={summary} runtime={runtime} onDatabases={()=>{}}/>);await waitFor(()=>expect(old).toBeTruthy());view.rerender(<Simulation summary={{...summary,handle_id:'new',path:'/test/new.rtdb'}} runtime={runtime} onDatabases={()=>{}}/>);await screen.findByRole('button',{name:'参与平衡 sodium'});await act(async()=>old({items:[water]}));expect(screen.queryByRole('button',{name:'参与平衡 water'})).toBeNull();});
- it('edits material sources independently from the loop variable',()=>{const patch=vi.fn();const config={...structuredClone(DEFAULT_CONFIG),cycles:3};render(<SimulationConditions config={config} patch={patch} items={items} disabled={false} onError={vi.fn()}/>);fireEvent.change(screen.getByLabelText('模拟结束条件'),{target:{value:'N=3'}});expect(patch.mock.calls.at(-1)?.[0].schedule.rounds).toBe(4);fireEvent.change(screen.getByLabelText('later_start 物料 1 来源'),{target:{value:'previous_cycle'}});expect(patch.mock.calls.at(-1)?.[0].reaction_stages.later_start[0].source).toBe('previous_cycle');expect(patch.mock.calls.at(-1)?.[0].schedule.positions).toBe(1);});
+ it('edits material sources independently from the loop variable',()=>{const patch=vi.fn();const config={...structuredClone(DEFAULT_CONFIG),cycles:3};render(<SimulationConditions config={config} patch={patch} items={items} disabled={false} onError={vi.fn()}/>);fireEvent.change(screen.getByLabelText('模拟结束条件'),{target:{value:'N=3'}});expect(compileSchedule({...config,...patch.mock.calls.at(-1)?.[0]}).counts.outer).toBe(4);fireEvent.change(screen.getByLabelText('later_start 物料 1 来源'),{target:{value:'previous_cycle'}});expect(patch.mock.calls.at(-1)?.[0].reaction_stages.later_start[0].source).toBe('previous_cycle');expect(patch.mock.calls.at(-1)?.[0].schedule.positions).toBe(1);});
  it('renders every activity model as mathematical notation with no raw TeX error',()=>{for(const model of Object.keys(MODEL_NAMES)){const view=render(<ActivityEquations model={model as any}/>);expect(view.container.querySelectorAll('math').length).toBeGreaterThan(0);expect(view.container.querySelector('.katex-error')).toBeNull();view.unmount();}});
 });
 
@@ -277,4 +277,19 @@ it('offers input navigation for the current failed run and clears it after chang
  await waitFor(()=>expect(document.activeElement).toBe(screen.getByLabelText('pH 物质交换方式')));
  fireEvent.change(screen.getByLabelText('pH 物质交换方式'),{target:{value:'both'}});
  expect(screen.queryByRole('button',{name:'前往修改',hidden:true})).toBeNull();
+});
+
+it('uses the toolbar undo history inside graphical text and number fields, while searches stay local',async()=>{
+ await selectWater();const amount=screen.getByLabelText('water 投料量') as HTMLInputElement;amount.focus();
+ for(const value of ['', '1','12','125'])fireEvent.change(amount,{target:{value}});
+ fireEvent.keyDown(amount,{key:'z',metaKey:true});expect(amount.value).toBe('1');
+ fireEvent.click(screen.getByRole('button',{name:'重做模拟修改'}));expect(amount.value).toBe('125');
+ fireEvent.keyDown(amount,{key:'z',ctrlKey:true});expect(amount.value).toBe('1');
+ fireEvent.keyDown(amount,{key:'z',ctrlKey:true,shiftKey:true});expect(amount.value).toBe('125');
+ const search=screen.getByLabelText('搜索可投料 species');fireEvent.change(search,{target:{value:'water'}});fireEvent.keyDown(search,{key:'z',metaKey:true});expect(amount.value).toBe('125');
+ fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));const temperature=screen.getByLabelText('first_start 温度') as HTMLInputElement;temperature.focus();
+ for(const value of ['','1','18','180'])fireEvent.change(temperature,{target:{value}});
+ fireEvent.keyDown(temperature,{key:'z',metaKey:true});expect(temperature.value).toBe('250');
+ fireEvent.click(screen.getByRole('button',{name:'重做模拟修改'}));expect(temperature.value).toBe('180');
+ const preview=screen.getByLabelText('预览路径位置');fireEvent.keyDown(preview,{key:'z',metaKey:true});expect(temperature.value).toBe('180');
 });

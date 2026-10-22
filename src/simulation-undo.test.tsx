@@ -42,3 +42,11 @@ it('retains non-finite original drafts through grouped undo',()=>{
  const initial=structuredClone(DEFAULT_CONFIG);initial.points[0].temperature_c=NaN;const current=mount(initial);
  type('Temperature',['2','25','250']);click('Undo');expect(Number.isNaN(current().points[0].temperature_c)).toBe(true);
 });
+
+it('leaves code, dialogs, navigation and IME composition to their own undo handlers',async()=>{
+ const {shouldUndoSimulation}=await import('./use-simulation-undo');
+ const view=render(<div data-simulation-undo><input aria-label="config"/><div className="cm-editor"><textarea aria-label="code"/></div><div role="dialog"><input aria-label="dialog"/></div><input aria-label="search" type="search"/><input aria-label="navigation" data-local-undo/></div>);
+ const allowed=(label:string,extra:KeyboardEventInit={})=>{let value:boolean|undefined;const field=screen.getByLabelText(label),handler=(event:Event)=>{value=shouldUndoSimulation(event as KeyboardEvent);};field.addEventListener('keydown',handler);field.dispatchEvent(new KeyboardEvent('keydown',{key:'z',metaKey:true,bubbles:true,cancelable:true,...extra}));field.removeEventListener('keydown',handler);return value;};
+ expect(allowed('config')).toBe(true);for(const label of ['code','dialog','search','navigation'])expect(allowed(label)).toBe(false);expect(allowed('config',{isComposing:true})).toBe(false);
+ view.unmount();expect(shouldUndoSimulation(new KeyboardEvent('keydown',{key:'z',ctrlKey:true}))).toBe(true);
+});

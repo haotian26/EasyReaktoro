@@ -140,7 +140,7 @@ it('opens a hidden local amount error without editing or isolating the schedule'
  render(<Editor initial={c}/>);const before=structuredClone(latest.schedule);
  expect(screen.queryByLabelText('此点单独设置')).toBeNull();
  fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);
- const local=screen.getByLabelText('此点单独设置');
+ const local=screen.getByLabelText('编辑保留的局部条件');
  expect(local.contains(document.activeElement)).toBe(true);
  expect((document.activeElement as HTMLInputElement).value).toBe('-1');
  expect(latest.schedule).toEqual(before);

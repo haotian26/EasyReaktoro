@@ -4,7 +4,7 @@ import {encodeDraft,restoreDraft} from './draft-json';
 import {Config,readConfig,type SimSpecies} from './simulation-types';
 import {materialBaseUsage} from './material-base-usage';
 import {loopCounts} from './simulation-loops';
-import {compileSchedule,scheduleCounts,scheduleScopeIndices,type ParameterSetting} from './simulation-schedule';
+import {compileSchedule,scheduleScopeIndices,type ParameterSetting} from './simulation-schedule';
 import {simulationCall,simulationError} from './simulation-api';
 import {constraintActiveAt,constraintDefinitionsIssue} from './equilibrium-constraints';
 
@@ -45,9 +45,10 @@ function finiteConfig(config:Config,items?:readonly SimSpecies[]){
   }
  }
  const checkedConstraints=equilibrium_constraints?.map(row=>targetDrafts?{...row,value:0}:row);
- const checkedMaterials=materials.map(material=>({...material,inputs:material.inputs.map(row=>!Number.isFinite(row.amount)&&Number.isNaN(row.amount)&&!materialBaseUsage(config,{kind:'material_amount',material_id:material.id,species:row.species},items).baseRequired?{...row,amount:0}:row)}));const counts=schedule?scheduleCounts(schedule):loopCounts(config);const activeStages=reaction_stages?Object.fromEntries(Object.entries(reaction_stages).filter(([key])=>!(key.endsWith('following')&&counts.inner===1||key.startsWith('later')&&counts.outer===1))):undefined;
+ let plan;try{if(schedule)plan=compileSchedule(config);}catch{}
+ const checkedMaterials=materials.map(material=>({...material,inputs:material.inputs.map(row=>!Number.isFinite(row.amount)&&Number.isNaN(row.amount)&&!materialBaseUsage(config,{kind:'material_amount',material_id:material.id,species:row.species},items).baseRequired?{...row,amount:0}:row)}));const counts=loopCounts(config);const activeStages=reaction_stages?Object.fromEntries(Object.entries(reaction_stages).filter(([key])=>!(key.endsWith('following')&&counts.inner===1||key.startsWith('later')&&counts.outer===1))):undefined;
  const activeParameters=(rows:ParameterSetting[],positions:number,rounds:number)=>rows.map(setting=>({...setting,value:targetDrafts&&setting.target.kind==='equilibrium_constraint'?{mode:'fixed' as const,value:0}:setting.value.mode==='list'?{...setting.value,values:setting.value.values.slice(0,setting.value.along==='path'?positions:rounds)}:setting.value}));
- const activeSchedule=schedule?{...schedule,parameters:activeParameters(schedule.parameters,schedule.positions,schedule.rounds),overrides:schedule.overrides.flatMap(group=>{const positions=scheduleScopeIndices(group.positions,schedule.positions).length,rounds=scheduleScopeIndices(group.rounds,schedule.rounds).length;return positions&&rounds?[{...group,parameters:activeParameters(group.parameters,positions,rounds)}]:[];})}:undefined;
+ const activeSchedule=schedule?{...schedule,parameters:activeParameters(schedule.parameters,counts.inner,counts.outer),overrides:schedule.overrides.flatMap(group=>{const positions=scheduleScopeIndices(group.positions,counts.inner),rounds=scheduleScopeIndices(group.rounds,counts.outer),used=positions.length&&rounds.length&&(!plan||rounds.some(o=>positions.some(i=>plan.active(i-1,o-1))));return used?[{...group,parameters:activeParameters(group.parameters,positions.length,rounds.length)}]:[];})}:undefined;
  visit({...parameters,...(checkedConstraints?{equilibrium_constraints:checkedConstraints}:{}),materials:checkedMaterials,...(activeSchedule?{schedule:activeSchedule}:{}),...(!schedule&&config.loops?{loops:{...config.loops,round_conditions:config.loops.round_conditions?.filter(row=>row.round<=counts.outer)}}:{}),...(!schedule&&!config.loops?{points:reaction_stages?points.map(({routes,...point})=>point):points,cycles}:{}),...(reaction_stages?{reaction_stages:activeStages}:{routes})},tr("模拟参数", "Simulation parameters"));return config;
 }
 async function refreshExecutionModules(old:EditorDraft):Promise<EditorDraft>{

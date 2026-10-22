@@ -12,6 +12,14 @@ function textField(target:EventTarget|null):HTMLElement|null{
  return target.closest<HTMLElement>('[contenteditable=true]');
 }
 
+export function shouldUndoSimulation(event:KeyboardEvent):boolean{
+ if(event.defaultPrevented||event.isComposing)return false;
+ const target=event.target instanceof Element?event.target:document.activeElement;
+ if(!target)return true;
+ if(target.closest('.cm-editor,[role=dialog],[role=alertdialog],[data-local-undo],input[type=search]'))return false;
+ return !target.closest('input,textarea,[contenteditable=true]')||!!target.closest('[data-simulation-undo]');
+}
+
 /** Saving retains history. A continuous edit is one undo step; commands and
  * field changes end the group, and every intermediate draft remains editable. */
 export function useSimulationUndo(key:string,ready:boolean,value:EditSnapshot,apply:(v:EditSnapshot)=>void){

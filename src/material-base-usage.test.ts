@@ -35,3 +35,8 @@ it('does not cache a failed compilation as a usable plan',()=>{
  const c=legacy(1);c.schedule!.positions=NaN;const compile=vi.spyOn(schedule,'compileSchedule');expect(materialBaseUsage(c,target('s0')).known).toBe(false);
  c.schedule!.positions=1000;expect(materialBaseUsage(c,target('s0')).known).toBe(true);expect(compile).toHaveBeenCalledTimes(2);
 });
+
+it('checks only reactions that exist when later rounds finish earlier',()=>{
+ const c=legacy(1);c.materials[0].inputs[0].amount=NaN;c.schedule!.positions=1;c.schedule!.rounds=1;c.schedule!.stop={first:'i = 3',later:'i = 1',rounds:'N = 1'};
+ expect(materialBaseUsage(c,target('s0'))).toMatchObject({known:true,used:6,baseRequired:false,firstUse:[0,0]});
+});

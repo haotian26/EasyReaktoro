@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {Config,DEFAULT_CONFIG,makeRoute} from './simulation-types';
 import {defaultSchedule,scheduleIssue,type ParameterSetting} from './simulation-schedule';
-import {atomicTargets,copyRouteParameterReferences,removeParameterReferences,restoreRemovedScheduleReferences} from './schedule-references';
+import {parameterControl,atomicTargets,copyRouteParameterReferences,removeParameterReferences,restoreRemovedScheduleReferences} from './schedule-references';
 import {reactionSourceIssue,toStageConfig} from './reaction-stages';
 
 const material=(species='salt'):ParameterSetting=>({id:`amount-${species}`,target:{kind:'material_amount',material_id:'initial',species},value:{mode:'linear',start:1,path_step:2,round_step:3}});
@@ -76,4 +76,11 @@ describe('reaction source availability',()=>{
   c.reaction_stages!.first_following[0].point_id='old-id';expect(reactionSourceIssue(c,{inner:4,outer:1})).toContain('不属于');
   c.reaction_stages!.first_following[0].point_id='loop-1';expect(reactionSourceIssue(c,{inner:4,outer:1})).toBeUndefined();
  });
+});
+
+it('reports local material control against evaluated stops and skips holes in shorter rounds',()=>{
+ const c=config(),target=material().target;c.schedule!.positions=1;c.schedule!.rounds=1;c.species=['salt'];c.materials[0].inputs=[{species:'salt',amount:1,unit:'mol'}];
+ c.schedule!.stop={first:'i = 3',later:'i = 1',rounds:'N = 1'};
+ c.schedule!.overrides=[{id:'last',rounds:{start:1,end:1},positions:{start:4,end:4},parameters:[{...material(),value:{mode:'fixed',value:3}}]},{id:'hole',rounds:{start:2,end:2},positions:{start:4,end:4},parameters:[{...material(),id:'hole-amount',value:{mode:'fixed',value:9}}]}];
+ const result=parameterControl(c,target,[3,0]);expect(result).toMatchObject({total:6,covered:1,allCovered:false,firstValue:3});expect(result.entries.map(e=>[e.overrideId,e.active,e.atCoordinate])).toEqual([['last',true,true],['hole',false,false]]);
 });

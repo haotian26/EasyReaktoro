@@ -75,7 +75,7 @@ function simplified(profile:ParameterProfile,stage:ReactionStageKey):SimpleStage
 }
 
 /** Read a symbolic projection; never infer a constant rule from a small current grid. */
-export function stageCondition(config:Config,stage:ReactionStageKey,kind:ConditionTarget['kind']):StageCondition{
+export function stageCondition(config:Config,stage:ReactionStageKey,kind:ConditionTarget['kind'],evaluate=true):StageCondition{
   const scope=stageConditionScope(stage),schedule=migrateSchedule(config),target={kind} as ConditionTarget;
   const result:StageCondition={scope,profile:null,rawProfile:null,actualValue:null,complex:true,active:false,settingIds:[]};
   if(!schedule){result.issue=t('这份模拟需要保留原逐步路线。','This simulation needs its original step-by-step path.');return result;}
@@ -108,9 +108,11 @@ export function stageCondition(config:Config,stage:ReactionStageKey,kind:Conditi
     result.complex=false;
   }
   if(incomplete.length)result.issue=incompleteRangeMessage();
-  if(result.active){
+  if(evaluate){
     try{
-      const point=compileSchedule(config,schedule).point(scope.positions.start-1,scope.rounds.start-1);
+      const plan=compileSchedule(config,schedule);result.active=plan.active(scope.positions.start-1,scope.rounds.start-1);
+      if(!result.active)return result;
+      const point=plan.point(scope.positions.start-1,scope.rounds.start-1);
       result.actualValue=kind==='temperature'?point.temperature_c:point.pressure_bar;
     }catch(error){result.issue=error instanceof Error?error.message:t('请补全反应条件。','Complete the reaction conditions.');}
   }

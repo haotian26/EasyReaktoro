@@ -13,7 +13,7 @@ export function ReactionConditionFields({config,stage,onChange}:{config:Config;s
 function Condition({config,stage,kind,onChange}:{config:Config;stage:ReactionStageKey;kind:'temperature'|'pressure';onChange:(schedule:Schedule)=>void}){
  const diagnostic=useContext(FormulaDiagnosticContext);
  const [error,setError]=useState('');
- const state=stageCondition(config,stage,kind),symbol=kind==='temperature'?'T':'P',title=kind==='temperature'?t('温度','Temperature'):t('压力','Pressure'),unit=kind==='temperature'?'°C':'bar';
+ const state=stageCondition(config,stage,kind,false),symbol=kind==='temperature'?'T':'P',title=kind==='temperature'?t('温度','Temperature'):t('压力','Pressure'),unit=kind==='temperature'?'°C':'bar';
  const rules=parameterSettings(config,{kind}).filter(r=>state.settingIds.includes(r.setting.id));
  const only=state.rawProfile??state.profile,scope=rules.length===1?rules[0].scope:undefined;
  const change=(text:string)=>{try{onChange(setStageCondition(config.schedule!,stage,{kind},{mode:'expression',expression:text}));setError('');}catch(e){setError(String(e instanceof Error?e.message:e));}};

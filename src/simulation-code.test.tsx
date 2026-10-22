@@ -234,3 +234,9 @@ it('transports and restores an unfinished inactive point without blocking active
  fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));expect((conditionInput('温度') as HTMLInputElement).value).toBe('25');await act(flushHistory);
  expect(currentHistory().config.points[0].temperature_c).toEqual({easyreaktoro_empty_number:true});expect(actualConditions(currentHistory().config).temperature_c).toBe(25);
 });
+
+it('exports the actual stop-driven grid while keeping a blank local condition outside a shorter round',async()=>{
+ const c={...structuredClone(cfg),schedule:{...defaultSchedule(),positions:1,rounds:1,stop:{first:'i = 3',later:'i = 1',rounds:'N = 1'},overrides:[{id:'retained-hole',point:true,rounds:{start:2,end:2},positions:{start:4,end:4},parameters:[{id:'hole-t',target:{kind:'temperature' as const},value:{mode:'fixed' as const,value:NaN}}]}]}};
+ localStorage.setItem(key,JSON.stringify(encodeDraft(c)));await openCode();
+ const sent=readConfig(calls('code_render').at(-1).config,{allowDraft:true});expect(compileSchedule(sent).lengths).toEqual([4,2]);expect(Number.isNaN((sent.schedule!.overrides.find(o=>o.id==='retained-hole')!.parameters[0].value as {value:number}).value)).toBe(true);
+});

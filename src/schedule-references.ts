@@ -57,7 +57,7 @@ function sameScope(a:IndexScope,b:IndexScope,count:number){
  for(let index=start;index<=end;index++)if((index-a.start)%(a.step??1)===0&&(index-b.start)%(b.step??1)===0)return true;
  return false;
 }
-function groupsOverlap(a:ScheduleOverride,b:ScheduleOverride,schedule:Schedule){return sameScope(a.rounds,b.rounds,schedule.rounds)&&sameScope(a.positions,b.positions,schedule.positions);}
+function groupsOverlap(a:ScheduleOverride,b:ScheduleOverride,schedule:Schedule){return sameScope(a.rounds,b.rounds,schedule.stop?.rounds!==undefined?10000:schedule.rounds)&&sameScope(a.positions,b.positions,schedule.stop?.first!==undefined||schedule.stop?.later!==undefined?10000:schedule.positions);}
 /** Restore just the references removed by an action, never a whole stale schedule. */
 export function restoreRemovedScheduleReferences(current:Schedule,before:Schedule,after:Schedule):Schedule{
  let result:Schedule={...current,parameters:[...current.parameters],overrides:current.overrides.map(group=>({...group,parameters:[...group.parameters]}))};
@@ -102,21 +102,23 @@ export type ParameterControl={entries:ParameterControlEntry[];covered:number;tot
 /** Explain the settings that actually replace a base value; never evaluate a separate numeric model. */
 export function parameterControl(config:Config,target:LoopTarget,coordinate?:[number,number]):ParameterControl{
  const schedule=migrateSchedule(config),empty:ParameterControl={entries:[],covered:0,total:0,allCovered:false};if(!schedule)return empty;
- const validSize=[schedule.positions,schedule.rounds].every(n=>Number.isInteger(n)&&n>0&&n<=10000)&&schedule.positions*schedule.rounds<=20000;
- const total=validSize?schedule.positions*schedule.rounds:0,covered=new Set<number>(),entries:ParameterControlEntry[]=[];
+ let plan;try{plan=compileSchedule(config,schedule);}catch{}
+ const size={positions:plan?.counts.inner??schedule.positions,rounds:plan?.counts.outer??schedule.rounds};
+ const validSize=[size.positions,size.rounds].every(n=>Number.isInteger(n)&&n>0&&n<=10000)&&size.positions*size.rounds<=20000;
+ const total=plan?.counts.total??(validSize?size.positions*size.rounds:0),covered=new Set<number>(),entries:ParameterControlEntry[]=[];
  const range=(scope:IndexScope,last:number,unit:string)=>scope.start===1&&scope.end===undefined&&(scope.step??1)===1?t(`全部${unit}`,`All ${unit}`):t(`第 ${scope.start}${(scope.end??last)===scope.start?'':`–${scope.end??last}`} ${unit}${(scope.step??1)>1?`（每 ${scope.step} ${unit}）`:''}`,`${unit} ${scope.start}${(scope.end??last)===scope.start?'':`–${scope.end??last}`}${(scope.step??1)>1?` (every ${scope.step})`:''}`);
  const general=schedule.parameters.filter(setting=>referenceMatches(setting.target,target));
- for(const setting of general)entries.push({settingId:setting.id,scope:t('通常设置',"General settings"),summary:scheduleSettingSummary(setting,config,{positions:schedule.positions,rounds:schedule.rounds}),active:true,atCoordinate:true});
+ for(const setting of general)entries.push({settingId:setting.id,scope:t('通常设置',"General settings"),summary:scheduleSettingSummary(setting,config,{positions:size.positions,rounds:size.rounds}),active:true,atCoordinate:true});
  for(const group of schedule.overrides){
   const matching=group.parameters.filter(setting=>referenceMatches(setting.target,target));if(!matching.length)continue;
   let positions:number[]=[],rounds:number[]=[],scope=group.name?group.name+' · ':'';
-  try{positions=scheduleScopeIndices(group.positions,schedule.positions);rounds=scheduleScopeIndices(group.rounds,schedule.rounds);scope+=`${range(group.rounds,schedule.rounds,t('轮',"rounds"))} · ${range(group.positions,schedule.positions,t('步',"positions"))}`;}catch{scope+=t('范围尚未填完整',"Range is incomplete");}
-  const active=positions.length>0&&rounds.length>0,atCoordinate=coordinate?positions.includes(coordinate[0]+1)&&rounds.includes(coordinate[1]+1):false;
-  if(validSize)for(const oi of rounds)for(const ii of positions)covered.add((oi-1)*schedule.positions+ii-1);
+  try{positions=scheduleScopeIndices(group.positions,size.positions);rounds=scheduleScopeIndices(group.rounds,size.rounds);scope+=`${range(group.rounds,size.rounds,t('轮',"rounds"))} · ${range(group.positions,size.positions,t('步',"positions"))}`;}catch{scope+=t('范围尚未填完整',"Range is incomplete");}
+  const active=rounds.some(o=>positions.some(i=>!plan||plan.active(i-1,o-1))),atCoordinate=coordinate?positions.includes(coordinate[0]+1)&&rounds.includes(coordinate[1]+1)&&(!plan||plan.active(...coordinate)):false;
+  if(validSize)for(const oi of rounds)for(const ii of positions)if(!plan||plan.active(ii-1,oi-1))covered.add((oi-1)*size.positions+ii-1);
   for(const setting of matching)entries.push({settingId:setting.id,overrideId:group.id,scope,summary:scheduleSettingSummary(setting,config,{positions:positions.length,rounds:rounds.length}),active,atCoordinate});
  }
  if(coordinate&&entries.some(entry=>entry.overrideId&&entry.atCoordinate))entries.forEach(entry=>{if(!entry.overrideId)entry.atCoordinate=false;});
  const count=general.length?total:covered.size,allCovered=general.length>0||total>0&&count===total;
- let firstValue:number|undefined;try{if(entries.length)firstValue=compileSchedule(config,schedule).valueAt(target,...(coordinate||[0,0]) as [number,number]);}catch{}
+ let firstValue:number|undefined;try{if(entries.length)firstValue=plan?.valueAt(target,...(coordinate||[0,0]) as [number,number]);}catch{}
  return {entries,covered:count,total,allCovered,firstValue};
 }
