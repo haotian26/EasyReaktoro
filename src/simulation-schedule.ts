@@ -127,6 +127,7 @@ const caches=new WeakMap<Config,WeakMap<Schedule,CompiledSchedule>>();
 export function compileSchedule(config:Config,schedule=config.schedule):CompiledSchedule{
  check(schedule&&validateScheduleShape(schedule),()=>t('反应条件设置不完整，请补全当前编辑。',"Complete the reaction conditions before continuing."));
  const existing=caches.get(config)?.get(schedule);if(existing)return existing;
+ const routeEntries=activeRouteEntries(config);
  const counts=scheduleCounts(schedule);check([counts.inner,counts.outer].every(n=>Number.isInteger(n)&&n>=1&&n<=10000),()=>t('路径位置数和反应轮数须为 1–10,000 的整数。',"Enter a whole number from 1 to 10,000 for path positions and reaction rounds."));check(!!schedule.stop||counts.total<=20000,()=>t('本次计算超过 20,000 个平衡点，请减少位置数或轮数。',"This simulation exceeds 20,000 equilibrium points. Reduce the number of positions or rounds."));
  const constraintIssue=constraintStructureDiagnostic(config);if(constraintIssue){if(constraintIssue.location)throw new ScheduleInputError(constraintIssue.message,constraintIssue.location);throw new Error(constraintIssue.message);}
  const stopValue=(expression:string,variable:(name:string)=>number)=>{
@@ -137,7 +138,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  if(completionRule!==undefined)atScheduleInput({kind:'stop',rule:'rounds'},()=>{let n=0;for(;n<10000;n++)if(stopValue(completionRule,name=>{check(name==='N',()=>t('总轮数的结束条件只使用 N。','The simulation completion condition can only use N.'));return n;}))break;check(n<10000,()=>t('结束条件在 10,000 轮内未达到。','The completion condition is not reached within 10,000 rounds.'));counts.outer=n+1;});
  const hasPathStop=schedule.stop?.first!==undefined||schedule.stop?.later!==undefined;
  if(hasPathStop)counts.inner=10000;
- const lengths:number[]=[];
+ const lengths:number[]=[];let totalPoints=0;
  const allPath=Array.from({length:counts.inner},(_,i)=>i+1),allRounds=Array.from({length:counts.outer},(_,i)=>i+1);
  const general=new Map<string,ScopedSetting>(),local=new Map<string,ScopedSetting[]>(),targets=new Map<string,LoopTarget>(),ids=new Set<string>();
  const add=(setting:ParameterSetting,path:number[],rounds:number[],scopeName:string,isGeneral:boolean,overrideId?:string,point=false)=>atScheduleInput({kind:'parameter',target:setting.target,settingId:setting.id,overrideId,inner:(path[0]??1)-1,outer:(rounds[0]??1)-1},()=>{
@@ -173,7 +174,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
     if(profile.mode==='list')value=profile.values[profile.along==='path'?pi:ri];
     if(profile.mode==='relative'){const previous=profile.along==='path'?ii>0:oi>0;value=previous?decimalSum([scalar(target,ii-(profile.along==='path'?1:0),oi-(profile.along==='round'?1:0)),1],[profile.step,1]):decimalSum([profile.start,1],[profile.other_step,profile.along==='path'?oi:ii]);}
     if(profile.mode==='water_saturation'){check(target.kind==='pressure',()=>t('饱和蒸汽压只能用于压力。','Saturation pressure can only be used for pressure.'));value=saturationPressure(scalar({kind:'temperature'},ii,oi));pressureModes.add(`${oi}:${ii}`);}
-    if(profile.mode==='expression'&&!(target.kind==='route_fraction'&&activeRouteEntries(config).some(e=>e.route.id===target.route_id&&e.stage&&e.stage!==stageAt(ii,oi)))){
+    if(profile.mode==='expression'&&!(target.kind==='route_fraction'&&routeEntries.some(e=>e.route.id===target.route_id&&e.stage&&e.stage!==stageAt(ii,oi)))){
      const previous=(kind:'temperature'|'pressure',above=false)=>{const x=above?ii:ii>0?ii-1:ii,y=above?oi-1:ii>0?oi:oi-1;check(y>=0,()=>t('第一步没有前次温压，请填写初始数值。','The first step has no previous conditions. Enter an initial value.'));check(lengths[y]===undefined||x<lengths[y],()=>t('上一轮在此位置之前已结束，无法引用这里的温压。','The previous round ended before this position; its conditions are unavailable.'));return scalar({kind},x,y);};
      value=evaluateExpression(parseExpression(profile.expression),name=>{
       if(name==='i')return ii;if(name==='N')return oi;
@@ -200,7 +201,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
     if(rule!==undefined&&atScheduleInput({kind:'stop',rule:oi===0?'first':'later'},()=>stopValue(rule,name=>{if(name==='T')return temperature;if(name==='P')return pressure;if(name==='i')return ii;if(name==='N')return oi;throw new Error(t(`结束条件中的变量 ${name} 无效。`,`Invalid variable in the end condition: ${name}.`));})))break;
     atScheduleInput({kind:'stop',rule:oi===0?'first':'later'},()=>check(rule===undefined||ii<9999,()=>t('结束条件在 10,000 步内未达到。','The end condition is not reached within 10,000 steps.')));
    }
-   lengths.push(length);check(lengths.reduce((a,b)=>a+b,0)<=20000,()=>t('本次计算超过 20,000 个平衡点。','This simulation exceeds 20,000 equilibrium points.'));
+   lengths.push(length);totalPoints+=length;check(totalPoints<=20000,()=>t('本次计算超过 20,000 个平衡点。','This simulation exceeds 20,000 equilibrium points.'));
   }
   counts.inner=Math.max(...lengths);
  }else for(let oi=0;oi<counts.outer;oi++)lengths.push(counts.inner);
@@ -208,7 +209,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  check(counts.inner*counts.outer<=20000,()=>t('路径与轮次的网格超过 20,000 个位置，请缩小范围。','The path and round grid exceeds 20,000 positions. Reduce its extent.'));
  const active=(ii:number,oi:number)=>oi>=0&&oi<lengths.length&&ii>=0&&ii<lengths[oi];
  const activeConstraintIssue=constraintDefinitionsDiagnostic(config,lengths);if(activeConstraintIssue){if(activeConstraintIssue.location)throw new ScheduleInputError(activeConstraintIssue.message,activeConstraintIssue.location);throw new Error(activeConstraintIssue.message);}
- const offsets=lengths.map((_,o)=>lengths.slice(0,o).reduce((a,b)=>a+b,0));
+ let offset=0;const offsets=lengths.map(length=>{const start=offset;offset+=length;return start;});
  const table=(target:LoopTarget):Float64Array=>{
   const key=targetKey(target),old=tables.get(key);if(old)return old;
   const values=new Float64Array(counts.inner*counts.outer).fill(NaN);
@@ -225,7 +226,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  const compiled:CompiledSchedule={counts,lengths,active,runIndex:(ii,oi)=>offsets[oi]+ii,valueAt:(target,ii,oi,fallback)=>{coordinate(ii,oi);const atom=atomicTargets(target)[0],key=targetKey(atom);return !general.has(key)&&!local.has(key)&&fallback!==undefined?fallback:table(atom)[oi*counts.inner+ii];},point:(ii,oi)=>{coordinate(ii,oi);const temperature_c=table({kind:'temperature'})[oi*counts.inner+ii],pressure_bar=table({kind:'pressure'})[oi*counts.inner+ii];return {id:`loop-${ii+1}`,label:t(`路径位置 ${ii+1}`,`Path position ${ii+1}`),temperature_c,pressure_bar,pressure_mode:pressureModes.has(`${oi}:${ii}`)?'water_saturation':'fixed'};},hasSetting:(target,ii,oi)=>atomicTargets(target).some(t=>{const key=targetKey(t);return ii===undefined||oi===undefined?general.has(key)||(local.get(key)||[]).some(s=>s.path.length&&s.rounds.length):!!at(key,ii,oi);})};
  // Detect input errors in the actual grid. Unused local ranges remain editable drafts.
  for(const c of config.equilibrium_constraints||[])targets.set(targetKey({kind:'equilibrium_constraint',constraint_id:c.id}),{kind:'equilibrium_constraint',constraint_id:c.id});
- for(const [key,target] of targets){const values=table(target),entries=target.kind==='route_fraction'?activeRouteEntries(config).filter(e=>routeId(e.route,e.index)===target.route_id):[];
+ for(const [key,target] of targets){const values=table(target),entries=target.kind==='route_fraction'?routeEntries.filter(e=>routeId(e.route,e.index)===target.route_id):[];
   for(let oi=0;oi<counts.outer;oi++)for(let ii=0;ii<counts.inner;ii++){
    if(!active(ii,oi))continue;
    if(target.kind==='equilibrium_constraint'){const row=config.equilibrium_constraints?.find(c=>c.id===target.constraint_id);if(!row||!constraintActiveAt(row,ii,oi))continue;}
@@ -240,12 +241,13 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
    });
   }
  }
- for(let oi=0;oi<counts.outer;oi++)for(let ii=0;ii<lengths[oi];ii++)for(const e of activeRouteEntries(config)){
+ for(let oi=0;oi<counts.outer;oi++)for(let ii=0;ii<lengths[oi];ii++)for(const e of routeEntries){
   if(e.stage&&e.stage!==stageAt(ii,oi))continue;const r=e.route;
   if((r.when==='first_cycle'&&oi>0)||(r.when==='after_first_cycle'&&oi===0)||r.source==='material')continue;
   const fraction=compiled.valueAt({kind:'route_fraction',route_id:routeId(r,e.index),field:'fraction'},ii,oi,r.fraction);
   if(fraction===0)continue;
-  const sourceInner=r.source==='previous_cycle'?ii:r.source==='output'?config.points.findIndex(p=>p.id===r.point_id):-1;
+  const generated=/^loop-([1-9]\d*)$/.exec(r.point_id||'');
+  const sourceInner=r.source==='previous_cycle'?ii:r.source==='output'?(generated?Number(generated[1])-1:config.points.findIndex(p=>p.id===r.point_id)):-1;
   const sourceOuter=r.source==='previous_cycle'?oi-1:r.source==='output'?oi-(r.lag??0):-1;
   if(sourceInner>=0&&sourceOuter>=0)atScheduleInput({kind:'source',routeId:routeId(r,e.index),field:r.source==='output'?'position':'source',inner:ii,outer:oi},()=>check(active(sourceInner,sourceOuter),()=>t(`第 ${oi+1} 轮位置 ${ii+1} 的物料来源在该位置之前已结束。`,`Round ${oi+1}, position ${ii+1}: the source round ended before the selected source position.`)));
  }

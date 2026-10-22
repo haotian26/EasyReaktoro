@@ -1,4 +1,4 @@
-import {t as tr,useLanguage} from './i18n';
+import {t as tr,useLanguage,englishCount} from './i18n';
 import {useEffect,useId,useMemo,useRef,useState} from 'react';
 import {type DiagramMaterialStages} from './LoopDiagram';
 import {flowInputs,flowKey,flowTextLines,type FlowCoordinate,type FlowInput,type FlowSource} from './reaction-flow-model';
@@ -29,13 +29,19 @@ export function ReactionFlowDiagram(props:Props){
  const [expanded,setExpanded]=useState(selected.inner!==0||selected.outer!==0);
  const previous=useRef(selected);
  useEffect(()=>{if(previous.current.inner!==selected.inner||previous.current.outer!==selected.outer)setExpanded(true);previous.current=selected;},[selected.inner,selected.outer]);
- if(!large)return <PointFlowDiagram {...props}/>;
+ if(!large)return <><PointFlowDiagram {...props}/><FlowAnnotations annotations={props.annotations} onSelect={props.onSelect}/></>;
  const explore=(p:FlowCoordinate)=>{props.onSelect(p.inner,p.outer);setExpanded(true);};
  return <section className="reaction-flow reaction-flow--overview" aria-label={tr('完整反应流程','Complete reaction flow')}>
   <ReactionFlowOverview {...props} active={props.active??alwaysActive} onExplore={explore}/>
+  <FlowAnnotations annotations={props.annotations} onSelect={(inner,outer)=>explore({inner,outer})}/>
   <div className="reaction-flow__expand"><button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?tr('收起附近步骤','Hide nearby steps'):tr('查看所选位置附近的步骤','Show steps near the selected position')}</button><span>{coordinate(selected)}</span>{!expanded&&props.onAdjust&&<button type="button" onClick={()=>{setExpanded(true);props.onAdjust?.();}}>{tr('单独调整此处','Adjust this point')}</button>}</div>
   {expanded&&<PointFlowDiagram {...props} windowed/>}
  </section>;
+}
+
+function FlowAnnotations({annotations=[],onSelect}:{annotations?:FlowAnnotation[];onSelect:(inner:number,outer:number)=>void}){
+ useLanguage();if(!annotations.length)return null;
+ return <div className="flow-overview__exceptions reaction-flow__local-conditions"><details open={annotations.length<=4}><summary>{tr(`${annotations.length} 组单独条件`,englishCount(annotations.length,'set of local conditions','sets of local conditions'))}</summary><ul>{annotations.map(annotation=><li key={annotation.id}>{annotation.at?<button type="button" onClick={()=>onSelect(annotation.at!.inner,annotation.at!.outer)}><span>{annotation.label}</span><small>{annotation.detail}</small></button>:<div className="reaction-flow__inactive-condition"><span>{annotation.label}</span><small>{annotation.detail}</small><small>{tr('本次不生效 · 条件已保留','Not applied in this run · condition retained')}</small></div>}</li>)}</ul></details></div>;
 }
 
 function PointFlowDiagram({positions,rounds,selected,materials,point,onSelect,onAdjust,showConditions=true,active=alwaysActive,runIndex=(i,o)=>o*positions+i,windowed=false}:Props&{windowed?:boolean}){

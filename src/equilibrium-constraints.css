@@ -26,3 +26,6 @@
  .constraint-scope{grid-template-columns:repeat(3,minmax(0,1fr))}
  .constraint-scope>label:first-child{grid-column:1/-1}
 }
+
+.constraint-coverage{margin:0;font-size:12px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
+.constraint-coverage[data-coverage=inactive]{padding:7px 10px;background:var(--surface-soft);border-left:2px solid var(--muted);border-radius:4px}

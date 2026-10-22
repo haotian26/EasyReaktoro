@@ -710,6 +710,8 @@
     "起点": "Start",
     "终点": "End",
     "间隔": "Interval",
+    "补全反应条件后显示生效范围": "Complete the reaction conditions to see coverage",
+    "本次不生效 · 条件已保留": "Not applied in this run · condition retained",
     "用什么物质调节": "Adjust with",
     "pH 调节物质": "pH adjustment substance",
     "填写中性化学式，例如 HCl、NaOH 或 CO2。软件计算满足目标 pH 所需的物质量；这些是示例，可使用体系元素支持的其他中性物质。": "Enter an electrically neutral formula, such as HCl, NaOH or CO2. The amount needed to reach the target pH is calculated. Other neutral substances supported by the system elements can also be used.",
@@ -977,7 +979,6 @@
     "第 1 轮": "Round 1",
     "第 2 轮": "Round 2",
     "⋯ 表示依次重复的步骤。数值区间涵盖实际变化，每步仍按所填条件计算。点击一组步骤可展开附近流程。": "⋯ marks successive steps. Ranges cover actual variation; each step uses its own conditions. Select a group to explore nearby steps.",
-    "流程中的变化": "Changes within the flow",
     "部分取用并非每步发生，已在对应箭头或投料旁标明。": "Some inputs are used only at certain steps, as marked beside each transfer or fresh input.",
     "N：轮次编号，从 0 开始。N = 2 表示共计算 3 轮。": "N: round index, starting at 0. N = 2 runs 3 rounds.",
     "达到条件的这一轮仍会计算。": "The round that meets the condition is included.",
@@ -3916,19 +3917,6 @@
     },
     {
       "zh": [
-        "",
-        " 组单独条件"
-      ],
-      "en": [
-        "",
-        " sets of local conditions"
-      ],
-      "order": [
-        0
-      ]
-    },
-    {
-      "zh": [
         "P：",
         "的压力。"
       ],
@@ -4954,6 +4942,19 @@
       "en": [
         "All ",
         ""
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "",
+        " 起"
+      ],
+      "en": [
+        "",
+        " onward"
       ],
       "order": [
         0

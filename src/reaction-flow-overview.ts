@@ -6,7 +6,7 @@ export type FlowRange={min:number;max:number};
 export type FlowOverviewInput={term:DiagramMaterialTerm;source:FlowInput['source'];amount:FlowRange;count:number;example:FlowCoordinate;from?:FlowCoordinate;differentSources:boolean;missing?:FlowCoordinate};
 export type FlowOverviewStage={key:DiagramStage;count:number;first:FlowCoordinate;last:FlowCoordinate;temperature:FlowRange;pressure:FlowRange;saturation:number;inputs:FlowOverviewInput[]};
 export type FlowOverview={stages:Partial<Record<DiagramStage,FlowOverviewStage>>;total:number;lengths:number[]};
-export type FlowAnnotation={id:string;label:string;detail:string;at:FlowCoordinate};
+export type FlowAnnotation={id:string;label:string;detail:string;at?:FlowCoordinate};
 export const flowStage=({inner,outer}:FlowCoordinate):DiagramStage=>outer===0?(inner===0?'first_start':'first_following'):(inner===0?'later_start':'later_following');
 const range=():FlowRange=>({min:Infinity,max:-Infinity});
 function include(range:FlowRange,value:number){if(Number.isFinite(value)){range.min=Math.min(range.min,value);range.max=Math.max(range.max,value);}}

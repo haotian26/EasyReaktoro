@@ -11,7 +11,7 @@ const phase=(input:FlowOverviewInput)=>input.term.phase==='species'?input.term.s
 const phaseClass=(inputs:FlowOverviewInput[])=>inputs.length&&inputs.every(i=>i.term.phase===inputs[0].term.phase)?`phase-${inputs[0].term.phase}`:'';
 const quantity=(input:FlowOverviewInput)=>input.source==='fresh'?`× ${span(input.amount)}`:`${span(input.amount,100)}%`;
 
-export function ReactionFlowOverview({positions,rounds,materials,point,active,selected,onExplore,annotations=[],showConditions=true}:Props){
+export function ReactionFlowOverview({positions,rounds,materials,point,active,selected,onExplore,showConditions=true}:Props){
  useLanguage();
  const model=useMemo(()=>flowOverview(positions,rounds,materials,point,active),[positions,rounds,materials,point,active]);
  const stage=model.stages,hasPath=positions>1,hasRounds=rounds>1;
@@ -57,6 +57,6 @@ export function ReactionFlowOverview({positions,rounds,materials,point,active,se
    </>}
   </div></div>
   <p className="flow-overview__note">{tr('⋯ 表示依次重复的步骤。数值区间涵盖实际变化，每步仍按所填条件计算。点击一组步骤可展开附近流程。','⋯ marks successive steps. Ranges cover actual variation; each step uses its own conditions. Select a group to explore nearby steps.')}</p>
-  {(annotations.length>0||partialInputs.length>0)&&<div className="flow-overview__exceptions"><strong>{tr('流程中的变化','Changes within the flow')}</strong>{partialInputs.length>0&&<p>{tr('部分取用并非每步发生，已在对应箭头或投料旁标明。','Some inputs are used only at certain steps, as marked beside each transfer or fresh input.')}</p>}{annotations.length>0&&<details open={annotations.length<=4}><summary>{tr(`${annotations.length} 组单独条件`,`${annotations.length} sets of local conditions`)}</summary><ul>{annotations.map(annotation=><li key={annotation.id}><button type="button" onClick={()=>onExplore(annotation.at)}><span>{annotation.label}</span><small>{annotation.detail}</small></button></li>)}</ul></details>}</div>}
+  {partialInputs.length>0&&<div className="flow-overview__exceptions"><p>{tr('部分取用并非每步发生，已在对应箭头或投料旁标明。','Some inputs are used only at certain steps, as marked beside each transfer or fresh input.')}</p></div>}
  </div>;
 }

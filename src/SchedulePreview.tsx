@@ -18,7 +18,7 @@ export type SchedulePreviewProps={config:Config;items:SimSpecies[];selected:Sche
 const finite=Number.isFinite;
 const clamped=(value:number,count:number)=>Math.max(0,Math.min(count-1,Number.isInteger(value)?value:0));
 const fraction=(plan:CompiledSchedule,route:Route,ii:number,oi:number)=>plan.valueAt({kind:'route_fraction',route_id:route.id!,field:'fraction'},ii,oi,route.fraction);
-function scopeLabel(scope:IndexScope,count:number,unit:string){const end=scope.end??count,range=scope.start===end?`${scope.start}`:`${scope.start}–${end}`;return tr(`${unit} ${range}${scope.step&&scope.step!==1?`（每 ${scope.step} 个）`:''}`, `${unit} ${range}${scope.step&&scope.step!==1?` (every ${scope.step})`:''}`);}
+function scopeLabel(scope:IndexScope,count:number,unit:string){const end=scope.end??count,range=scope.end===undefined&&scope.start>count?tr(`${scope.start} 起`,`${scope.start} onward`):scope.start===end?`${scope.start}`:`${scope.start}–${end}`;return tr(`${unit} ${range}${scope.step&&scope.step!==1?`（每 ${scope.step} 个）`:''}`, `${unit} ${range}${scope.step&&scope.step!==1?` (every ${scope.step})`:''}`);}
 function PointNumber({value,count,label,onChange}:{value:number;count:number;label:string;onChange:(value:number)=>void}){
  useLanguage();
  const [text,setText]=useState(String(value+1));useEffect(()=>setText(String(value+1)),[value,count]);
@@ -70,10 +70,11 @@ export function SchedulePreview({config,items,selected,onSelect,onAdjust,onLocat
  const changed=schedule.parameters.filter(setting=>setting.value.mode!=='fixed'),overrides=schedule.overrides;
  const completeStageAxis=(scope:IndexScope,count:number)=>!scope.step||scope.step===1?((scope.start===1&&(scope.end===1||scope.end===undefined||scope.end>=count))||(scope.start===2&&(scope.end===undefined||scope.end>=count))):false;
  const annotations:FlowAnnotation[]=overrides.flatMap(override=>{
-  if(completeStageAxis(override.positions,counts.inner)&&completeStageAxis(override.rounds,counts.outer))return [];
+  if(!override.point&&completeStageAxis(override.positions,counts.inner)&&completeStageAxis(override.rounds,counts.outer))return [];
   const positions=scheduleScopeIndices(override.positions,counts.inner),rounds=scheduleScopeIndices(override.rounds,counts.outer);
-  for(const outer of rounds)for(const inner of positions)if(plan.active(inner-1,outer-1))return [{id:override.id,at:{inner:inner-1,outer:outer-1},label:`${scopeLabel(override.rounds,counts.outer,tr('轮次',override.rounds.start===(override.rounds.end??counts.outer)?'Round':'Rounds'))} · ${scopeLabel(override.positions,counts.inner,tr('位置',override.positions.start===(override.positions.end??counts.inner)?'Position':'Positions'))}`,detail:override.parameters.map(setting=>`${targetDescription(setting.target,effective).label}: ${scheduleSettingSummary(setting,effective,{positions:positions.length,rounds:rounds.length})}`).join(' · ')}];
-  return [];
+  let at:ScheduleSelection|undefined;
+  for(const outer of rounds){const inner=positions.find(inner=>plan.active(inner-1,outer-1));if(inner!==undefined){at={inner:inner-1,outer:outer-1};break;}}
+  return [{id:override.id,at,label:`${scopeLabel(override.rounds,counts.outer,tr('轮次',override.rounds.start===(override.rounds.end??counts.outer)?'Round':'Rounds'))} · ${scopeLabel(override.positions,counts.inner,tr('位置',override.positions.start===(override.positions.end??counts.inner)?'Position':'Positions'))}`,detail:override.parameters.map(setting=>`${targetDescription(setting.target,effective).label}: ${scheduleSettingSummary(setting,effective,{positions:positions.length,rounds:rounds.length})}`).join(' · ')}];
  });
  return <aside ref={previewElement} className="schedule-preview" aria-label={tr("反应预览", "Reaction preview")}>
   <header className="schedule-preview__heading"><div><h3>{tr("反应预览", "Reaction preview")}</h3><p>{tr("横向是反应路径，纵向是轮次传递；重复流程合并展示，可展开附近步骤。", "Follow the path across and the rounds down. Repetitions are grouped; expand nearby steps for detail.")}</p></div><span>{counts.total.toLocaleString()} {tr("次平衡", counts.total===1?"equilibrium":"equilibria")}</span></header>

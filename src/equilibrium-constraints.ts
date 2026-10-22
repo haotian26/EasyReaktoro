@@ -12,6 +12,17 @@ export function validConstraintShape(row:any,allowDraft=false):row is Equilibriu
 function scopeIncludes(scope:IndexScope|undefined,index:number){const n=index+1;return !scope||n>=scope.start&&(scope.end===undefined||n<=scope.end)&&(n-scope.start)%(scope.step??1)===0;}
 export function constraintActiveAt(row:EquilibriumConstraint,inner:number,outer:number){return scopeIncludes(row.positions,inner)&&scopeIncludes(row.rounds,outer);}
 function validScope(s:IndexScope|undefined){return !s||Number.isInteger(s.start)&&s.start>=1&&s.start<=10000&&(s.end===undefined||Number.isInteger(s.end)&&s.end>=s.start&&s.end<=10000)&&(s.step===undefined||Number.isInteger(s.step)&&s.step>=1&&s.step<=10000);}
+export function constraintPointCount(row:Pick<EquilibriumConstraint,'rounds'|'positions'>,lengths?:readonly number[]):number|undefined{
+ if(!lengths||!validScope(row.rounds)||!validScope(row.positions))return;
+ let count=0;
+ for(let outer=0;outer<lengths.length;outer++){
+  if(!Number.isInteger(lengths[outer])||lengths[outer]<0)return;
+  if(!scopeIncludes(row.rounds,outer))continue;
+  const start=row.positions?.start??1,end=Math.min(row.positions?.end??lengths[outer],lengths[outer]),step=row.positions?.step??1;
+  if(end>=start)count+=Math.floor((end-start)/step)+1;
+ }
+ return count;
+}
 export function constraintStructureDiagnostic(config:Config):ScheduleDiagnostic|undefined{
  const issue=(message:string,location?:ScheduleIssueLocation):ScheduleDiagnostic=>({message,location});
  const rows=config.equilibrium_constraints||[],ids=new Set<string>();

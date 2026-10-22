@@ -58,3 +58,8 @@
 .reaction-flow__expand{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:16px 18px}.reaction-flow__expand>button{border:1px solid var(--line);border-radius:6px;padding:7px 11px;background:var(--surface);font-size:12px;color:var(--accent);cursor:pointer}.reaction-flow__expand>button:hover{border-color:var(--accent)}.reaction-flow__expand>span{font-size:12px;color:var(--muted)}.reaction-flow--overview>.reaction-flow{border-top:1px solid var(--line)}
 .reaction-flow__external{font-size:9px;fill:var(--muted)}
 @container(max-width:660px){.flow-overview__diagram{grid-template-columns:100px minmax(150px,1fr) 100px minmax(150px,1fr);gap:8px 10px}.flow-overview__diagram--single-path{grid-template-columns:90px minmax(170px,1fr);min-width:0}.flow-overview__stage{padding:12px 10px}}
+
+.reaction-flow__local-conditions{margin:12px 18px 16px;padding-top:10px}
+.reaction-flow__local-conditions details{margin-top:0}
+.reaction-flow__inactive-condition{border:1px solid var(--line);border-radius:6px;padding:7px 10px;background:var(--surface-soft);display:flex;flex-direction:column;gap:4px;font-size:12px;height:100%;box-sizing:border-box;overflow-wrap:anywhere}
+.reaction-flow__local-conditions button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
