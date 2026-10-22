@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "EasyReaktoro",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "identifier": "com.hliu0242.easyreaktoro",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -45,8 +45,10 @@
       "../bridge/easyreaktoro_runtime/loader.py": "bridge/easyreaktoro_runtime/loader.py",
       "../bridge/easyreaktoro_runtime/references.py": "bridge/easyreaktoro_runtime/references.py",
       "../bridge/easyreaktoro_runtime/repository.py": "bridge/easyreaktoro_runtime/repository.py",
+      "../bridge/easyreaktoro_runtime/database_versions.py": "bridge/easyreaktoro_runtime/database_versions.py",
       "../bridge/easyreaktoro_runtime/service.py": "bridge/easyreaktoro_runtime/service.py",
       "../bridge/easyreaktoro_runtime/activity_nacl.py": "bridge/easyreaktoro_runtime/activity_nacl.py",
+      "../bridge/easyreaktoro_runtime/simulation_constraints.py": "bridge/easyreaktoro_runtime/simulation_constraints.py",
       "../bridge/easyreaktoro_runtime/simulation.py": "bridge/easyreaktoro_runtime/simulation.py",
       "../bridge/easyreaktoro_runtime/simulation_code.py": "bridge/easyreaktoro_runtime/simulation_code.py",
       "../bridge/easyreaktoro_runtime/simulation_jobs.py": "bridge/easyreaktoro_runtime/simulation_jobs.py",
@@ -63,7 +65,8 @@
       "../bridge/easyreaktoro_runtime/simulation_loops.py": "bridge/easyreaktoro_runtime/simulation_loops.py",
       "../bridge/easyreaktoro_runtime/simulation_result_import.py": "bridge/easyreaktoro_runtime/simulation_result_import.py",
       "../bridge/easyreaktoro_runtime/simulation_reactions.py": "bridge/easyreaktoro_runtime/simulation_reactions.py",
-      "../bridge/easyreaktoro_runtime/simulation_schedule.py": "bridge/easyreaktoro_runtime/simulation_schedule.py"
+      "../bridge/easyreaktoro_runtime/simulation_schedule.py": "bridge/easyreaktoro_runtime/simulation_schedule.py",
+      "../bridge/easyreaktoro_runtime/reaction_expression.py": "bridge/easyreaktoro_runtime/reaction_expression.py"
     },
     "macOS": {
       "minimumSystemVersion": "13.0"

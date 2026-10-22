@@ -446,3 +446,19 @@ describe('home simulation access',()=>{
   expect(screen.getByRole('heading',{name:'从热力学数据，到反应与结果'})).toBeTruthy();expect(mocks.invoke.mock.calls.some(([cmd])=>cmd==='rtdb_open'||cmd==='database_open')).toBe(false);expect(mocks.invoke.mock.calls.filter(([cmd,args])=>cmd==='settings_save'&&args.settings.startup!=='home')).toHaveLength(0);
  });
 });
+
+it('retains a working environment and database after a selected Python fails to connect, and clears the error after a healthy check', async()=>{
+  const base=handler;
+  handler=(cmd,args)=>cmd==='rtdb_open'?{summary:{...summary,dirty:false}}:cmd==='pick_path'?'/other/bin/python':cmd==='runtime_select'?Promise.reject(new Error("ModuleNotFoundError: No module named 'reaktoro'")):cmd==='runtime_discover'?{entries:[runtime]}:base(cmd,args);
+  await openCurrent();
+  fireEvent.click(screen.getByRole('button',{name:'设置'}));fireEvent.click(screen.getByRole('button',{name:'Reaktoro 环境'}));
+  fireEvent.click(screen.getByRole('button',{name:'选择 Python'}));
+  await screen.findByText('这个 Python 中没有安装 Reaktoro');
+  expect(screen.getByRole('heading',{name:'Reaktoro 2.13.0'})).toBeTruthy();
+  expect(mocks.invoke.mock.calls.some(([cmd])=>cmd==='database_close')).toBe(false);
+  fireEvent.click(screen.getByRole('button',{name:'数据库'}));await screen.findByRole('heading',{name:'lab'});
+  fireEvent.click(screen.getByRole('button',{name:'设置'}));
+  expect(screen.getByText('这个 Python 中没有安装 Reaktoro')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button',{name:'检查并重新连接'}));
+  await screen.findByText('Reaktoro 2.13.0 连接正常。');expect(screen.queryByText('这个 Python 中没有安装 Reaktoro')).toBeNull();
+});

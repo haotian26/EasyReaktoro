@@ -1,3 +1,4 @@
+import './i18n-equilibrium-errors';
 import './i18n-simulation-legacy';
 import './i18n-simulation-errors';
 import './i18n-code-errors';

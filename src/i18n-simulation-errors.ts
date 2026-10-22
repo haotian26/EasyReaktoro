@@ -1,6 +1,8 @@
+import './i18n-simulation-labels';
 import {registerMessages,registerMessagePatterns,translateMessage} from './i18n';
 // Only application diagnostics are localized; numerical values and scientific names remain intact.
 registerMessages({
+'所引用的轮次在此位置之前已结束，该位置不存在。请为新增位置填写条件或用量。':'The referenced round ended before this position. Specify conditions or amounts for the new position.',
 '模拟设置必须是对象':'Simulation settings must be an object.',
 '请选择水相活度模型':'Choose an aqueous activity model.',
 '请选择 1–500 个平衡物种':'Select 1–500 equilibrium species.',
@@ -141,10 +143,10 @@ registerMessages({
 registerMessagePatterns([
  [/^当前数据库没有物种：([\s\S]+)$/,name=>`The current database does not contain species: ${name}`],
  [/^物质配方内物种重复：([\s\S]+)$/,name=>`Duplicate species within a composition: ${name}`],
- [/^(.+?) (?:必须是有限数|须为有限数值)$/,label=>`${label} must be a finite number.`],
- [/^(.+?)须为有限数值$/,label=>`${label} must be a finite number.`],
- [/^(.+?) 不能小于 (.+)$/, (label,value)=>`${label} must be at least ${value}.`],
- [/^(.+?) 不能大于 (.+)$/, (label,value)=>`${label} must be no greater than ${value}.`],
+ [/^(.+?) (?:必须是有限数|须为有限数值)$/,label=>`${translateMessage(label)} must be a finite number.`],
+ [/^(.+?)须为有限数值$/,label=>`${translateMessage(label)} must be a finite number.`],
+ [/^(.+?) 不能小于 (.+)$/, (label,value)=>`${translateMessage(label)} must be at least ${value}.`],
+ [/^(.+?) 不能大于 (.+)$/, (label,value)=>`${translateMessage(label)} must be no greater than ${value}.`],
  [/^(.+?) 必须是布尔值$/,key=>`${key} must be true or false.`],
  [/^温压点 (\d+) 无效$/,n=>`Reaction conditions ${n} are invalid.`],
  [/^第 (\d+) 点的第 (\d+) 轮温压重复$/,(point,round)=>`Duplicate conditions for position ${point}, round ${round}.`],
@@ -166,10 +168,10 @@ registerMessagePatterns([
  [/^未知模拟操作：(.+)$/,action=>`Unknown simulation action: ${action}`],
  [/^第 (\d+) 轮、路径位置 (\d+) 的纯水饱和蒸汽压需要 0.01 ≤ T < 373.946 °C$/,(round,position)=>`Round ${round}, position ${position}: pure-water saturation pressure requires 0.01 ≤ T < 373.946 °C.`],
  [/^第 (\d+) 轮、路径位置 (\d+) 缺少对应的参数数列值$/,(round,position)=>`Round ${round}, position ${position}: a value is missing from the parameter series.`],
- [/^(.+?) 超出允许范围或不是有限数$/,label=>`${label} is outside the allowed range or is not finite.`],
- [/^(.+?)的物料来源数量无效，最多 30 条$/,label=>`${label}: enter between 1 and 30 material sources.`],
- [/^(.+?)的物料来源规则无效$/,label=>`${label}: invalid material source rule.`],
- [/^(.+?)引用的物质配方不存在$/,label=>`${label}: the referenced composition does not exist.`],
+ [/^(.+?) 超出允许范围或不是有限数$/,label=>`${translateMessage(label)} is outside the allowed range or is not finite.`],
+ [/^(.+?)的物料来源数量无效，最多 30 条$/,label=>`${translateMessage(label)}: enter between 1 and 30 material sources.`],
+ [/^(.+?)的物料来源规则无效$/,label=>`${translateMessage(label)}: invalid material source rule.`],
+ [/^(.+?)引用的物质配方不存在$/,label=>`${translateMessage(label)}: the referenced composition does not exist.`],
  [/^(.+?)没有物料来源，请为该位置添加需要参与反应的物料$/,label=>`${translateMessage(label)} has no material source. Add the material that reacts at this stage.`],
  [/^(.+?)没有所选历史输出，请改选配方或已有输出作为物料来源$/,label=>`${translateMessage(label)} has no selected result available. Choose a composition or an earlier result.`],
  [/^第 (\d+) 点引用了尚未计算的输出；同一循环只能引用前面的点$/,n=>`Position ${n} refers to a result that has not been calculated. Within a round, choose an earlier position.`],
@@ -178,7 +180,7 @@ registerMessagePatterns([
  [/^(.+?)已明确反应位置；请将物料放到对应反应位置，不要另外限制使用轮次$/,label=>`${translateMessage(label)} already specifies the reaction stage. Add the material at that stage without another round restriction.`],
  [/^结果点 run_index 必须从 0 连续递增；当前应为 (\d+)。$/,n=>`Result run_index must start at 0 and increase sequentially; expected ${n}.`],
  [/^结果点的 (.+) 表不完整。$/,kind=>`The result ${kind} table is incomplete.`],
- [/^(.+) 需要有效的有限数值。$/,label=>`${label} requires a valid finite number.`],
+ [/^(.+) 需要有效的有限数值。$/,label=>`${translateMessage(label)} requires a valid finite number.`],
  [/^(.+) 需要列表。$/,kind=>`${kind} must be a list.`],
  [/^(.+) 的列在本次运行中须保持一致；请对暂缺值使用 None。$/,kind=>`${kind} columns must remain consistent within a calculation. Use None for missing values.`],
 ]);
@@ -195,9 +197,9 @@ registerMessagePatterns([
  [/^岩石初始化 (.+)$/,fraction=>`Rock initialization ${fraction}`],
  [/^反应轮次 (\d+)\/(\d+) · (.+) \((\d+)\/(\d+)\)$/,(round,rounds,label,position,positions)=>`Round ${round}/${rounds} · ${/^路径位置 \d+$/.test(label)?label.replace('路径位置 ','Path position '):label} (${position}/${positions})`],
  [/^第 (\d+) 轮、路径位置 (\d+) 需要使用 (.+) 中 (.+) 的基础投料量，但该值未填写；请填写基础量或为此处设置投料量$/,(round,position,composition,species)=>`Round ${round}, position ${position} needs the base amount of ${species} in ${composition}. Enter the base amount or set an amount for this position.`],
- [/^循环 (\d+) 的 (.+) 输出 (.+) 被分配了 (.+)，超过 100%；请调整分流比例$/,(round,position,species,fraction)=>`Round ${round}, ${position}: ${fraction} of ${species} has been allocated, exceeding 100%. Adjust the transfer fractions.`],
- [/^(.+) 第 (\d+) 轮温度为 (.+) °C；纯水饱和蒸汽压需要 0.01 ≤ T < 373.946 °C，请调整温度或改为指定压力$/,(position,round,temperature)=>`${position}, round ${round}: temperature is ${temperature} °C. Pure-water saturation pressure requires 0.01 ≤ T < 373.946 °C. Adjust the temperature or use fixed pressure.`],
-]);
+ [/^循环 (\d+) 的 (.+) 输出 (.+) 被分配了 (.+)，超过 100%；请调整分流比例$/,(round,position,species,fraction)=>`Round ${round}, ${translateMessage(position)}: ${fraction} of ${species} has been allocated, exceeding 100%. Adjust the transfer fractions.`],
+ [/^(.+) 第 (\d+) 轮温度为 (.+) °C；纯水饱和蒸汽压需要 0.01 ≤ T < 373.946 °C，请调整温度或改为指定压力$/,(position,round,temperature)=>`${translateMessage(position)}, round ${round}: temperature is ${temperature} °C. Pure-water saturation pressure requires 0.01 ≤ T < 373.946 °C. Adjust the temperature or use fixed pressure.`],
+], {priority:true});
 registerMessages({
  '活度模型物种顺序与水相不一致':'The activity model species order does not match the aqueous phase.',
  '当前温压尚未激活对应的 NaCl 活度参数':'NaCl activity parameters have not been initialized at these conditions.',

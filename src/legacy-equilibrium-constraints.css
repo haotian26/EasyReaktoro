@@ -1,0 +1,11 @@
+.legacy-equilibrium-targets{min-width:0}
+.legacy-equilibrium-targets .sim-panel-heading>span{font-size:12px;color:var(--muted)}
+.legacy-equilibrium-target-list{display:grid;gap:12px}
+.legacy-equilibrium-target{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);min-width:0}
+.legacy-equilibrium-target-heading{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,180px) auto;align-items:end;gap:14px}
+.legacy-equilibrium-target-heading>strong{align-self:center;overflow-wrap:anywhere;font-size:14px}
+.legacy-equilibrium-target-heading>label{display:grid;gap:6px;font-size:12px;color:var(--muted)}
+.legacy-equilibrium-target-heading input{width:100%;min-width:0;box-sizing:border-box}
+.legacy-equilibrium-target-heading>.sim-icon-btn{align-self:end;margin-bottom:4px}
+.legacy-equilibrium-target-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-top:12px}
+@media(max-width:560px){.legacy-equilibrium-target-heading{grid-template-columns:minmax(0,1fr) auto}.legacy-equilibrium-target-heading>strong{grid-column:1}.legacy-equilibrium-target-heading>label{grid-column:1;grid-row:2}.legacy-equilibrium-target-heading>.sim-icon-btn{grid-column:2;grid-row:1}}

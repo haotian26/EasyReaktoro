@@ -285,9 +285,11 @@ def execution_config(cfg, plan=None, *, fill_missing=True):
     plan = plan or LoopPlan(cfg)
     points = []
     for inner in range(len(plan.values['inner'])):
-        point = plan.point(0, inner)
+        base_round = next((o for o in range(len(plan.values['outer'])) if not hasattr(plan, 'active') or plan.active(o, inner)), 0)
+        point = plan.point(base_round, inner)
         conditions = []
-        for outer in range(1, len(plan.values['outer'])):
+        for outer in range(len(plan.values['outer'])):
+            if hasattr(plan, 'active') and not plan.active(outer, inner): continue
             actual = plan.point(outer, inner)
             if any(actual[k] != point[k] for k in ('temperature_c', 'pressure_bar', 'pressure_mode')):
                 conditions.append({'round': outer+1, **{k: actual[k] for k in ('temperature_c', 'pressure_bar', 'pressure_mode')}})
@@ -306,7 +308,8 @@ def execution_config(cfg, plan=None, *, fill_missing=True):
 
 def execution_shape(cfg):
     if cfg.get("schedule"):
-        return cfg["schedule"]["positions"], cfg["schedule"]["rounds"]
+        plan = LoopPlan(cfg)
+        return plan.positions, plan.rounds
     if cfg.get('loops'):
         return len(axis_values(cfg['loops']['inner'])), len(axis_values(cfg['loops']['outer']))
     return len(cfg['points']), cfg['cycles']

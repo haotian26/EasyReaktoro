@@ -42,7 +42,7 @@ async function openCode(){const view=render(<Simulation summary={summary} runtim
 function edit(next:any){fireEvent.change(screen.getByLabelText('conditions source'),{target:{value:typeof next==='string'?next:JSON.stringify(next)}});}
 const calls=(action:string)=>mocks.invoke.mock.calls.filter(([,a])=>a.payload.action===action).map(([,a])=>a.payload);
 const actualConditions=(c:Config)=>compileSchedule(readConfig(c,{allowDraft:true})).point(0,0);
-function conditionInput(label:'温度'|'压力'){const method=screen.getByLabelText(`${label} 变化方式`) as HTMLSelectElement;if(method.value!=='fixed')fireEvent.change(method,{target:{value:'fixed'}});return screen.getByLabelText(`${label} 数值`) as HTMLInputElement;}
+function conditionInput(label:'温度'|'压力'){return screen.getByLabelText(`first_start ${label}`) as HTMLInputElement;}
 
 describe('UI and code integration',()=>{
  it('keeps unfinished code in its own simulation when creating and switching history',async()=>{
@@ -58,6 +58,22 @@ describe('UI and code integration',()=>{
   expect(actualConditions(calls('code_render')[1].config).pressure_bar).toBe(75);expect(calls('code_render')[1].previous.cells[0].source).toBe('# preserved comment');
   next.points[0].temperature_c=210;edit(next);mocks.open.mockResolvedValue('/test/output');fireEvent.click(screen.getByRole('button',{name:'检查并运行代码'}));
   await waitFor(()=>expect(calls('start')).toHaveLength(1));expect(calls('start')[0].config.points[0].temperature_c).toBe(210);expect(actualConditions(calls('start')[0].config).temperature_c).toBe(210);expect(calls('start')[0].config.materials[0].inputs[0].amount).toBe(.35);expect(calls('start')[0].code_editor.document.cells[2].source).toBe(JSON.stringify(next));
+ });
+ it('regenerates code from edited formulas, stop rules and input fractions, then uses those same parameters for execution',async()=>{
+  await openCode();fireEvent.click(screen.getByRole('button',{name:'图形'}));await waitFor(()=>expect(screen.getByRole('button',{name:'图形'}).getAttribute('aria-pressed')).toBe('true'));
+  fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));
+  fireEvent.change(screen.getByLabelText('first_start 温度'),{target:{value:'150'}});
+  fireEvent.change(screen.getByLabelText('first_following 温度'),{target:{value:'T-20'}});
+  fireEvent.change(screen.getByLabelText('first_start 压力'),{target:{value:'Psat(T)'}});
+  fireEvent.change(screen.getByLabelText('first_following 压力'),{target:{value:'Psat(T)'}});
+  fireEvent.change(screen.getByLabelText('first_following 物料 1 用量'),{target:{value:'1/(i+1)'}});
+  fireEvent.change(screen.getByLabelText('first 结束条件'),{target:{value:'T <= 90'}});
+  fireEvent.click(screen.getByRole('button',{name:'代码'}));await waitFor(()=>expect(screen.getByRole('button',{name:'代码'}).getAttribute('aria-pressed')).toBe('true'));
+  const shown=JSON.parse((screen.getByLabelText('conditions source') as HTMLTextAreaElement).value),plan=compileSchedule(shown);
+  expect(plan.lengths).toEqual([4]);expect(plan.point(3,0).temperature_c).toBe(90);expect(plan.point(3,0).pressure_bar).toBeCloseTo(.7018267758,9);
+  const route=shown.reaction_stages.first_following[0];expect(plan.valueAt({kind:'route_fraction',route_id:route.id,field:'fraction'},3,0,route.fraction)).toBe(.25);
+  mocks.open.mockResolvedValue('/test/output');fireEvent.click(screen.getByRole('button',{name:'运行 4 个平衡点'}));await waitFor(()=>expect(calls('start')).toHaveLength(1));
+  expect(calls('start')[0].config.schedule).toEqual(shown.schedule);expect(calls('start')[0].config.reaction_stages).toEqual(shown.reaction_stages);
  });
  it('applies edited legacy loop source after history migration without losing custom solver code',async()=>{
   const legacy={...structuredClone(cfg),loops:{base:{temperature_c:25,pressure_bar:1},inner:{mode:'repeat' as const,count:1},outer:{mode:'repeat' as const,count:1}}};
@@ -86,7 +102,7 @@ describe('UI and code integration',()=>{
   localStorage.setItem(key,JSON.stringify(c));render(<Simulation summary={summary} runtime={runtime} onDatabases={()=>{}}/>);await screen.findByRole('button',{name:'参与平衡 water'});
   fireEvent.click(screen.getByRole('tab',{name:/初始物质/}));expect((screen.getByLabelText('water 投料量') as HTMLInputElement).value).toBe('2');fireEvent.click(screen.getByRole('button',{name:'修改通常设置中的water 每份含量'}));
   await waitFor(()=>expect(screen.getByRole('tab',{name:/计算流程/}).getAttribute('aria-selected')).toBe('true'));
-  const actual=document.getElementById('schedule-setting-actual-water')!;expect(actual).toBeTruthy();const value=actual.querySelector('input[type="number"]') as HTMLInputElement;expect(value.value).toBe('2');fireEvent.change(value,{target:{value:'3'}});
+  const actual=document.getElementById('schedule-setting-actual-water')!;expect(actual).toBeTruthy();const value=actual.querySelector('input.wave-formula') as HTMLInputElement;expect(value.value).toBe('2');fireEvent.change(value,{target:{value:'3'}});
   fireEvent.click(screen.getByRole('tab',{name:/初始物质/}));expect((screen.getByLabelText('water 投料量') as HTMLInputElement).value).toBe('3');await act(flushHistory);expect(compileSchedule(currentHistory().config).valueAt({kind:'material_amount',material_id:'initial',species:'water'},0,0)).toBe(3);
   expect(currentHistory().config.materials[0].inputs[0].amount).toBe(1);
  });
@@ -94,7 +110,7 @@ describe('UI and code integration',()=>{
   const c={...structuredClone(cfg),schedule:defaultSchedule()};c.materials[0].inputs[0].amount=NaN;c.schedule.parameters.push({id:'actual-water',target:{kind:'material_amount',material_id:'initial',species:'water'},value:{mode:'fixed',value:2}});
   localStorage.setItem(key,JSON.stringify(encodeDraft(c)));await openCode();expect(calls('code_render').at(-1).config.materials[0].inputs[0].amount).toEqual({easyreaktoro_empty_number:true});
   custom=(action,p)=>{if(action!=='code_parse')return undefined;const parsed=JSON.parse(p.document.cells.find((cell:any)=>cell.id==='conditions').source);parsed.materials[0].inputs[0].amount=null;return {valid:true,config:parsed,errors:[]};};
-  fireEvent.click(screen.getByRole('button',{name:'图形'}));await waitFor(()=>expect(screen.getByRole('button',{name:'图形'}).getAttribute('aria-pressed')).toBe('true'));fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));fireEvent.click(screen.getByRole('button',{name:/移除 .*water 每份含量 设置/}));
+  fireEvent.click(screen.getByRole('button',{name:'图形'}));await waitFor(()=>expect(screen.getByRole('button',{name:'图形'}).getAttribute('aria-pressed')).toBe('true'));fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));fireEvent.click(screen.getByRole('button',{name:'移除此条件'}));
   const before=calls('code_render').length;fireEvent.click(screen.getByRole('button',{name:'代码'}));await screen.findByText(/数值尚未填完整/);expect(calls('code_render')).toHaveLength(before);expect(screen.getByRole('button',{name:'图形'}).getAttribute('aria-pressed')).toBe('true');await act(flushHistory);expect(currentHistory().config.materials[0].inputs[0].amount).toEqual({easyreaktoro_empty_number:true});
  });
  it('loads a complete worker-saved file with an unused null base and exports it again without filling the base',async()=>{

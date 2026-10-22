@@ -25,3 +25,26 @@
 .schedule-point-table footer{padding-top:9px}
 
 .schedule-preview__directions{display:grid;gap:10px;padding:12px 14px 3px}.schedule-preview__directions h4{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin:0 0 6px}.schedule-preview__directions h4 svg{color:var(--accent)}.schedule-preview__directions h4 small{font-size:12px;font-weight:400;color:var(--muted);margin-left:auto}.schedule-preview__directions dl{margin:0;display:grid;gap:5px}.schedule-preview__directions dl>div{font-size:12px;line-height:1.5;display:grid;grid-template-columns:minmax(50px,auto) minmax(0,1fr);gap:8px}.schedule-preview__directions dt{color:var(--muted);max-width:125px;overflow-wrap:anywhere}.schedule-preview__directions dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.schedule-preview__composition{margin-top:12px}.schedule-preview__point{margin-top:0}
+
+/* Put the flow first; the detailed input inventory stays available on demand. */
+.schedule-preview__heading p{max-width:28em}
+.schedule-preview__directions{padding:8px 14px 13px;gap:8px}
+.schedule-preview__directions section{border-left:2px solid var(--line);padding-left:9px}
+.schedule-preview__directions h4{margin-bottom:3px}
+.schedule-preview__directions dl{gap:3px}
+.schedule-preview__composition>summary{font-size:12px;color:var(--muted);cursor:pointer;margin-bottom:8px;line-height:1.6}
+.schedule-preview__changes{font-size:11px}
+.schedule-preview__point{margin-top:4px}
+
+/* Preview navigation stays compact; labels can wrap without squeezing fields. */
+.schedule-preview__heading{padding:18px 18px 12px;flex-wrap:wrap;gap:6px 12px}
+.schedule-preview__heading>div{flex:1;min-width:210px}
+.schedule-preview__heading p{font-size:12px;line-height:1.6}
+.schedule-preview__selectors{padding:4px 14px 14px;gap:12px}
+.schedule-preview__views{padding:12px 16px 0;gap:18px}
+.schedule-preview__views button{font-size:12px;line-height:1.5;text-align:left}
+.schedule-preview__directions{padding:14px 18px;gap:13px}
+.schedule-preview__directions h4{flex-wrap:wrap;row-gap:4px}
+.schedule-preview__point{margin:0 16px 14px;padding:15px}
+.schedule-preview__point>header{flex-wrap:wrap;row-gap:10px}
+.schedule-preview__composition{margin:0 16px 14px}

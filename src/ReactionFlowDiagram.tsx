@@ -1,40 +1,143 @@
 import {t as tr,useLanguage} from './i18n';
-import {useId,type ReactNode} from 'react';
-import {DiagramMaterialStages,DiagramMaterialTerm} from './LoopDiagram';
+import {useEffect,useId,useMemo,useRef,useState} from 'react';
+import {type DiagramMaterialStages} from './LoopDiagram';
+import {flowInputs,flowKey,flowTextLines,type FlowCoordinate,type FlowInput,type FlowSource} from './reaction-flow-model';
+import {ReactionFlowOverview} from './ReactionFlowOverview';
+import {flowWindow,type FlowAnnotation} from './reaction-flow-overview';
 import './reaction-flow-diagram.css';
 
 type Point={temperature_c:number;pressure_bar:number;pressure_mode?:string};
-type Props={positions:number;rounds:number;selected:{inner:number;outer:number};materials:DiagramMaterialStages;point:(i:number,o:number)=>Point;onSelect:(i:number,o:number)=>void};
-const stage=(i:number,o:number)=>o===0?(i===0?'first_start':'first_following'):(i===0?'later_start':'later_following');
-const phaseNames=():Record<string,string>=>({aqueous:tr('水相',"Aqueous"),mineral:tr('固相',"Solids"),gas:tr('气相',"Gas"),all:tr('全部',"All"),species:'species'});
-export function nearbyIndices(count:number,selected:number){const start=Math.max(0,Math.min(count-3,selected-1));return Array.from({length:Math.min(count,3)},(_,n)=>start+n);}
-function display(value:number){return Number.isFinite(value)?Number(value.toPrecision(5)).toString():'—';}
-type Input={term:DiagramMaterialTerm;amount:number};
-function description(inputs:Input[]){return inputs.map(({term,amount})=>tr(`${term.label} · ${term.phaseLabel||phaseNames()[term.phase]||term.phase}${term.species?.length?` (${term.species.join(', ')})`:''} · ${display(amount*(term.source==='fresh'?1:100))}${term.source==='fresh'?' 份':'%'}`,`${term.label} · ${term.phaseLabel||phaseNames()[term.phase]||term.phase}${term.species?.length?` (${term.species.join(', ')})`:''} · ${display(amount*(term.source==='fresh'?1:100))}${term.source==='fresh'?' portions':'%'}`)).join('；');}
-function flowColor(inputs:Input[]){const phases=[...new Set(inputs.map(v=>v.term.phase))];return phases.length===1?` phase-${phases[0]}`:'';}
-function flowLabel(inputs:Input[]){const compact:Record<string,string>={aqueous:tr('水相','Aq.'),mineral:tr('固相','Solid'),gas:tr('气相','Gas'),all:tr('全部','All'),species:'species'};const names=[...new Set(inputs.map(({term})=>compact[term.phase]||term.phase))];return names.length===1?names[0]:tr('混合物料','Mixed');}
-export function ReactionFlowDiagram({positions,rounds,selected,materials,point,onSelect}:Props){
- const language=useLanguage();
- const id=useId(),columns=nearbyIndices(positions,selected.inner),rows=nearbyIndices(rounds,selected.outer);
- const inputs=(i:number,o:number,source:DiagramMaterialTerm['source']):Input[]=>materials[stage(i,o)].filter(term=>term.source===source&&(source!=='left'||i>0)&&(source!=='above'||o>0)).map(term=>({term,amount:term.fractionAt?.(i,o)??term.fraction})).filter(({amount})=>Number.isFinite(amount)&&amount>0);
- const cells:ReactNode[]=[];
- for(const [r,o] of rows.entries()){
-  cells.push(<div key={`round-${o}`} className="reaction-flow__round" style={{gridColumn:1,gridRow:r*2+2,...(language==='en'?{writingMode:'horizontal-tb' as const,letterSpacing:0}: {})}}>{tr("第","Round ")}{o+1}{tr("轮","")}</div>);
-  for(const [c,i] of columns.entries()){
-   const p=point(i,o),fresh=inputs(i,o,'fresh'),left=inputs(i,o,'left'),above=inputs(i,o,'above'),other=inputs(i,o,'other').filter(({term})=>{const from=term.sourceAt?.(i,o);return from&&from.inner>=0&&from.inner<positions&&from.outer>=0&&from.outer*positions+from.inner<o*positions+i;});
-   const col=c*2+2,row=r*2+2,chosen=i===selected.inner&&o===selected.outer;
-   const full=tr(`第 ${o+1} 轮 · 位置 ${i+1}；${p.temperature_c} °C；${p.pressure_mode==='water_saturation'?'纯水饱和蒸汽压 ':''}${p.pressure_bar} bar`,`Round ${o+1} · position ${i+1}; ${p.temperature_c} °C; ${p.pressure_mode==='water_saturation'?'pure-water saturation pressure ':''}${p.pressure_bar} bar`);
-   cells.push(<button type="button" key={`point-${i}-${o}`} className={`reaction-flow__point${chosen?' is-selected':''}`} style={{gridColumn:col,gridRow:row}} aria-label={full} aria-pressed={chosen} onClick={()=>onSelect(i,o)} title={full} data-inner-index={i} data-outer-index={o}>
-    <span className="reaction-flow__order">#{o*positions+i+1}</span><strong>{display(p.temperature_c)} <small>°C</small></strong><strong>{display(p.pressure_bar)} <small>bar</small></strong>{p.pressure_mode==='water_saturation'&&<span className="reaction-flow__psat">Psat(T)</span>}
-    {fresh.length>0&&<span className="reaction-flow__fresh" title={tr(`加入：${description(fresh)}`,`Add: ${description(fresh)}`)}>+ {fresh.length===1?flowLabel(fresh):tr(`${fresh.length} 项投料`,`${fresh.length} inputs`)}</span>}
-    {other.length>0&&<span className="reaction-flow__other" title={other.map(({term})=>{const from=term.sourceAt!(i,o)!;return tr(`第 ${from.outer+1} 轮位置 ${from.inner+1} → ${description(other.filter(v=>v.term===term))}`,`Round ${from.outer+1}, position ${from.inner+1} → ${description(other.filter(v=>v.term===term))}`);}).join('；')}>{other.length===1?(()=>{const from=other[0].term.sourceAt!(i,o)!;return tr(`↳ 第${from.outer+1}轮·位置${from.inner+1} ${display(other[0].amount*100)}%`,`↳ Round ${from.outer+1} · position ${from.inner+1} ${display(other[0].amount*100)}%`);})():tr(`↳ ${other.length} 项指定来源`,`↳ ${other.length} specified sources`)}</span>}
-   </button>);
-   if(left.length&&c>0)cells.push(<div key={`left-${i}-${o}`} className={`reaction-flow__edge reaction-flow__edge--left${flowColor(left)}`} style={{gridColumn:col-1,gridRow:row}} title={tr(`本轮位置 ${i} → 位置 ${i+1}：${description(left)}`,`This round, position ${i} → position ${i+1}: ${description(left)}`)} data-source="left" data-from-inner={i-1} data-from-outer={o} data-to-inner={i} data-to-outer={o}><span>{flowLabel(left)}</span><b aria-hidden="true">→</b>{left.length===1&&<small>{display(left[0].amount*100)}%</small>}</div>);
-   if(above.length&&r>0)cells.push(<div key={`above-${i}-${o}`} className={`reaction-flow__edge reaction-flow__edge--above${flowColor(above)}`} style={{gridColumn:col,gridRow:row-1}} title={tr(`第 ${o} 轮 → 第 ${o+1} 轮，位置 ${i+1}：${description(above)}`,`Round ${o} → round ${o+1}, position ${i+1}: ${description(above)}`)} data-source="above" data-from-inner={i} data-from-outer={o-1} data-to-inner={i} data-to-outer={o}><b aria-hidden="true">↓</b><span>{flowLabel(above)}{above.length===1&&<small> {display(above[0].amount*100)}%</small>}</span></div>);
-   if((left.length&&c===0)||(above.length&&r===0))cells.push(<span key={`omitted-${i}-${o}`} className="reaction-flow__omitted" style={{gridColumn:col,gridRow:row}} title={[left.length&&c===0?tr(`左侧未展开的位置 ${i}：${description(left)}`,`Position ${i}, beyond the left edge: ${description(left)}`):'',above.length&&r===0?tr(`上方未展开的第 ${o} 轮：${description(above)}`,`Round ${o}, above the displayed area: ${description(above)}`):''].filter(Boolean).join('；')}>{left.length&&c===0?'← ':''}{above.length&&r===0?'↑ ':''}{tr("图外来源","Source outside view")}</span>);
+type Props={active?:(i:number,o:number)=>boolean;runIndex?:(i:number,o:number)=>number;positions:number;rounds:number;selected:FlowCoordinate;materials:DiagramMaterialStages;point:(i:number,o:number)=>Point;onSelect:(i:number,o:number)=>void;showConditions?:boolean;onAdjust?:()=>void;annotations?:FlowAnnotation[]};
+type FlowNode=FlowCoordinate&{key:string;x:number;y:number;height:number;point:Point;sources:FlowSource[];fresh:string[];external:boolean};
+type FlowEdge={key:string;from:FlowNode;to:FlowNode;group:FlowSource;lines:string[]};
+const NODE_WIDTH=116, COLUMN=252, LEFT=88, TOP=44;
+const phases=():Record<string,string>=>({aqueous:tr('水相','Aqueous phase'),mineral:tr('固相','Solid phases'),gas:tr('气相','Gas phase'),all:tr('全部物料','All material'),species:'Species'});
+const display=(v:number)=>Number.isFinite(v)?Number(v.toPrecision(5)).toString():'—';
+const coordinate=({inner,outer}:FlowCoordinate)=>tr(`第 ${outer+1} 轮 · 位置 ${inner+1}`,`Round ${outer+1} · position ${inner+1}`);
+const amountLabel=(input:FlowInput)=>input.source==='fresh'?`× ${display(input.amount)}`:`${display(input.amount*100)}%`;
+const phaseLabel=(input:FlowInput)=>input.term.phase==='species'?input.term.species?.join(', ')||'Species':phases()[input.term.phase]||input.term.phase;
+const inputLabel=(input:FlowInput)=>`${input.source==='fresh'?input.term.label.trim()||'Composition':phaseLabel(input)} ${amountLabel(input)}`;
+const freshLabel=(input:FlowInput)=>`+ ${inputLabel(input)}${input.term.phase!=='all'?` · ${phaseLabel(input)}`:''}`;
+function phase(group:FlowSource){const key=group.inputs[0]?.term.phase;return ['aqueous','mineral','gas','all','species'].includes(key)&&group.inputs.every(input=>input.term.phase===key)?key:'mixed';}
+function color(group:FlowSource){return ` phase-${phase(group)}`;}
+const alwaysActive=()=>true;
+
+export function ReactionFlowDiagram(props:Props){
+ useLanguage();
+ const {positions,rounds,selected}=props;
+ const large=positions>4||rounds>3;
+ const [expanded,setExpanded]=useState(selected.inner!==0||selected.outer!==0);
+ const previous=useRef(selected);
+ useEffect(()=>{if(previous.current.inner!==selected.inner||previous.current.outer!==selected.outer)setExpanded(true);previous.current=selected;},[selected.inner,selected.outer]);
+ if(!large)return <PointFlowDiagram {...props}/>;
+ const explore=(p:FlowCoordinate)=>{props.onSelect(p.inner,p.outer);setExpanded(true);};
+ return <section className="reaction-flow reaction-flow--overview" aria-label={tr('完整反应流程','Complete reaction flow')}>
+  <ReactionFlowOverview {...props} active={props.active??alwaysActive} onExplore={explore}/>
+  <div className="reaction-flow__expand"><button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?tr('收起附近步骤','Hide nearby steps'):tr('查看所选位置附近的步骤','Show steps near the selected position')}</button><span>{coordinate(selected)}</span>{!expanded&&props.onAdjust&&<button type="button" onClick={()=>{setExpanded(true);props.onAdjust?.();}}>{tr('单独调整此处','Adjust this point')}</button>}</div>
+  {expanded&&<PointFlowDiagram {...props} windowed/>}
+ </section>;
+}
+
+function PointFlowDiagram({positions,rounds,selected,materials,point,onSelect,onAdjust,showConditions=true,active=alwaysActive,runIndex=(i,o)=>o*positions+i,windowed=false}:Props&{windowed?:boolean}){
+ const language=useLanguage(),id=useId().replace(/:/g,''),viewport=useRef<HTMLDivElement>(null);
+ const [frame,setFrame]=useState({left:0,top:0,width:1000,height:560});
+ const [manualZoom,setManualZoom]=useState<number|null>(null);
+ const i=Math.max(0,Math.min(positions-1,selected.inner)),o=Math.max(0,Math.min(rounds-1,selected.outer));
+ const columns=windowed?flowWindow(positions,i):{start:0,end:positions},rowWindow=windowed?flowWindow(rounds,o):{start:0,end:rounds};
+ const graph=useMemo(()=>{
+  const nodes:FlowNode[]=[],byKey=new Map<string,FlowNode>(),rows:{outer:number;y:number;height:number;gap:number}[]=[];
+  let y=TOP;
+  for(let outer=rowWindow.start;outer<rowWindow.end;outer++) {
+   const row:FlowNode[]=[];let height=54,gap=64,headroom=TOP;
+   for(let inner=columns.start;inner<columns.end;inner++) {
+    if(!active(inner,outer))continue;
+    const sources=flowInputs(materials,{inner,outer},positions,rounds,active);
+    const fresh=sources.filter(g=>g.source==='fresh').flatMap(g=>g.inputs.flatMap(input=>flowTextLines(freshLabel(input),19)));
+    const external=sources.some(g=>g.from&&(g.from.inner<columns.start||g.from.inner>=columns.end||g.from.outer<rowWindow.start||g.from.outer>=rowWindow.end));
+    const node:FlowNode={inner,outer,key:flowKey({inner,outer}),x:LEFT+(inner-columns.start)*COLUMN,y,height:54+(fresh.length?12+fresh.length*15:0)+(external?23:0),point:point(inner,outer),sources,fresh,external};
+    row.push(node);nodes.push(node);byKey.set(node.key,node);height=Math.max(height,node.height);
+    for(const source of sources)if(source.source!=='fresh'){
+     const lines=source.inputs.flatMap(input=>flowTextLines(inputLabel(input),20)).length;
+     gap=Math.max(gap,lines*15+36);
+     if(source.source==='left')headroom=Math.max(headroom,34+(lines-1)*15);
+    }
+   }
+   if(rows.length){const previous=rows.at(-1)!;y=previous.y+previous.height+Math.max(previous.gap,gap,headroom);}else y=headroom;
+   for(const node of row)node.y=y;
+   rows.push({outer,y,height,gap});
   }
- }
- return <section className="reaction-flow" aria-label={tr("反应条件与物料传递","Conditions and material transfer")} aria-describedby={`${id}-caption`}>
-  {positions*rounds>1&&<><div className="reaction-flow__grid" style={{gridTemplateColumns:`${language==='en'?48:32}px ${columns.map((_,i)=>`${i?'40px ':''}minmax(0,1fr)`).join(' ')}`}}>{columns.map((i,c)=><div key={i} className="reaction-flow__position" style={{gridColumn:c*2+2,gridRow:1}}>{tr("位置 ","Position ")}{i+1}</div>)}{cells}</div><p className="reaction-flow__caption" id={`${id}-caption`}>{tr("箭头表示设置的物料来源与取用比例。点击反应点查看详情，继承的实际组成由平衡结果决定。","Arrows show the chosen material sources and fractions. Click a reaction point for details; the actual composition of reused material is determined by equilibrium.")}{(positions>3||rounds>3)&&<span>{tr("显示所选点附近的位置；完整路径共 ","Showing positions near the selected point. The full path has ")}{positions} {tr("个位置、"," positions and ")}{rounds} {tr("轮。"," rounds.")}</span>}</p></>}
+  const edges:FlowEdge[]=nodes.flatMap(to=>to.sources.filter(g=>g.from).map(group=>({key:`${flowKey(group.from!)}>${to.key}`,from:byKey.get(flowKey(group.from!))!,to,group,lines:group.inputs.flatMap(input=>flowTextLines(inputLabel(input),20))}))).filter(edge=>edge.from);
+  return {nodes,byKey,edges,rows,width:LEFT+(columns.end-columns.start-1)*COLUMN+NODE_WIDTH+(edges.some(e=>e.group.source==='other')?170:36),height:y+(rows.at(-1)?.height??54)+24};
+ },[positions,rounds,materials,active,point,language,columns.start,columns.end,rowWindow.start,rowWindow.end]);
+ const zoom=manualZoom??Math.min(1,Math.max(.8,(frame.width-8)/graph.width));
+ const chosen=graph.byKey.get(flowKey({inner:i,outer:o}));
+ const height=Math.max(170,Math.min(560,graph.height*zoom+20));
+ const updateFrame=()=>{const el=viewport.current;if(el)setFrame({left:el.scrollLeft,top:el.scrollTop,width:el.clientWidth||1000,height:el.clientHeight||560});};
+ useEffect(()=>{
+  updateFrame();const el=viewport.current;if(!el||typeof ResizeObserver==='undefined')return;
+  const observer=new ResizeObserver(updateFrame);observer.observe(el);return ()=>observer.disconnect();
+ },[]);
+ // Selecting a coordinate reveals it in the same continuous diagram. Panning
+ // alone never changes selection or replaces the overview with a local graph.
+ useEffect(()=>{
+  const el=viewport.current,node=graph.byKey.get(flowKey({inner:i,outer:o}));if(!el||!node)return;
+  const left=node.x*zoom,right=(node.x+NODE_WIDTH)*zoom,top=node.y*zoom,bottom=(node.y+node.height)*zoom;
+  if(left<el.scrollLeft+25||right>el.scrollLeft+(el.clientWidth||1000)-25)el.scrollLeft=Math.max(0,left-(el.clientWidth||1000)/2+NODE_WIDTH*zoom/2);
+  if(top<el.scrollTop+30||bottom>el.scrollTop+(el.clientHeight||560)-20)el.scrollTop=Math.max(0,top-(el.clientHeight||560)/2+node.height*zoom/2);
+  updateFrame();
+ },[i,o,zoom,positions,rounds,graph.height]);
+ const view={left:frame.left/zoom-80,right:(frame.left+frame.width)/zoom+80,top:frame.top/zoom-80,bottom:(frame.top+frame.height)/zoom+80};
+ const visible=(n:FlowNode)=>n.x+NODE_WIDTH>=view.left&&n.x<=view.right&&n.y+n.height>=view.top&&n.y<=view.bottom;
+ const nodes=graph.nodes.filter(visible);
+ const edges=graph.edges.filter(e=>Math.max(e.from.x,e.to.x)+NODE_WIDTH>=view.left&&Math.min(e.from.x,e.to.x)<=view.right&&Math.max(e.from.y+e.from.height,e.to.y+e.to.height)>=view.top&&Math.min(e.from.y,e.to.y)<=view.bottom);
+ const arrow=(edge:FlowEdge)=>{
+  const {from,to,group,lines}=edge;let d:string,lx:number,ly:number,anchor:'start'|'middle'='middle';
+  if(group.source==='left'){
+   const y=to.y+27;d=`M${from.x+NODE_WIDTH+5},${y} H${to.x-6}`;lx=(from.x+NODE_WIDTH+to.x)/2;ly=y-9-(lines.length-1)*15;
+  }else if(group.source==='above'){
+   const x=to.x+NODE_WIDTH/2;d=`M${x},${from.y+from.height+5} V${to.y-6}`;lx=x;ly=(from.y+from.height+to.y)/2-(lines.length-1)*7.5;
+  }else{
+   // A nonadjacent dependency stays attached to its true source, including a
+   // result in a non-neighbouring round. It is never disguised as an adjacent edge.
+   const sx=from.x+NODE_WIDTH-12,sy=from.y+from.height+5,tx=to.x+NODE_WIDTH-16,ty=to.y-6;
+   const row=graph.rows.find(row=>row.outer===from.outer)!,channelY=row.y+row.height+16,laneX=to.x-22;
+   d=from.outer===to.outer?`M${sx},${sy} V${channelY} H${laneX} V${to.y+27} H${to.x-6}`:`M${sx},${sy} V${channelY} H${laneX} V${to.y-18} H${tx} V${ty}`;
+   lx=to.x+NODE_WIDTH+10;ly=to.y+59;anchor='start';
+  }
+  const related=from.key===chosen?.key||to.key===chosen?.key;
+  return <g key={edge.key} className={`reaction-flow__connection${color(group)}${related?' is-related':''}`} data-source={group.source} data-from-inner={from.inner} data-from-outer={from.outer} data-to-inner={to.inner} data-to-outer={to.outer}>
+   <title>{`${coordinate(from)} → ${coordinate(to)}: ${group.inputs.map(inputLabel).join('; ')}`}</title>
+   <path d={d} markerEnd={`url(#${id}-arrow-${phase(group)})`}/>
+   {group.source==='above'&&<rect className="reaction-flow__edge-label-bg" x={lx-Math.min(130,Math.max(...lines.map(l=>l.length))*6.4)/2-3} y={ly-12} width={Math.min(130,Math.max(...lines.map(l=>l.length))*6.4)+6} height={lines.length*15+2} rx="3"/>}
+   <text x={lx} y={ly} textAnchor={anchor}>{lines.map((line,n)=><tspan key={n} x={lx} dy={n?15:0}>{line}</tspan>)}</text>
+  </g>;
+ };
+ const keyboard=(event:React.KeyboardEvent,node:FlowNode)=>{
+  if(event.key==='Enter'||event.key===' '){event.preventDefault();onSelect(node.inner,node.outer);return;}
+  const delta:Record<string,[number,number]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+  const next=delta[event.key];if(!next)return;event.preventDefault();const inner=i+next[0],outer=o+next[1];if(inner>=0&&inner<positions&&outer>=0&&outer<rounds&&active(inner,outer)){onSelect(inner,outer);requestAnimationFrame(()=>viewport.current?.querySelector<SVGElement>(`[data-inner="${inner}"][data-outer="${outer}"]`)?.focus({preventScroll:true}));}
+ };
+ return <section className="reaction-flow" aria-label={windowed?tr('附近步骤','Nearby steps'):tr('完整反应流程','Complete reaction flow')}>
+  <div className="reaction-flow__toolbar"><p>{windowed?tr(`第 ${rowWindow.start+1}–${rowWindow.end} 轮 · 位置 ${columns.start+1}–${columns.end}`,`Rounds ${rowWindow.start+1}–${rowWindow.end} · positions ${columns.start+1}–${columns.end}`):tr('横向：沿路径反应　纵向：下一轮','Across: along the path · Down: next round')}</p><div className="reaction-flow__zoom" aria-label={tr('流程图缩放','Diagram zoom')}><button type="button" aria-label={tr('缩小流程图','Zoom out')} disabled={zoom<=.25} onClick={()=>setManualZoom(Math.max(.25,zoom-.2))}>−</button><button type="button" aria-label={tr('恢复流程图比例','Reset diagram zoom')} onClick={()=>setManualZoom(null)}>{Math.round(zoom*100)}%</button><button type="button" aria-label={tr('放大流程图','Zoom in')} disabled={zoom>=1.6} onClick={()=>setManualZoom(Math.min(1.6,zoom+.2))}>+</button></div></div>
+  <div className="reaction-flow__viewport" ref={viewport} onScroll={updateFrame} style={{height}} role="region" aria-label={windowed?tr('局部流程图','Local flow diagram'):tr('可滚动的完整流程图','Scrollable complete flow diagram')} tabIndex={0}>
+   <svg className="reaction-flow__map" width={graph.width*zoom} height={graph.height*zoom} viewBox={`0 0 ${graph.width} ${graph.height}`} aria-label={windowed?tr(`附近流程：第 ${rowWindow.start+1}–${rowWindow.end} 轮，位置 ${columns.start+1}–${columns.end}`,`Nearby flow: rounds ${rowWindow.start+1}–${rowWindow.end}, positions ${columns.start+1}–${columns.end}`):tr(`${rounds} 轮、${positions} 个路径位置的反应流程`,`${rounds} rounds and ${positions} path positions`)}>
+    <defs>{['aqueous','mineral','gas','all','species','mixed'].map(phase=><marker key={phase} className={`phase-${phase}`} id={`${id}-arrow-${phase}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1L8 5L1 9" fill="none" stroke="var(--flow-color)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></marker>)}</defs>
+    {edges.map(arrow)}
+    {nodes.map(node=><g key={node.key} className={`reaction-flow__node${node.key===chosen?.key?' is-selected':''}`} data-inner={node.inner} data-outer={node.outer} role="button" tabIndex={node.key===chosen?.key?0:-1} aria-pressed={node.key===chosen?.key} aria-label={tr(`查看第 ${node.outer+1} 轮位置 ${node.inner+1}`,`View round ${node.outer+1}, position ${node.inner+1}`)} onClick={()=>onSelect(node.inner,node.outer)} onKeyDown={event=>keyboard(event,node)}>
+     <rect x={node.x} y={node.y} width={NODE_WIDTH} height={node.height} rx="8"/>
+     {showConditions?<><text className="reaction-flow__node-temperature" x={node.x+NODE_WIDTH/2} y={node.y+23} textAnchor="middle">{display(node.point.temperature_c)} °C</text><text className="reaction-flow__node-pressure" x={node.x+NODE_WIDTH/2} y={node.y+42} textAnchor="middle">{node.point.pressure_mode==='water_saturation'?'Psat(T)':`${display(node.point.pressure_bar)} bar`}</text></>:<text className="reaction-flow__node-temperature" x={node.x+NODE_WIDTH/2} y={node.y+32} textAnchor="middle">{tr(`位置 ${node.inner+1}`,`Position ${node.inner+1}`)}</text>}
+     {!!node.fresh.length&&<g className="reaction-flow__feed" data-source="fresh" data-to-inner={node.inner} data-to-outer={node.outer}><line x1={node.x+10} x2={node.x+NODE_WIDTH-10} y1={node.y+53} y2={node.y+53}/>{node.fresh.map((line,n)=><text key={n} x={node.x+NODE_WIDTH/2} y={node.y+71+n*15} textAnchor="middle">{line}</text>)}</g>}
+     {node.external&&<text className="reaction-flow__external" x={node.x+NODE_WIDTH/2} y={node.y+node.height-9} textAnchor="middle">{tr('↖ 含图外来源','↖ Source outside view')}</text>}
+    </g>)}
+    <g className="reaction-flow__axis-backdrop" aria-hidden="true"><rect x={frame.left/zoom} y={frame.top/zoom} width={LEFT-12} height={frame.height/zoom}/><rect x={frame.left/zoom} y={frame.top/zoom} width={frame.width/zoom} height="35"/></g>
+    {graph.rows.filter(row=>row.y+row.height>=view.top&&row.y<=view.bottom).map(row=><g key={row.outer} className="reaction-flow__axis"><rect x={frame.left/zoom} y={row.y+5} width={LEFT-13} height="42"/><text x={frame.left/zoom+12} y={row.y+31}>{tr(`第 ${row.outer+1} 轮`,`Round ${row.outer+1}`)}</text></g>)}
+    {Array.from({length:columns.end-columns.start},(_,index)=>index+columns.start).filter(inner=>LEFT+(inner-columns.start)*COLUMN+NODE_WIDTH>=view.left&&LEFT+(inner-columns.start)*COLUMN<=view.right).map(inner=><g key={inner} className="reaction-flow__axis"><rect x={LEFT+(inner-columns.start)*COLUMN-10} y={frame.top/zoom} width={NODE_WIDTH+20} height="35"/><text x={LEFT+(inner-columns.start)*COLUMN+NODE_WIDTH/2} y={frame.top/zoom+23} textAnchor="middle">{tr(`位置 ${inner+1}`,`Position ${inner+1}`)}</text></g>)}
+   </svg>
+  </div>
+  <p className="reaction-flow__caption">{windowed?tr('这里是连续的附近步骤，图外来源在下方详情中列出。切换坐标可查看其他位置，上方概览始终保留。','These are consecutive nearby steps. Sources outside this view are listed in the details below. Change coordinates to explore elsewhere; the overview stays visible.'):tr('箭头表示实际物料传递，+ 表示新投料。点击任一反应查看详情。','Arrows show material transfers; + marks fresh input. Select any reaction for details.')}</p>
+  {chosen?<div className="reaction-flow__current" aria-label={coordinate(chosen)}>
+   <div className="reaction-flow__current-heading"><div><strong>{coordinate(chosen)}</strong><small>{tr(`第 ${runIndex(i,o)+1} 次平衡计算`,`Equilibrium calculation ${runIndex(i,o)+1}`)}</small></div>{showConditions&&<dl className="reaction-flow__conditions"><div><dt>{tr('温度','Temperature')}</dt><dd data-actual-temperature>{display(chosen.point.temperature_c)} <small>°C</small></dd></div><div><dt>{chosen.point.pressure_mode==='water_saturation'?'Psat(T)':tr('压力','Pressure')}</dt><dd data-actual-pressure>{display(chosen.point.pressure_bar)} <small>bar</small></dd></div></dl>}{onAdjust&&<button type="button" className="reaction-flow__adjust" onClick={onAdjust}>{tr('单独调整此处','Adjust this point')}</button>}</div>
+   <div className="reaction-flow__sources">{chosen.sources.map((group,n)=><div key={n} className={`reaction-flow__source${color(group)}`}><strong>{group.from?<button type="button" aria-label={tr(`查看来源：${coordinate(group.from)}`,`View source: ${coordinate(group.from)}`)} onClick={()=>onSelect(group.from!.inner,group.from!.outer)}>{coordinate(group.from)} →</button>:tr('新投料','Fresh input')}</strong><span>{group.inputs.map(input=>input.source==='fresh'?freshLabel(input).slice(2):inputLabel(input)).join(' · ')}</span></div>)}{!chosen.sources.length&&<p className="reaction-flow__empty">{tr('这一步没有投料或取用的反应结果。','No fresh material or previous result is used at this step.')}</p>}</div>
+  </div>:<p className="reaction-flow__empty">{tr('本轮在该位置之前已结束。','This round ended before this position.')}</p>}
  </section>;
 }

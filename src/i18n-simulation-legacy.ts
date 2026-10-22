@@ -1,3 +1,4 @@
+import './i18n-simulation-labels';
 import {registerMessages,registerMessagePatterns,translateMessage} from './i18n';
 
 // Validation messages for simulation settings saved before the current schedule editor.

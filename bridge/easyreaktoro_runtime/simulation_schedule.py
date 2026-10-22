@@ -62,11 +62,14 @@ def _identities(target):
     kind = target.get('kind')
     fields = {'temperature': {'kind'}, 'pressure': {'kind'},
               'material_amount': {'kind', 'material_id', 'species'},
+              'equilibrium_constraint': {'kind', 'constraint_id'},
               'route_fraction': {'kind', 'route_id', 'field'}}
     _check(isinstance(kind, str) and kind in fields and fields[kind] <= set(target) <= fields[kind] | ({'bindings'} if kind == 'route_fraction' else set()), '所选参数无法识别')
     _check(all(isinstance(value, str) and bool(value.strip()) for key, value in target.items() if key != 'bindings'), '所选参数缺少对应名称或编号')
     if kind == 'route_fraction':
         return [('route_fraction', row['route_id'], row['field']) for row in route_bindings(target)]
+    if kind == 'equilibrium_constraint':
+        return [(kind, target['constraint_id'])]
     if kind == 'material_amount':
         return [(kind, target['material_id'], target['species'])]
     return [(kind,)]
@@ -77,8 +80,11 @@ def _profile_shape(profile, target, active):
     mode = profile.get('mode')
     fields = {'fixed': {'mode', 'value'}, 'linear': {'mode', 'start', 'path_step', 'round_step'},
               'list': {'mode', 'along', 'values'}, 'relative': {'mode', 'along', 'start', 'step', 'other_step'},
-              'water_saturation': {'mode'}}
+              'water_saturation': {'mode'}, 'expression': {'mode', 'expression'}}
     _check(isinstance(mode, str) and mode in fields and set(profile) == fields[mode], '参数变化方式或字段不完整')
+    if mode == 'expression':
+        _check(isinstance(profile['expression'], str) and len(profile['expression']) <= 2000, 'Formula must be text of up to 2,000 characters.')
+        return
     if mode == 'water_saturation':
         _check(target['kind'] == 'pressure', '纯水饱和蒸汽压只能用于压力参数')
         return
@@ -97,6 +103,10 @@ def _profile_shape(profile, target, active):
 
 def _reference(cfg, identity):
     kind = identity[0]
+    if kind == 'equilibrium_constraint':
+        matches = [row for row in cfg.get('equilibrium_constraints', []) if row.get('id') == identity[1]]
+        _check(len(matches) == 1, '找不到唯一对应的平衡约束，请重新选择参数')
+        return matches[0]
     if kind == 'material_amount':
         matches = [row for material in cfg.get('materials', []) if material.get('id') == identity[1]
                    for row in material.get('inputs', []) if row.get('species') == identity[2]]
@@ -118,10 +128,12 @@ def normalize_schedule(cfg, check_references=True):
     if schedule is None:
         cfg.pop('schedule', None)
         return
-    _check(isinstance(schedule, dict) and set(schedule) == {'version', 'positions', 'rounds', 'parameters', 'overrides'} and type(schedule['version']) is int and schedule['version'] == 1, '反应计划格式无法识别')
+    _check(isinstance(schedule, dict) and {'version', 'positions', 'rounds', 'parameters', 'overrides'} <= set(schedule) <= {'version', 'positions', 'rounds', 'parameters', 'overrides', 'stop'} and type(schedule['version']) is int and schedule['version'] == 1, '反应计划格式无法识别')
     for key in ('positions', 'rounds'):
         _check(type(schedule[key]) is int and 1 <= schedule[key] <= 10000, '路径位置数和轮数须为 1–10,000 的整数')
-    _check(schedule['positions'] * schedule['rounds'] <= 20000, '本次模拟最多包含 20,000 个平衡点')
+    if 'stop' in schedule:
+        _check(isinstance(schedule['stop'], dict) and set(schedule['stop']) <= {'first', 'later', 'rounds'} and all(isinstance(v, str) and len(v) <= 2000 for v in schedule['stop'].values()), 'Invalid end conditions.')
+    _check(bool(schedule.get('stop')) or schedule['positions'] * schedule['rounds'] <= 20000, '本次模拟最多包含 20,000 个平衡点')
     normalize_reaction_stages(cfg)
     if not cfg.get('reaction_stages'):
         from .simulation_loops import ensure_route_ids
@@ -176,6 +188,20 @@ class SchedulePlan:
         normalize_schedule(cfg, check_references=check_references)
         self.schedule = cfg['schedule']
         self.positions, self.rounds = self.schedule['positions'], self.schedule['rounds']
+        stop = self.schedule.get('stop', {})
+        if 'rounds' in stop:
+            for n in range(10000):
+                def round_variable(name):
+                    _check(name == 'N', 'The simulation completion condition can only use N.')
+                    return n
+                if self._stop(stop['rounds'], round_variable):
+                    self.rounds = n+1
+                    break
+            else:
+                _check(False, 'The completion condition is not reached within 10,000 rounds.')
+        has_stop = 'first' in stop or 'later' in stop
+        if has_stop: self.positions = 10000
+        self.lengths = []
         self.values = {'inner': list(range(1, self.positions+1)), 'outer': list(range(1, self.rounds+1))}
         self._settings, self._targets = {}, {}
         self._general, self._local = {}, {}
@@ -195,50 +221,61 @@ class SchedulePlan:
                     else:
                         self._local.setdefault(identity, []).append((rounds, positions, descriptor))
         self._arrays = {}
-        self._pressure_modes = bytearray(self.positions*self.rounds)
-        # Only defined targets need a numeric array. Compile temperature before
-        # pressure, whose saturation profile depends on the final temperature.
+        self._pressure_modes = set()
+        self._scalars, self._evaluating = {}, set()
+        self._references = {identity: _reference(cfg, identity) if check_references else None for identity in self._targets}
+        if has_stop:
+            for outer in range(self.rounds):
+                rule = stop.get('first' if outer == 0 else 'later')
+                limit = 10000 if rule is not None else self.schedule['positions']
+                for inner in range(limit):
+                    temperature = self._raw(('temperature',), outer, inner)
+                    pressure = self._raw(('pressure',), outer, inner)
+                    _check(math.isfinite(temperature) and temperature > -273.15 and math.isfinite(pressure) and pressure > 0,
+                           f'Invalid conditions at round {outer+1}, position {inner+1}, before the end condition is reached.')
+                    def variable(name):
+                        env = {'i': inner, 'N': outer, 'T': temperature, 'P': pressure}
+                        _check(name in env, f'Invalid variable in the end condition: {name}.')
+                        return env[name]
+                    if rule is not None and self._stop(rule, variable): break
+                else:
+                    _check(rule is None, 'The end condition is not reached within 10,000 steps.')
+                self.lengths.append(inner+1)
+                _check(sum(self.lengths) <= 20000, 'This simulation exceeds 20,000 equilibrium points.')
+            self.positions = max(self.lengths)
+        else:
+            self.lengths = [self.positions]*self.rounds
+        self.total = sum(self.lengths)
+        _check(self.positions*self.rounds <= 20000, 'The path and round grid exceeds 20,000 positions. Reduce its extent.')
+        self.values = {'inner': list(range(1, self.positions+1)), 'outer': list(range(1, self.rounds+1))}
         for identity in sorted(self._targets, key=lambda key: (key[0] == 'pressure', key)):
-            reference = _reference(cfg, identity) if check_references else None
+            reference = self._references[identity]
             values = array('d')
             self._arrays[identity] = values
             for outer in range(self.rounds):
                 for inner in range(self.positions):
                     index = outer*self.positions+inner
+                    if not self.active(outer, inner):
+                        values.append(float('nan'))
+                        continue
                     descriptor = self._descriptor(identity, outer, inner)
-                    if descriptor is None:
-                        raw = reference.get('amount', 0) if identity[0] == 'material_amount' and reference else reference.get(identity[2], 1) if reference else 0
-                    else:
-                        setting, round_scope, position_scope, rule_id = descriptor
-                        profile = {key: (float('nan') if value == {'easyreaktoro_empty_number': True} else value) for key, value in setting['value'].items()}
-                        mode = profile['mode']
-                        path_index = (inner+1-position_scope['start']) // position_scope.get('step', 1)
-                        round_index = (outer+1-round_scope['start']) // round_scope.get('step', 1)
-                        if mode == 'water_saturation':
-                            temperature = self._arrays[('temperature',)][index]
-                            _check(0.01 <= temperature < 373.946, f'第 {outer+1} 轮、路径位置 {inner+1} 的纯水饱和蒸汽压需要 0.01 ≤ T < 373.946 °C')
-                            import reaktoro as rkt
-                            raw = float(rkt.waterSaturationPressureWagnerPruss(temperature+273.15))/1e5
-                            self._pressure_modes[index] = 1
-                        elif mode == 'fixed':
-                            raw = profile['value']
-                        elif mode == 'linear':
-                            raw = _arithmetic(profile['start'], (path_index, profile['path_step']), (round_index, profile['round_step']))
-                        elif mode == 'list':
-                            position = path_index if profile['along'] == 'path' else round_index
-                            _check(0 <= position < len(profile['values']), f'第 {outer+1} 轮、路径位置 {inner+1} 缺少对应的参数数列值')
-                            raw = profile['values'][position]
-                        else:
-                            along_path = profile['along'] == 'path'
-                            coordinate = inner if along_path else outer
-                            previous = index-1 if along_path else index-self.positions
-                            raw = _arithmetic(values[previous], (1, profile['step'])) if coordinate else _arithmetic(profile['start'], (outer if along_path else inner, profile['other_step']))
+                    from .simulation_constraints import active_at
+                    constraint_active = identity[0] != 'equilibrium_constraint' or reference is None or active_at(reference, outer, inner, self.rounds, self.positions)
+                    if not constraint_active:
+                        values.append(float('nan'))
+                        continue
+                    self._raw(('temperature',), outer, inner)
+                    self._raw(('pressure',), outer, inner)
+                    raw = self._raw(identity, outer, inner)
                     if raw == {'easyreaktoro_empty_number': True}:
                         raw = float('nan')
                     if identity[0] == 'material_amount' and descriptor is None and missing_amount(raw):
                         # Whether this base value is required depends on actual
                         # material sources and phase filters, checked at preflight.
                         values.append(float('nan'))
+                        continue
+                    if not constraint_active:
+                        values.append(float(raw) if type(raw) in (int, float) else float('nan'))
                         continue
                     reference_active = identity[0] != 'route_fraction' or any(route.get('id') == identity[1] for route in reaction_routes(cfg, outer, inner))
                     if not reference_active:
@@ -247,10 +284,94 @@ class SchedulePlan:
                     raw = _number(raw, f'第 {outer+1} 轮、路径位置 {inner+1} 的参数')
                     _check(identity[0] != 'temperature' or raw > -273.15, '温度必须高于绝对零度')
                     _check(identity[0] != 'pressure' or raw > 0, '指定压力必须大于零')
+                    _check(identity[0] != 'equilibrium_constraint' or not reference or reference['kind'] != 'fugacity' or raw > 0, '气体逸度必须大于零，单位为 bar')
                     _check(identity[0] not in ('material_amount', 'route_fraction') or raw >= 0, '投料量和物料比例不能为负')
                     if identity[0] == 'route_fraction' and identity[2] == 'fraction' and reference and reference.get('source') != 'material':
                         _check(raw <= 1, '历史输出取用比例不能超过 100%')
                     values.append(raw)
+
+    @staticmethod
+    def _stop(expression, variable):
+        import ast
+        from .reaction_expression import parse_expression, evaluate_expression
+        _check(isinstance(parse_expression(expression), ast.Compare), 'Use a comparison to end the calculation, for example i = 3 or P < 150.')
+        return evaluate_expression(expression, variable) != 0
+
+    def active(self, outer, inner):
+        return 0 <= outer < len(self.lengths) and 0 <= inner < self.lengths[outer]
+
+    def run_index(self, outer, inner):
+        return sum(self.lengths[:outer])+inner
+
+    def _raw(self, identity, outer, inner):
+        _check(inner >= 0 and outer >= 0 and (outer >= len(self.lengths) or inner < self.lengths[outer]),
+               'The referenced round ended before this position. Specify conditions or amounts for the new position.')
+        key = (identity, outer, inner)
+        if key in self._scalars:
+            return self._scalars[key]
+        _check(key not in self._evaluating, 'Expressions refer to each other in a cycle.')
+        self._evaluating.add(key)
+        try:
+            reference = self._references.get(identity)
+            descriptor = self._descriptor(identity, outer, inner)
+            if descriptor is None:
+                raw = reference.get('value') if identity[0] == 'equilibrium_constraint' and reference else reference.get('amount', 0) if identity[0] == 'material_amount' and reference else reference.get(identity[2], 1) if reference else 0
+            else:
+                setting, rs, ps, _ = descriptor
+                profile = setting['value']
+                mode = profile['mode']
+                pi, ri = (inner+1-ps['start']) // ps.get('step', 1), (outer+1-rs['start']) // rs.get('step', 1)
+                if mode == 'fixed': raw = profile['value']
+                elif mode == 'linear': raw = _arithmetic(profile['start'], (pi, profile['path_step']), (ri, profile['round_step']))
+                elif mode == 'list':
+                    ordinal = pi if profile['along'] == 'path' else ri
+                    _check(0 <= ordinal < len(profile['values']), f'第 {outer+1} 轮、路径位置 {inner+1} 缺少对应的参数数列值')
+                    raw = profile['values'][ordinal]
+                elif mode == 'relative':
+                    path = profile['along'] == 'path'
+                    previous = inner if path else outer
+                    raw = _arithmetic(self._raw(identity, outer if path else outer-1, inner-1 if path else inner), (1, profile['step'])) if previous else _arithmetic(profile['start'], (outer if path else inner, profile['other_step']))
+                elif mode == 'water_saturation':
+                    raw = self._psat(self._raw(('temperature',), outer, inner))
+                    self._pressure_modes.add((outer, inner))
+                elif identity[0] == 'route_fraction' and not any(r.get('id') == identity[1] for r in reaction_routes(self.cfg, outer, inner)):
+                    raw = reference.get(identity[2], 1) if reference else 1
+                else:
+                    from .reaction_expression import evaluate_expression
+                    def previous(kind, above=False):
+                        x, y = (inner, outer-1) if above else (inner-1, outer) if inner else (inner, outer-1)
+                        _check(y >= 0, 'The first step has no previous conditions. Enter an initial value.')
+                        _check(y >= len(self.lengths) or x < self.lengths[y], 'The previous round ended before this position; its conditions are unavailable.')
+                        return self._raw((kind,), y, x)
+                    def variable(name):
+                        if name == 'i': return inner
+                        if name == 'N': return outer
+                        if name == 'T': return previous('temperature') if identity[0] == 'temperature' else self._raw(('temperature',), outer, inner)
+                        if name == 'P': return previous('pressure') if identity[0] in ('temperature', 'pressure') else self._raw(('pressure',), outer, inner)
+                        if name == 'Tr': return previous('temperature', True)
+                        if name == 'Pr': return previous('pressure', True)
+                        if name == 'Xr':
+                            _check(outer > 0, 'The first round has no previous-round amount.')
+                            return self._raw(identity, outer-1, inner)
+                        if name == 'X':
+                            _check(inner > 0 or outer > 0, 'The first step has no previous amount. Enter an initial value.')
+                            return self._raw(identity, outer if inner else outer-1, inner-1 if inner else inner)
+                        raise ValueError(f'Unknown variable: {name}.')
+                    raw = evaluate_expression(profile['expression'], variable, self._psat)
+                    import re
+                    if identity[0] == 'pressure' and re.fullmatch(r'\s*Psat\(\s*T\s*\)\s*', profile['expression']):
+                        self._pressure_modes.add((outer, inner))
+            if raw == {'easyreaktoro_empty_number': True}: raw = float('nan')
+            self._scalars[key] = raw
+            return raw
+        finally:
+            self._evaluating.remove(key)
+
+    @staticmethod
+    def _psat(temperature):
+        _check(0.01 <= temperature < 373.946, 'Psat(T) requires 0.01 <= T < 373.946 C.')
+        import reaktoro as rkt
+        return float(rkt.waterSaturationPressureWagnerPruss(temperature+273.15))/1e5
 
     def _descriptor(self, identity, outer, inner):
         for rounds, positions, descriptor in self._local.get(identity, []):
@@ -265,14 +386,16 @@ class SchedulePlan:
     def point(self, outer, inner):
         index = self._index(outer, inner)
         return {'id': f'loop-{inner+1}', 'label': f'路径位置 {inner+1}', 'temperature_c': self._arrays[('temperature',)][index],
-                'pressure_bar': self._arrays[('pressure',)][index], 'pressure_mode': 'water_saturation' if self._pressure_modes[index] else 'fixed'}
+                'pressure_bar': self._arrays[('pressure',)][index], 'pressure_mode': 'water_saturation' if (outer, inner) in self._pressure_modes else 'fixed'}
 
     def assignments(self, outer, inner):
         index = self._index(outer, inner)
         for identity, values in self._arrays.items():
             value = values[index]
             target = {'kind': identity[0]}
-            if identity[0] == 'material_amount':
+            if identity[0] == 'equilibrium_constraint':
+                target.update(constraint_id=identity[1])
+            elif identity[0] == 'material_amount':
                 target.update(material_id=identity[1], species=identity[2])
             elif identity[0] == 'route_fraction':
                 target.update(route_id=identity[1], field=identity[2])
@@ -313,7 +436,8 @@ class SchedulePlan:
                 for name, label, english in [('inner', '路径位置', 'Path position'), ('outer', '反应轮次', 'Reaction round')]}
 
     def field_info(self):
-        return {'inner_index': ['路径位置', 'Path position', ''], 'outer_index': ['反应轮次', 'Reaction round', ''],
+        from .simulation_constraints import field_info
+        return {**field_info(self.cfg), 'inner_index': ['路径位置', 'Path position', ''], 'outer_index': ['反应轮次', 'Reaction round', ''],
                 'step': ['路径位置', 'Path position', ''], 'pass': ['反应轮次', 'Reaction round', '']}
 
     def frame(self, outer, inner):

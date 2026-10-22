@@ -3,6 +3,8 @@ import {translateModelMessage} from './i18n-models';
 import {t,useLanguage,setLanguage,normalizeLanguage} from './i18n';
 import {DEFAULT_TRIAL_TP,TrialConditions,readTrialTP,ReadableNumber,readingNumber,type TrialTP} from './database-reading';
 import {DatabaseSwitcher} from './DatabaseSwitcher';
+import {DatabaseVersions} from './DatabaseVersions';
+import {EnvironmentHelp, type RuntimeConnectionError} from './EnvironmentHelp';
 import {historyDatabase} from './simulation-history';
 import { useEffect, useMemo, useRef, useState } from "react";
 import {version as APP_VERSION} from "../package.json";
@@ -303,6 +305,7 @@ export default function AppV3() {
     status: "probing",
     available: false,
   });
+  const [connectionError, setConnectionError] = useState<RuntimeConnectionError | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [catalog, setCatalog] = useState<Catalog[]>([]);
   const [catalogState, setCatalogState] = useState<
@@ -334,12 +337,15 @@ export default function AppV3() {
     | "compose"
     | "import"
     | "export"
+    | "versions"
     | null
   >(null);
   const [simulationActive,setSimulationActive]=useState(false),[composeForSimulation,setComposeForSimulation]=useState(false);
   const [menu, setMenu] = useState(false);
-  const [toast, setToast] = useState("");
-  const toastNeedsAttention = /失败|无法|不能|未确认|请输入|超出|无效|未被覆盖|暂时|未保存/.test(toast);
+  const [notification, setNotification] = useState({message: "", attention: false});
+  const toast = notification.message, toastNeedsAttention = notification.attention;
+  const setToast = (message: string, attention = false) => setNotification({message, attention});
+  const setAttentionToast = (message: string) => setToast(message, true);
   const [evaluation, setEvaluation] = useState<any>(null);
   const [tp, setTp] = useState<TrialTP>(STANDARD_TP);
   const [diagnostics, setDiagnostics] = useState<any>(null);
@@ -366,7 +372,7 @@ export default function AppV3() {
   const [exitSaveError,setExitSaveError]=useState('');
   const preferenceQueue = useRef(Promise.resolve());
   const guard = async (action: () => Promise<void> | void) => {
-    try{const flush=(window as any).__easyreaktoroFlushSimulation;if(flush&&await flush()===false)return;}catch(error){setToast(t("模拟尚未保存：", "Simulation has not been saved: ")+errText(error));return;}
+    try{const flush=(window as any).__easyreaktoroFlushSimulation;if(flush&&await flush()===false)return;}catch(error){setAttentionToast(t("模拟尚未保存：", "Simulation has not been saved: ")+errText(error));return;}
     if (currentSummary.current?.dirty) { pendingAction.current = action; setDialog("close"); return; }
     await action();
   };
@@ -375,7 +381,7 @@ export default function AppV3() {
     currentPrefs.current=next;
     setPrefs(next);
     preferenceQueue.current = preferenceQueue.current.then(() => api("settings_save", { settings: next })).then(() => {}).catch((error) =>
-      setToast(t(`设置保存失败：${errText(error)}`, `Could not save settings: ${errText(error)}`)),
+      setAttentionToast(t(`设置保存失败：${errText(error)}`, `Could not save settings: ${errText(error)}`)),
     );
   };
   const validRecents = async (settings: Preferences) => {
@@ -419,12 +425,12 @@ export default function AppV3() {
     } catch (error) {
       setCatalog([]);
       setCatalogState("error");
-      setToast(t(`系统数据库目录加载失败：${errText(error)}`, `Could not load the system database catalog: ${errText(error)}`));
+      setAttentionToast(t(`系统数据库目录加载失败：${errText(error)}`, `Could not load the system database catalog: ${errText(error)}`));
       return false;
     }
   };
   const probe = async (settings = prefs) => {
-    if(simulationRunning.current) {setToast(t("请先停止模拟或等待完成，再重新连接 Reaktoro 环境。", "Stop the simulation or wait for it to finish before reconnecting Reaktoro."));return;}
+    if(simulationRunning.current) {setAttentionToast(t("请先停止模拟或等待完成，再重新连接 Reaktoro 环境。", "Stop the simulation or wait for it to finish before reconnecting Reaktoro."));return;}
     setRuntime((x) => ({ ...x, status: "probing" }));
     try {
       let result: Runtime;
@@ -452,9 +458,9 @@ export default function AppV3() {
       let loaded = DEFAULTS;
       try {
         loaded = normalizePreferences(await api("settings_load"));
-      } catch { setToast(t("设置无法读取，已使用默认设置启动；原设置文件未被覆盖。", "Settings could not be read. The app started with defaults; your settings file has not been overwritten.")); }
+      } catch { setAttentionToast(t("设置无法读取，已使用默认设置启动；原设置文件未被覆盖。", "Settings could not be read. The app started with defaults; your settings file has not been overwritten.")); }
       try { loaded = await validRecents(loaded); }
-      catch(error) { setToast(t(`最近文件暂时无法检查：${errText(error)}`, `Recent files could not be checked: ${errText(error)}`)); }
+      catch(error) { setAttentionToast(t(`最近文件暂时无法检查：${errText(error)}`, `Recent files could not be checked: ${errText(error)}`)); }
       setPrefs(loaded);
       document.documentElement.dataset.theme = loaded.theme;
       document.documentElement.dataset.density = loaded.density;
@@ -464,7 +470,7 @@ export default function AppV3() {
         if(destination==="results")return;
         let database=loaded.default_database;
         if(destination==="simulation"){try{const entries=(await historyList()).entries,activeId=localStorage.getItem('easyreaktoro.simulation.active'),latest=entries.find(e=>e.id===activeId)||entries[0];if(latest){localStorage.setItem(activeHistoryKey(databaseKey(latest.database)||""),latest.id);database=latest.database.kind==="rtdb"?{kind:"rtdb",path:latest.database.path!}:{kind:"official",group:latest.database.group!,name:latest.database.name};}}catch{}}
-        if(database){try{const result=await api<{summary:Summary}>(database.kind==="rtdb"?"rtdb_open":"database_open",database.kind==="rtdb"?{path:database.path}:{group:database.group,name:database.name});acceptSummary(result.summary);setPage(destination);}catch(error){setToast(t("启动时未能打开数据库：", "Could not open the database at startup: ")+errText(error));setLibraryVisible(true);if(destination==="simulation"){setDatabaseIntent("simulation");setPage("databases");}}}
+        if(database){try{const result=await api<{summary:Summary}>(database.kind==="rtdb"?"rtdb_open":"database_open",database.kind==="rtdb"?{path:database.path}:{group:database.group,name:database.name});acceptSummary(result.summary);setPage(destination);}catch(error){setAttentionToast(t("启动时未能打开数据库：", "Could not open the database at startup: ")+errText(error));setLibraryVisible(true);if(destination==="simulation"){setDatabaseIntent("simulation");setPage("databases");}}}
         else if(destination==="simulation"){setDatabaseIntent("simulation");setLibraryVisible(true);setPage("databases");}
       }
     })();
@@ -472,10 +478,10 @@ export default function AppV3() {
   useEffect(() => {
     let disposed = false; let unlisten: (() => void) | undefined;
     let unlistenQuit: (() => void) | undefined;
-    listen("easyreaktoro:request-exit", () => { getCurrentWindow().close().catch(error => setToast(errText(error))); }).then(off => { if(disposed) off(); else unlistenQuit=off; }).catch(() => {});
+    listen("easyreaktoro:request-exit", () => { getCurrentWindow().close().catch(error => setAttentionToast(errText(error))); }).then(off => { if(disposed) off(); else unlistenQuit=off; }).catch(() => {});
     getCurrentWindow().onCloseRequested(async (event) => {
-      if(simulationRunning.current) { event.preventDefault();setPage("simulation");setToast(t("模拟正在运行，请先停止计算或等待完成，再退出应用。", "The simulation is running. Stop it or wait for it to finish before quitting."));return; }
-      if(busyRef.current) { event.preventDefault(); setToast(t("操作正在进行，请完成后再退出。", "An operation is in progress. Wait for it to finish before quitting.")); return; }
+      if(simulationRunning.current) { event.preventDefault();setPage("simulation");setAttentionToast(t("模拟正在运行，请先停止计算或等待完成，再退出应用。", "The simulation is running. Stop it or wait for it to finish before quitting."));return; }
+      if(busyRef.current) { event.preventDefault(); setAttentionToast(t("操作正在进行，请完成后再退出。", "An operation is in progress. Wait for it to finish before quitting.")); return; }
       if (editorExit.current) {event.preventDefault();editorExit.current();return;}
       if (currentDialog.current && currentDialog.current !== "close") {setDialog(null);}
       const saves=(window as any).__easyreaktoroFlushSimulation as undefined|(()=>Promise<boolean|void>);
@@ -491,7 +497,6 @@ export default function AppV3() {
     return () => { disposed = true; unlisten?.(); unlistenQuit?.(); };
   }, []);
   useEffect(() => {
-    document.documentElement.lang = "zh-CN";
     document.documentElement.dataset.theme = prefs.theme;
     document.documentElement.dataset.density = prefs.density;
   }, [prefs.theme, prefs.density]);
@@ -499,9 +504,9 @@ export default function AppV3() {
     if (!toast || toastNeedsAttention) return;
     const id = setTimeout(() => setToast(""), 6500);
     return () => clearTimeout(id);
-  }, [toast]);
+  }, [toast, toastNeedsAttention]);
   useEffect(() => {
-    const refresh = () => {void refreshSummary().catch(error=>setToast(t(`刷新失败：${errText(error)}`, `Could not refresh: ${errText(error)}`)));};
+    const refresh = () => {void refreshSummary().catch(error=>setAttentionToast(t(`刷新失败：${errText(error)}`, `Could not refresh: ${errText(error)}`)));};
     window.addEventListener("easyreaktoro:species-mutated", refresh);
     return () =>
       window.removeEventListener("easyreaktoro:species-mutated", refresh);
@@ -520,11 +525,12 @@ export default function AppV3() {
   },[]);
   const discover = async () => {
     if(busyRef.current||discovering)return;
-    if(simulationRunning.current){setToast(t("请先停止模拟或等待完成，再检查 Reaktoro 连接。", "Stop the simulation or wait for it to finish before checking the Reaktoro connection."));return;}
+    if(simulationRunning.current){setAttentionToast(t("请先停止模拟或等待完成，再检查 Reaktoro 连接。", "Stop the simulation or wait for it to finish before checking the Reaktoro connection."));return;}
     setDiscovering(true);
     try {
       const checked = await api<Runtime>('runtime_probe');
       setRuntime(checked);
+      if(checked.available) setConnectionError(null);
       if(checked.reconnected){
         const unsaved=currentSummary.current?.dirty;
         currentSummary.current=null;currentSelected.current=null;
@@ -532,7 +538,7 @@ export default function AppV3() {
         setSummary(null);setRows([]);setRowsLoading(false);setRowsError('');setTotal(0);setOffset(0);
         setSelected(null);setDetails(null);setDetailsError('');setEvaluation(null);setValidation(null);setDiagnostics(null);
         setLibraryVisible(true);
-        setToast(unsaved?t("已重新连接。请重新打开数据库；连接中断前未保存的数据库修改已无法恢复。", "Reconnected. Reopen your database; database changes not saved before the connection was lost cannot be recovered."):t("已重新连接 Reaktoro，请重新打开数据库。", "Reconnected to Reaktoro. Reopen your database to continue."));
+        (unsaved?setAttentionToast:setToast)(unsaved?t("已重新连接。请重新打开数据库；连接中断前未保存的数据库修改已无法恢复。", "Reconnected. Reopen your database; database changes not saved before the connection was lost cannot be recovered."):t("已重新连接 Reaktoro，请重新打开数据库。", "Reconnected to Reaktoro. Reopen your database to continue."));
       }
       const catalogReady=await loadCatalog(checked);
       const r = await api<{ entries: Candidate[] }>('runtime_discover');
@@ -540,7 +546,7 @@ export default function AppV3() {
       setCandidates(ready);
       if(!checked.reconnected&&(!checked.available||catalogReady))setToast(checked.available?t(`Reaktoro ${checked.version} 连接正常。`, `Reaktoro ${checked.version} is connected.`):ready.length?t(`发现 ${ready.length} 个可用环境，请选择要连接的环境。`, `Found ${ready.length} available environments. Choose one to connect.`):t("尚未连接 Reaktoro，请选择安装位置。", "Reaktoro is not connected. Choose its installation location."));
     } catch (error) {
-      setToast(t(`检测失败：${errText(error)}`, `Detection failed: ${errText(error)}`));
+      setAttentionToast(t(`检测失败：${errText(error)}`, `Detection failed: ${errText(error)}`));
     } finally {
       setDiscovering(false);
     }
@@ -551,7 +557,7 @@ export default function AppV3() {
     await discover();
   };
   const chooseRuntime = async (path?: string, folder = false) => {
-    if(simulationRunning.current) {setToast(t("请先停止模拟或等待完成，再切换 Reaktoro 环境。", "Stop the simulation or wait for it to finish before switching Reaktoro environments."));return;}
+    if(simulationRunning.current) {setAttentionToast(t("请先停止模拟或等待完成，再切换 Reaktoro 环境。", "Stop the simulation or wait for it to finish before switching Reaktoro environments."));return;}
     if(busyRef.current) return;
     try {
       const chosen =
@@ -573,16 +579,17 @@ export default function AppV3() {
       setEvaluation(null);
       setTp(STANDARD_TP);
       setRuntime(result);
+      setConnectionError(null);
       setCatalog([]); setDiagnostics(null); setValidation(null);
       savePrefs({ ...currentPrefs.current, runtime_path: result.python || chosen });
       await loadCatalog(result);
       setToast(t(`已连接 Reaktoro ${result.version}`, `Connected to Reaktoro ${result.version}`));
-      } catch (error) { setToast(t(`连接失败，原数据库保持打开：${errText(error)}`, `Connection failed; your database remains open: ${errText(error)}`)); }
+      } catch (error) { setConnectionError({python: chosen, diagnostic: errText(error)}); setAttentionToast(t("未能连接所选环境，请查看连接详情。原数据库保持打开。", "Could not connect to the selected environment. See connection details; your database remains open.")); }
       finally { setBusy(false); }
       });
     } catch (error) {
       if (!String(error).includes("cancelled"))
-        setToast(t(`连接失败：${errText(error)}`, `Connection failed: ${errText(error)}`));
+        setAttentionToast(t(`连接失败：${errText(error)}`, `Connection failed: ${errText(error)}`));
     }
   };
   const loadRows = async (at = offset) => {
@@ -667,14 +674,14 @@ export default function AppV3() {
         localStorage.setItem(activeHistoryKey(databaseKey(database)||''),lastSimulation.id);
         localStorage.setItem('easyreaktoro.simulation.active',lastSimulation.id);
         acceptSummary(result.summary);setSimulationOpened(true);setPage('simulation');
-      }catch(error){setToast(t("上次模拟未能打开：", "Could not open the last simulation: ")+errText(error));}
+      }catch(error){setAttentionToast(t("上次模拟未能打开：", "Could not open the last simulation: ")+errText(error));}
       finally{setBusy(false);}
     });
   };
   const acceptSummary = (s: Summary) => {
     pendingDefault.current=false;
     const old = currentSummary.current;
-    if (old && old.handle_id !== s.handle_id) api("database_close", {handleId:old.handle_id,discard:true}).catch(error => setToast(errText(error)));
+    if (old && old.handle_id !== s.handle_id) api("database_close", {handleId:old.handle_id,discard:true}).catch(error => setAttentionToast(errText(error)));
     currentSummary.current = s;
     request.current++; detailRequest.current++; evaluationRequest.current++;
     setRows([]); setRowsError("");setDetailsError("");setOffset(0); setTotal(0); setValidation(null); setLibraryVisible(false);
@@ -689,7 +696,7 @@ export default function AppV3() {
     setFilters({ state: "All", model: "All", elements: [] });
     if (s.path) addRecent(s);
   };
-  const switchSimulationDatabase=async(database:import('./simulation-history').HistoryDatabase)=>{if(busyRef.current||simulationRunning.current)return;await guard(async()=>{setBusy(true);try{const r=await api<{summary:Summary}>(database.kind==='rtdb'?'rtdb_open':'database_open',database.kind==='rtdb'?{path:database.path}:{group:database.group,name:database.name});acceptSummary(r.summary);setSimulationOpened(true);setPage('simulation');}catch(error){setToast(t("数据库未能打开：", "Could not open the database: ")+errText(error));}finally{setBusy(false);}});};
+  const switchSimulationDatabase=async(database:import('./simulation-history').HistoryDatabase)=>{if(busyRef.current||simulationRunning.current)return;await guard(async()=>{setBusy(true);try{const r=await api<{summary:Summary}>(database.kind==='rtdb'?'rtdb_open':'database_open',database.kind==='rtdb'?{path:database.path}:{group:database.group,name:database.name});acceptSummary(r.summary);setSimulationOpened(true);setPage('simulation');}catch(error){setAttentionToast(t("数据库未能打开：", "Could not open the database: ")+errText(error));}finally{setBusy(false);}});};
   const openOfficial = async (entry: Catalog) => {
     if(busyRef.current) return;
     await guard(async () => {
@@ -702,7 +709,7 @@ export default function AppV3() {
       });
       acceptSummary(r.summary);
     } catch (error) {
-      setToast(t(`打开失败：${errText(error)}`, `Could not open: ${errText(error)}`));
+      setAttentionToast(t(`打开失败：${errText(error)}`, `Could not open: ${errText(error)}`));
     } finally { setBusy(false); }
     });
   };
@@ -716,7 +723,7 @@ export default function AppV3() {
       try {
       const r = await api<{ summary: Summary }>("rtdb_open", { path: p });
       acceptSummary(r.summary);
-      } catch(error) { setToast(t(`打开失败：${errText(error)}`, `Could not open: ${errText(error)}`)); await validRecents(prefs); }
+      } catch(error) { setAttentionToast(t(`打开失败：${errText(error)}`, `Could not open: ${errText(error)}`)); await validRecents(prefs); }
       finally { setBusy(false); }
       });
     } catch (error) {
@@ -735,7 +742,7 @@ export default function AppV3() {
         savePrefs(next);
       }
       if (!String(error).includes("cancelled"))
-        setToast(t(`打开失败：${errText(error)}`, `Could not open: ${errText(error)}`));
+        setAttentionToast(t(`打开失败：${errText(error)}`, `Could not open: ${errText(error)}`));
     }
   };
   const enterDatabases = async () => {
@@ -751,7 +758,7 @@ export default function AppV3() {
       );
       if (entry) await openOfficial(entry);
       else if(catalogState === 'loading' || runtime.status === 'probing') pendingDefault.current=true;
-      else setToast(t("默认系统数据库当前不可用，请先连接提供该数据库的 Reaktoro 环境。", "The default system database is unavailable. Connect to a Reaktoro environment that provides it."));
+      else setAttentionToast(t("默认系统数据库当前不可用，请先连接提供该数据库的 Reaktoro 环境。", "The default system database is unavailable. Connect to a Reaktoro environment that provides it."));
     }
   };
   const selectSpecies = async (species: Species) => {
@@ -790,15 +797,15 @@ export default function AppV3() {
     if (!active) return;
     setBusy(true);
     try {
-      const r = await api<{ summary: Summary; success: boolean }>("rtdb_save", {
+      const r = await api<{ summary: Summary; success: boolean; backup_warning?:string }>("rtdb_save", {
         handleId: active.handle_id,
       });
       if(r.success !== true || r.summary?.handle_id !== active.handle_id || r.summary?.dirty !== false) throw new Error(t("无法确认文件是否已保存，请检查保存位置后重试。当前修改已保留。", "The save could not be confirmed. Check the destination and try again. Your changes have been retained."));
       setSummary(r.summary);
       currentSummary.current = r.summary;
-      setToast(t("数据库已保存", "Database saved"));
+      (r.backup_warning?setAttentionToast:setToast)(r.backup_warning?t(`数据库已保存。${r.backup_warning}`,`Database saved. ${translateDatabaseMessage(r.backup_warning)}`):t("数据库已保存", "Database saved"));
     } catch (error) {
-      setToast(t(`保存失败：${errText(error)}`, `Could not save: ${errText(error)}`));
+      setAttentionToast(t(`保存失败：${errText(error)}`, `Could not save: ${errText(error)}`));
       throw error;
     } finally { setBusy(false); }
   };
@@ -817,7 +824,7 @@ export default function AppV3() {
       setDetails(null);
       setDialog(null);
     } catch (error) {
-      setToast(t(`关闭失败：${errText(error)}`, `Could not close: ${errText(error)}`));
+      setAttentionToast(t(`关闭失败：${errText(error)}`, `Could not close: ${errText(error)}`));
     }
   };
   const evaluate = async () => {
@@ -826,7 +833,7 @@ export default function AppV3() {
     const {temperatureK:temperature,pressurePa:pressure} = readTrialTP(tp);
     const reject = (message: string) => {
       setEvaluation(null);
-      setToast(message);
+      setAttentionToast(message);
     };
     if (!Number.isFinite(temperature) || temperature <= 0) {
       reject(tp.temperatureUnit==='°C'?t("请输入高于 −273.15 °C 的有效温度。", "Enter a valid temperature above −273.15 °C."):t("请输入大于 0 K 的有效温度。", "Enter a valid temperature above 0 K."));
@@ -865,7 +872,7 @@ export default function AppV3() {
     if (busyRef.current || !summary || summary.read_only || !selected) return;
     const speciesId = selected.id || details?.id;
     if (!speciesId) {
-      setToast(t("该 species 没有可删除的本地记录 ID", "This species has no local record ID to delete."));
+      setAttentionToast(t("该 species 没有可删除的本地记录 ID", "This species has no local record ID to delete."));
       return;
     }
     if (
@@ -889,7 +896,7 @@ export default function AppV3() {
       await loadRows(0);
       setToast(t("species 已删除，保存数据库后生效", "Species deleted. Save the database to keep this change."));
     } catch (error) {
-      setToast(t(`删除失败：${errText(error)}`, `Could not delete: ${errText(error)}`));
+      setAttentionToast(t(`删除失败：${errText(error)}`, `Could not delete: ${errText(error)}`));
     } finally {setBusy(false);}
   };
   const setDefault = () => {
@@ -924,10 +931,10 @@ export default function AppV3() {
   return (
     <div className="app-shell" onClick={() => setMenu(false)}>
       <header className="app-commandbar">
-        <button className="shell-icon" aria-label={drawer?t("收起导航", "Collapse navigation"):t("展开导航", "Expand navigation")} aria-expanded={drawer} aria-controls="app-navigation" onClick={()=>setDrawer(!drawer)} title={t("展开导航", "Expand navigation")}><PanelLeft size={18}/></button>
+        <button className="shell-icon" aria-label={drawer?t("收起导航", "Collapse navigation"):t("展开导航", "Expand navigation")} aria-expanded={drawer} aria-controls="app-navigation" onClick={()=>setDrawer(!drawer)} title={drawer?t("收起导航", "Collapse navigation"):t("展开导航", "Expand navigation")}><PanelLeft size={18}/></button>
         <strong className="page-context">{{home:t("主页", "Home"),databases:t("数据库", "Database"),simulation:t("模拟", "Simulation"),results:t("结果", "Results"),settings:t("设置", "Settings")}[page]}</strong>
         <div className="commandbar-slot" ref={setWorkbenchToolbar}/>
-        {summary && page==='simulation' ? <DatabaseSwitcher name={label(summary).replace(/\.rtdb$/i,'')} current={historyDatabase(summary)} currentCounts={{species_count:summary.species_count,element_count:summary.element_count}} dirty={summary.dirty} disabled={busy||simulationActive} catalog={catalog} recents={prefs.recent_databases} onChoose={database=>void switchSimulationDatabase(database)} onFile={()=>{void (async()=>{try{const path=await pickPath('open_rtdb');await switchSimulationDatabase({kind:'rtdb',path,name:localDatabaseName(path)});}catch(error){if(!String(error).includes('cancelled'))setToast(errText(error));}})();}} onCombine={()=>{void guard(()=>{setComposeForSimulation(true);setDialog('compose');});}} onInspect={()=>{setLibraryVisible(false);setPage('databases');}}/> : summary && page==='databases' && libraryVisible && <button className="context-database" title={t(`当前数据库：${label(summary)}`, `Current database: ${label(summary)}`)} onClick={()=>{setLibraryVisible(false);setPage('databases');}}><Database size={14}/><span>{label(summary).replace(/\.rtdb$/i,'')}</span>{summary.dirty && <i title={t("有未保存的数据库修改", "Unsaved database changes")}/>}</button>}
+        {summary && page==='simulation' ? <DatabaseSwitcher name={label(summary).replace(/\.rtdb$/i,'')} current={historyDatabase(summary)} currentCounts={{species_count:summary.species_count,element_count:summary.element_count}} dirty={summary.dirty} disabled={busy||simulationActive} catalog={catalog} recents={prefs.recent_databases} onChoose={database=>void switchSimulationDatabase(database)} onFile={()=>{void (async()=>{try{const path=await pickPath('open_rtdb');await switchSimulationDatabase({kind:'rtdb',path,name:localDatabaseName(path)});}catch(error){if(!String(error).includes('cancelled'))setAttentionToast(errText(error));}})();}} onCombine={()=>{void guard(()=>{setComposeForSimulation(true);setDialog('compose');});}} onInspect={()=>{setLibraryVisible(false);setPage('databases');}}/> : summary && page==='databases' && libraryVisible && <button className="context-database" title={t(`当前数据库：${label(summary)}`, `Current database: ${label(summary)}`)} onClick={()=>{setLibraryVisible(false);setPage('databases');}}><Database size={14}/><span>{label(summary).replace(/\.rtdb$/i,'')}</span>{summary.dirty && <i title={t("有未保存的数据库修改", "Unsaved database changes")}/>}</button>}
         <button className="shell-icon theme-quick" aria-label={t("切换浅色或深色", "Switch between light and dark")} title={t("切换浅色 / 深色；跟随系统可在设置中选择", "Switch between light and dark; follow system appearance in Settings")} onClick={()=>{const current=currentPrefs.current;const dark=current.theme==='dark' || (current.theme==='system' && window.matchMedia('(prefers-color-scheme: dark)').matches);savePrefs({...current,theme:dark?'light':'dark'});}}>{prefs.theme==='light'?<Moon size={16}/>:<Sun size={16}/>}</button>
       </header>
       <div className="body">
@@ -988,7 +995,7 @@ export default function AppV3() {
         <main className="main-content">
           {page === "home" && (
             <HomePage
-              {...{ runtime, candidates, prefs, summary, discovering }}
+              {...{ runtime, candidates, prefs, summary, discovering, connectionError }}
               onDiscover={showRuntimeSettings}
               onChoose={() => chooseRuntime()}
               onChooseFolder={() => chooseRuntime(undefined, true)}
@@ -1054,7 +1061,7 @@ export default function AppV3() {
                   const path=await pickPath('save_rtdb',prefs.save_directory);
                   const result=await api<{summary:Summary}>('compose_commit',{selections:[{handle_id:summary.handle_id,all:true}],path});
                   acceptSummary(result.summary);
-                }catch(error){if(!String(error).includes('cancelled'))setToast(t(`复制失败：${errText(error)}`, `Could not copy: ${errText(error)}`));}finally{setBusy(false);}}}
+                }catch(error){if(!String(error).includes('cancelled'))setAttentionToast(t(`复制失败：${errText(error)}`, `Could not copy: ${errText(error)}`));}finally{setBusy(false);}}}
                 onImport={() => {
                   setMenu(false);
                   setDialog("import");
@@ -1071,22 +1078,24 @@ export default function AppV3() {
                     r.status === "valid"
                       ? t("验证通过", "Validation passed")
                       : t(`验证发现 ${r.issues.length} 个问题`, `Validation found ${r.issues.length} issues`),
+                    r.status !== "valid",
                   );
                   setValidation(r); setReport({kind:"validation",...r});
-                } catch(error) { setToast(t(`验证失败：${errText(error)}`, `Validation failed: ${errText(error)}`)); } finally {setBusy(false);} }}
+                } catch(error) { setAttentionToast(t(`验证失败：${errText(error)}`, `Validation failed: ${errText(error)}`)); } finally {setBusy(false);} }}
+                onVersions={()=>{setMenu(false);setDialog("versions");}}
                 onDefault={setDefault}
                 onReveal={() =>
-                  summary.path && api("reveal_path", { path: summary.path }).catch(error => setToast(errText(error)))
+                  summary.path && api("reveal_path", { path: summary.path }).catch(error => setAttentionToast(errText(error)))
                 }
                 onClose={() => close()}
                 onTp={(value:TrialTP) => { const before=readTrialTP(tp),after=readTrialTP(value);setTp(value);if(before.temperatureK!==after.temperatureK||before.pressurePa!==after.pressurePa){evaluationRequest.current++;setEvaluation(null);} }}
                 onLibrary={() => setLibraryVisible(true)}
                 onSaveAs={async () => { if(busyRef.current) return; setBusy(true); try {
                   const path = await pickPath("save_rtdb", prefs.save_directory);
-                  const result = await api<{summary:Summary;success:boolean}>("rtdb_save_as", {handleId:summary.handle_id,path});
+                  const result = await api<{summary:Summary;success:boolean;backup_warning?:string}>("rtdb_save_as", {handleId:summary.handle_id,path});
                   if(result.success !== true || result.summary?.dirty !== false) throw new Error(t("无法确认文件是否已另存，请检查保存位置后重试。", "The new copy could not be confirmed. Check the destination and try again."));
-                  acceptSummary(result.summary); setToast(t(`已另存为：${path}`, `Saved as: ${path}`));
-                } catch(error) { if(!String(error).includes("cancelled")) setToast(t(`另存为失败：${errText(error)}`, `Could not save as: ${errText(error)}`)); } finally {setBusy(false);} }}
+                  acceptSummary(result.summary); (result.backup_warning?setAttentionToast:setToast)(result.backup_warning?t(`已另存为：${path}。${result.backup_warning}`,`Saved as: ${path}. ${translateDatabaseMessage(result.backup_warning)}`):t(`已另存为：${path}`, `Saved as: ${path}`));
+                } catch(error) { if(!String(error).includes("cancelled")) setAttentionToast(t(`另存为失败：${errText(error)}`, `Could not save as: ${errText(error)}`)); } finally {setBusy(false);} }}
                 onEvaluate={evaluate}
               />
             ) : (
@@ -1107,12 +1116,13 @@ export default function AppV3() {
                 onRetry={()=>loadCatalog(runtime)}
               />
             ))}{" "}
-          {simulationOpened && <div hidden={page !== "simulation" && page !== "results"} style={{height:"100%"}}><SimulationWorkbench summary={summary} runtime={runtime} onRunningChange={value=>{simulationRunning.current=value;setSimulationActive(value);}} autoSave={prefs.auto_save_simulations!==false} onDatabases={chooseSimulationDatabase} onRuntime={showRuntimeSettings} exportDirectory={prefs.export_directory} view={page==='results'?'results':'simulation'} visible={page==='simulation' || page==='results'} onViewChange={setPage} toolbar={workbenchToolbar} theme={prefs.theme} onHistoryDatabase={database=>{void guard(async()=>{try{const result=await api<{summary:Summary}>(database.kind==="rtdb"?"rtdb_open":"database_open",database.kind==="rtdb"?{path:database.path}:{group:database.group,name:database.name});acceptSummary(result.summary);setSimulationOpened(true);setPage("simulation");}catch(error){setToast(t("此模拟的数据库未能打开：", "Could not open this simulation's database: ")+errText(error));}});}}/></div>}{" "}
+          {simulationOpened && <div hidden={page !== "simulation" && page !== "results"} style={{height:"100%"}}><SimulationWorkbench summary={summary} runtime={runtime} onRunningChange={value=>{simulationRunning.current=value;setSimulationActive(value);}} autoSave={prefs.auto_save_simulations!==false} onDatabases={chooseSimulationDatabase} onRuntime={showRuntimeSettings} exportDirectory={prefs.export_directory} view={page==='results'?'results':'simulation'} visible={page==='simulation' || page==='results'} onViewChange={setPage} toolbar={workbenchToolbar} theme={prefs.theme} onHistoryDatabase={database=>{void guard(async()=>{try{const result=await api<{summary:Summary}>(database.kind==="rtdb"?"rtdb_open":"database_open",database.kind==="rtdb"?{path:database.path}:{group:database.group,name:database.name});acceptSummary(result.summary);setSimulationOpened(true);setPage("simulation");}catch(error){setAttentionToast(t("此模拟的数据库未能打开：", "Could not open this simulation's database: ")+errText(error));}});}}/></div>}{" "}
           {page === "settings" && (
             <SettingsPage
               {...{
                 prefs,
                 runtime,
+                connectionError,
                 candidates,
                 settingsTab,
                 diagnostics,
@@ -1122,7 +1132,7 @@ export default function AppV3() {
               onPrefs={savePrefs}
               summary={summary} catalog={catalog}
               onSetDefault={setDefault}
-              onChooseDefaultFile={async()=>{try{const path=await pickPath("open_rtdb");savePrefs({...prefs,default_database:{kind:"rtdb",path}});}catch(error){if(!String(error).includes("cancelled"))setToast(errText(error));}}}
+              onChooseDefaultFile={async()=>{try{const path=await pickPath("open_rtdb");savePrefs({...prefs,default_database:{kind:"rtdb",path}});}catch(error){if(!String(error).includes("cancelled"))setAttentionToast(errText(error));}}}
               onHistory={showSimulationHistory}
               onDiscover={discover}
               onChoose={() => chooseRuntime()}
@@ -1139,7 +1149,7 @@ export default function AppV3() {
                   });
                 } catch {}
               }}
-              onDiagnose={async () => { try { setDiagnostics(await api("runtime_diagnostics")); } catch(error) { setToast(errText(error)); } }}
+              onDiagnose={async () => { try { setDiagnostics(await api("runtime_diagnostics")); } catch(error) { setAttentionToast(errText(error)); } }}
             />
           )}
         </main>
@@ -1235,6 +1245,7 @@ export default function AppV3() {
           }}
         />
       )}
+      {dialog === "versions" && summary && !summary.read_only && <DatabaseVersions handleId={summary.handle_id} databaseName={label(summary)} onClose={()=>setDialog(null)} onRestored={path=>{setDialog(null);void openLocal(path);}}/>}
       {dialog === "close" && (
         <Modal title={t("保存未完成的更改？", "Save your changes?")} busy={busy} onClose={() => { pendingAction.current = null; setDialog(null); }}>
           <p className="modal-copy">“{label(summary)}{t("”包含未保存更改。保存失败时会保留当前数据库。", "” has unsaved changes. If saving fails, the database will remain open.")}</p>
@@ -1286,16 +1297,16 @@ function Nav({
 }) {
   useLanguage();
   return (
-    <button className={`nav-item ${active ? "active" : ""}`} aria-label={label} aria-current={active?"page":undefined} title={label} onClick={onClick}>
+    <button className={`nav-item ${active ? "active" : ""}`} aria-label={label} aria-current={active?"page":undefined} onClick={onClick}>
       {icon}
-      <span>{label}</span>
+      <span className="nav-label">{label}</span>
       {suffix && <em>{suffix}</em>}
     </button>
   );
 }
 
-export function HomePage({runtime,candidates,prefs,summary,discovering,onDiscover,onChoose,onChooseFolder,onCandidate,onContinue,onManage,onOpen,onSimulation,onResults,lastSimulation,onResumeSimulation,onHistory}: {
-  runtime:Runtime;candidates:Candidate[];prefs:Preferences;summary:Summary|null;discovering:boolean;
+export function HomePage({runtime,candidates,prefs,summary,discovering,connectionError,onDiscover,onChoose,onChooseFolder,onCandidate,onContinue,onManage,onOpen,onSimulation,onResults,lastSimulation,onResumeSimulation,onHistory}: {
+  runtime:Runtime;candidates:Candidate[];prefs:Preferences;summary:Summary|null;discovering:boolean;connectionError?:RuntimeConnectionError|null;
   onDiscover:()=>void;onChoose:()=>void;onChooseFolder:()=>void;onCandidate:(p:string)=>void;
   onContinue:()=>void;onManage:()=>void;onOpen:(path?:string)=>void;onSimulation:()=>void;onResults:()=>void;
   lastSimulation?:HistoryEntry|null;onResumeSimulation?:()=>void;onHistory?:()=>void;
@@ -1306,48 +1317,10 @@ export function HomePage({runtime,candidates,prefs,summary,discovering,onDiscove
       <div><span className="eyebrow">EASYREAKTORO</span><h1>{t("从热力学数据，到反应与结果", "From thermodynamic data to reactions and results")}</h1><p>{t("定义化学体系，构建平衡计算，观察物质如何变化。", "Define a chemical system, set up equilibrium calculations, and follow its evolution.")}</p></div>
       {runtime.available && <button className="home-runtime" onClick={onDiscover} title={runtime.python}><i/><span>Reaktoro {runtime.version}{t(" 已连接", " Connected")}</span><ChevronRight size={14}/></button>}
     </header>
-    {!runtime.available && <section className="onboarding panel">
-          <div className="onboarding-icon">
-            <MonitorCog />
-          </div>
-          <div>
-            <span className="eyebrow">{t("计算准备", "Prepare for calculation")}</span>
-            <h2>{t("连接 Reaktoro", "Connect Reaktoro")}</h2>
-            <p>
-              {runtime.status === "probing"
-                ? t("正在检查常见安装位置…", "Checking common installation locations…")
-                : (runtime.diagnostic?errText(runtime.diagnostic):'') ||
-                  t("自动检测，或手动指定 Reaktoro 环境中的 Python。", "Detect automatically, or choose the Python executable in your Reaktoro environment.")}
-            </p>
-            <div className="button-row">
-              <button
-                className="primary"
-                disabled={discovering}
-                onClick={onDiscover}
-              >
-                <RefreshCw />
-                {discovering ? t("正在检测…", "Detecting…") : t("自动检测", "Detect automatically")}
-              </button>
-              <button className="secondary" onClick={onChoose}>
-                <FolderOpen />{t("选择 Reaktoro Python", "Choose Reaktoro Python")}</button>
-              <button className="secondary" onClick={onChooseFolder}>{t("选择 Conda / Reaktoro 环境", "Choose Conda / Reaktoro environment")}</button>
-            </div>
-            {candidates.length > 0 && (
-              <div className="candidate-list">
-                {candidates.map((x) => (
-                  <button key={x.python} onClick={() => onCandidate(x.python)}>
-                    <span>
-                      <strong>Reaktoro {x.version}</strong>
-                      <small>{x.environment_root || x.python}</small>
-                    </span>
-                    <ChevronRight />
-                  </button>
-                ))}
-              </div>
-            )}
-            {runtime.status !== "probing" && <p className="offline-access">{t("暂不连接？", "Connect later?")}<button className="text-button" onClick={onManage}>{t("离线管理 .rtdb", "Manage .rtdb files offline")}</button></p>}
-          </div>
-        </section>}
+    {!runtime.available && <section className="home-environment panel">
+      <EnvironmentHelp {...{runtime,candidates,connectionError,discovering,onDiscover,onChoose,onChooseFolder,onCandidate}}/>
+      {runtime.status !== "probing" && <p className="offline-access">{t("暂不连接？", "Connect later?")}<button className="text-button" onClick={onManage}>{t("离线管理 .rtdb", "Manage .rtdb files offline")}</button></p>}
+    </section>}
     {summary && <section className="home-current panel"><div className="home-current-icon"><Database size={23}/></div><div><small>{t("当前数据库", "Current database")}{summary.dirty?t(" · 有未保存的修改", " · Unsaved changes"):''}</small><h2>{label(summary)}</h2><p>{summary.species_count.toLocaleString()}{t(" 个 species · ", " species · ")}{summary.element_count}{t(" 个元素 · ", " elements · ")}{summary.read_only?t("只读数据", "Read-only data"):t("可编辑数据", "Editable data")}</p></div><div className="button-row"><button className="secondary" onClick={onContinue}>{t("查看 species", "Browse species")}</button><button className="primary" onClick={onSimulation}><FlaskConical size={16}/>{t("进入模拟", "Open simulation")}<ChevronRight size={15}/></button></div></section>}
     <div className="home-workflow" aria-label={t("计算工作流程", "Calculation workflow")}>
       <button className="workflow-card" onClick={onManage}><span className="workflow-card-top"><Database size={23}/><small>{t("01 / 数据", "01 / Data")}</small></span><h2>{t("数据库与 species 管理", "Database and species management")}</h2><p>{t("按名称、化学式或元素寻找 species，检查热力学参数与来源。", "Find species by name, formula, or element, and inspect thermodynamic parameters and sources.")}</p><span className="workflow-card-link">{t("查看我的数据库和系统数据库", "Browse my databases and system databases")}<ChevronRight size={16}/></span></button>
@@ -1668,6 +1641,7 @@ function ActionMenu(p: any) {
           <button onClick={p.onCompose}>{t("从 Reaktoro 系统数据库添加", "Add from a Reaktoro system database")}</button>
           <button onClick={p.onImport}>{t("从 YAML / .rtdb / 文件夹添加", "Add from YAML / .rtdb / folder")}</button>
           <button onClick={p.onSaveAs}>{t("另存为 .rtdb…", "Save as .rtdb…")}</button>
+          <button onClick={p.onVersions}><History size={15}/>{t("历史版本", "Version history")}</button>
           {p.selected && (
             <button className="danger" onClick={p.onDeleteSpecies}>
               <Trash2 />{t("删除所选 species", "Delete selected species")}</button>
@@ -1945,6 +1919,7 @@ function ReferenceList({ references }: { references: any[] }) {
 function SettingsPage({
   prefs,
   runtime,
+  connectionError,
   candidates,
   settingsTab,
   diagnostics,
@@ -2053,53 +2028,7 @@ function SettingsPage({
 
           {settingsTab === "runtime" && (
             <>
-              <div className="runtime-settings-head">
-                <div>
-                  <span className={`status-chip ${runtime.status}`}>
-                    {runtime.available ? t("已连接", "Connected") : t("未连接", "Not connected")}
-                  </span>
-                  <h3>
-                    {runtime.available
-                      ? `Reaktoro ${runtime.version}`
-                      : t("尚未连接 Reaktoro", "Reaktoro is not connected")}
-                  </h3>
-                  <p>{runtime.python || (runtime.diagnostic?errText(runtime.diagnostic):'')}</p>
-                </div>
-                <MonitorCog />
-              </div>
-              <div className="button-row">
-                <button
-                  className="secondary"
-                  disabled={discovering}
-                  onClick={onDiscover}
-                >
-                  <RefreshCw />
-                  {discovering ? t("正在检查…", "Checking…") : t("检查并重新连接", "Check and reconnect")}
-                </button>
-                <button className="primary" onClick={onChoose}>{t("选择 Python", "Choose Python")}</button>
-                <button className="secondary" onClick={onChooseFolder}>{t("选择环境文件夹", "Choose environment folder")}</button>
-                <button
-                  className="secondary"
-                  disabled={!runtime.available}
-                  onClick={onDiagnose}
-                >{t("检查连接", "Check connection")}</button>
-              </div>
-              <p className="setting-copy">{t("检查当前连接，并在连接中断时重新连接。正常连接会保留已打开的数据库；其他已安装环境列在下方。", "Check the current connection and reconnect if needed. A working connection keeps the open database. Other installed environments are listed below.")}</p>
-              <div className="candidate-list">
-                {candidates.map((x: Candidate) => (
-                  <button
-                    key={x.python}
-                    className={runtime.python === x.python ? "selected" : ""}
-                    onClick={() => onCandidate(x.python)}
-                  >
-                    <span>
-                      <strong>Reaktoro {x.version}</strong>
-                      <small>{x.environment_root || x.python}</small>
-                    </span>
-                    {runtime.python === x.python ? <Check /> : <ChevronRight />}
-                  </button>
-                ))}
-              </div>
+              <EnvironmentHelp {...{runtime,candidates,connectionError,discovering,onDiscover,onChoose,onChooseFolder,onCandidate,onDiagnose}}/>
               {diagnostics && <Diagnostics data={diagnostics} />}
             </>
           )}

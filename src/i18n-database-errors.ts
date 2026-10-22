@@ -1,3 +1,4 @@
+import './i18n-database-versions';
 import {getLanguage,registerMessages,registerMessagePatterns,translateMessage} from './i18n';
 import {translateModelMessage} from './i18n-models';
 

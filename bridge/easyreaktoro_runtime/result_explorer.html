@@ -34,7 +34,7 @@ button.primary{background:var(--blue);color:var(--accent-text);border-color:var(
 </head>
 <body>
 <div id="app"></div>
-<div id="loading" class="loading"><div class="loading-box"><h2><span class="spinner"></span>读取结果 / Loading results</h2><p id="loading-text" class="muted">本地处理 · Local processing</p></div></div>
+<div id="loading" class="loading"><div class="loading-box"><h2><span class="spinner"></span><span id="loading-title">Loading results</span></h2><p id="loading-text" class="muted">Local processing</p></div></div>
 <div id="toast" class="toast hide" role="status"></div>
 <div id="curve-tooltip" class="curve-tooltip hide" role="tooltip"></div>
 <script id="payload" type="application/octet-stream" data-encoding="gzip-base64"></script>
@@ -71,7 +71,17 @@ const fieldUnit = (k,fields=model?.fieldInfo) => fields?.[k]?.[2] ?? info[k]?.[2
 const label = k => model?.byAxis?.has(k)?(model.byAxis.get(k).species?model.byAxis.get(k).species.name+' · ':'')+fieldLabel(model.byAxis.get(k).key):model&&k===model.rowAxis?L('记录顺序','Record order'):fieldLabel(k);
 const unit = k => fieldUnit(model?.byAxis?.get(k)?.key || k);
 const withUnit = k => label(k)+(unit(k)?' / '+unit(k):'');
-const phaseLabel = p => ({aqueous:L('水相','Aqueous'),mineral:L('矿物','Mineral'),gas:L('气相','Gas')})[p] || p || L('未标明相','Unspecified phase');
+const phaseKind = p => ({aqueous:'aqueous',water:'aqueous','水相':'aqueous','水溶液':'aqueous',mineral:'mineral',solid:'mineral','矿物':'mineral','固相':'mineral',gas:'gas',gaseous:'gas','气相':'gas',solid_solution:'solid_solution','固溶体':'solid_solution'})[String(p??'').toLowerCase()] || '';
+const phaseLabel = p => ({aqueous:L('水相','Aqueous'),mineral:L('矿物','Mineral'),gas:L('气相','Gas'),solid_solution:L('固溶体','Solid solution')})[phaseKind(p)] || p || L('未标明相','Unspecified phase');
+function resultNote(value){
+ const notes={
+  '使用自定义 Python 求解逻辑；请核对修改后的模型、约束与结果。':'Custom Python calculation logic is in use. Check the modified models, constraints and results.',
+  '正在读取并核对计算点…':'Reading and matching calculation points…',
+  '已选入文件，点击“读取结果”。':'Files selected. Click Load results.',
+ };
+ if(language==='en')return notes[value]||value;
+ return Object.entries(notes).find(([,english])=>english===value)?.[0]||value;
+}
 const keyCandidates=['scenario','simulation_mode','run_id','case_id','case','run_index','cycle','pass','step','step_index','point_id','state_id','record_index','temperature_c','pressure_bar','time','time_s'];
 const dimensionCandidates=['temperature_c','pressure_bar','cycle','pass','step','step_index','time','time_s'];
 const flags=['success','succeeded','converged','solver_success'];
@@ -104,6 +114,7 @@ function recordKey(keys,get,extra){return JSON.stringify(keys.map(k=>[...dimensi
 function buildModel(payload){
  if(!object(payload)||payload.format!=='result-explorer-1')throw new Error(L('无法识别结果格式。','Unrecognized result format.'));
  validateTable(payload.summary);const table=payload.summary,columns=table.columns;
+ if(columns.includes('constraint_id'))throw new Error(L('平衡目标明细不能作为状态汇总，请选择 summary.csv。','Equilibrium target details cannot be used as a state summary. Choose summary.csv.'));
  const fieldInfo=Object.fromEntries(Object.entries(object(payload.metadata?.field_info)?payload.metadata.field_info:{}).filter(([k,v])=>columns.includes(k)&&Array.isArray(v)&&v.length===3&&v.every(x=>typeof x==='string'&&x.length<=500)).map(([k,v])=>{
   // Translate only names emitted by older versions; keep actual variables and custom labels.
   if(['inner_index','inner_value','step','step_index'].includes(k)&&v[0]==='内循环序号'&&v[1]==='Inner iteration')return [k,['路径位置','Path position',v[2]]];
@@ -128,7 +139,12 @@ function buildModel(payload){
  const requestedMeasures=new Set(viewCharts.map(c=>c?.measure));
  for(const axis of requestedAxes)if(typeof axis==='string'&&axis.startsWith('x:')){try{const pair=JSON.parse(axis.slice(2));if(Array.isArray(pair)&&pair.length===2&&pair.every(k=>typeof k==='string'))requestedMeasures.add(pair[1]);}catch{}}
  const numeric=columns.filter(k=>(points.some(r=>finite(num(r[k])))||requestedStates.has('state:'+k))&&points.every(r=>r[k]==null||String(r[k]).trim()===''||finite(num(r[k]))));
- const statusKeys=numeric.filter(k=>!keyCandidates.includes(k)&&!extra.includes(k)&&!(payload.key_columns||[]).includes(k)&&!flags.includes(k));
+ // Generated result tables retain index aliases for round-trip compatibility.
+ // Do not offer an identical coordinate twice as a new state quantity. Saved
+ // views may still request the alias, and distinct imported values stay visible.
+ const coordinateAliases={inner_index:['step','step_index'],outer_index:['pass','cycle']};
+ const redundantCoordinate=k=>!requestedStates.has('state:'+k)&&(coordinateAliases[k]||[]).some(axis=>dims.includes(axis)&&points.every(r=>finite(num(r[k]))&&num(r[k])===num(r[axis])));
+ const statusKeys=numeric.filter(k=>!keyCandidates.includes(k)&&!extra.includes(k)&&!(payload.key_columns||[]).includes(k)&&!flags.includes(k)&&!redundantCoordinate(k));
  const valid=points.map(r=>!flags.some(k=>k in r&&[false,'false','False',0,'0'].includes(r[k])));
  const statuses=statusKeys.map((k,i)=>({id:'state:'+k,key:k,name:k,unit:fieldUnit(k,fieldInfo),styleIndex:i,values:Float64Array.from(points.map((r,j)=>valid[j]?num(r[k]):NaN))}));
  const catalog=new Map(),measureSet=new Set(),identities=[];let unmatched=0,linked=0;
@@ -246,6 +262,7 @@ function option(value,text,selected){return `<option value="${esc(value)}" ${sam
 function button(id,text,cls=''){return `<button id="${id}" class="${cls}">${text}</button>`;}
 function buildShell(){
  document.documentElement.lang=language==='en'?'en':'zh-CN';document.title='Result Explorer for Reaktoro';
+ $('loading-title').textContent=L('正在读取结果','Loading results');$('loading-text').textContent=L('本地处理','Local processing');
  $('app').innerHTML=`
  <header class="topbar"><div class="brand"><svg width="25" height="25" viewBox="0 0 30 30" aria-hidden="true"><path d="M3 25V5M3 25H28" fill="none" stroke="#b4c1cb"/><path d="M5 20L11 19L17 8L23 11L28 5" fill="none" stroke="#3376b9" stroke-width="2"/><circle cx="17" cy="8" r="3" fill="white" stroke="#3376b9" stroke-width="2"/></svg><h1>Result Explorer<span class="brand-sub">for Reaktoro</span></h1></div><div class="dataset grow"><strong id="dataset-name"></strong><span id="dataset-count"></span></div><select id="language" aria-label="${L('界面语言','Interface language')}">${option('zh','中文',language)}${option('en','English',language)}</select>${button('open-results',L('打开结果','Open results'))}${button('save-workspace',L('保存工作区','Save workspace'),'primary')}${button('source-button',L('数据来源','Source'),'quiet optional')}${button('help-button','?','quiet')}</header>
  <div class="workspace"><aside class="library"><div class="library-head"><div class="row between"><span class="label">${L('正在编辑','Editing')}</span><span class="label" id="selected-count"></span></div><select id="active-chart" aria-label="${L('选择要编辑的图','Figure to edit')}"></select><input id="search" type="search" aria-label="${L('搜索物种或指标','Search fields or species')}" placeholder="${L('搜索物种或指标…','Search names or fields…')}"><div class="tabs" role="tablist"><button id="tab-species" role="tab">Species</button><button id="tab-states" role="tab">${L('系统状态','System state')}</button></div></div><div id="species-options" class="library-options"><select id="measure" aria-label="${L('Species 数值类型','Species quantity')}"></select><select id="phase-filter" aria-label="${L('筛选相','Filter by phase')}"></select></div><div class="library-actions"><label class="row note"><input id="selected-only" type="checkbox">${L('只看已选','Selected only')}</label><span id="match-count" class="label"></span><div class="row">${button('select-matches',L('选中筛选结果','Select matches'),'quiet small')}${button('clear-selection',L('清空此类','Clear tab'),'quiet small')}</div></div><div id="library-list" class="library-list"></div><div class="library-bottom">${L('仅修改正在编辑的图。切换图或条件不会丢失选择。','Changes apply to the active figure only. Selections stay when you switch figures or conditions.')}</div></aside>
@@ -277,7 +294,7 @@ function shownPaths(){
  for(const p of matchingPins()){const g=allPaths.find(g=>fixedKeys().every(k=>same(g.fixed[k],p.fixed[k])));if(g&&!out.includes(g))out.push(g);}return out;
 }
 function shownPointIds(){return unique(shownPaths().flatMap(g=>g.indices));}
-function unavailableMeasure(s,key){return key==='molality'&&['mineral','gas','solid','solid_solution'].includes(s.phase)&&!s.axisMeasures.includes(key);}
+function unavailableMeasure(s,key){return key==='molality'&&['mineral','gas','solid_solution'].includes(phaseKind(s.phase))&&!s.axisMeasures.includes(key);}
 function alternativeMeasure(c){const selected=c.selectedSpecies.map(id=>model.bySpecies.get(id)).filter(Boolean);return ['amount_mol','outlet_amount_mol','activity',...model.measures].find(k=>k!==c.measure&&selected.length&&selected.every(s=>s.axisMeasures.includes(k)));}
 
 function defaultPathAxis(){return ['step','step_index','time_s','time'].find(k=>model.coordinateAxes.includes(k))||model.rowAxis;}
@@ -408,6 +425,24 @@ function captureViewport(){
  const anchor=box?[...document.querySelectorAll('.figure')].find(e=>e.getBoundingClientRect().bottom>box.top+40):null;
  return {openDetails:['bookmarks-details','all-values-details'].filter(id=>$(id)?.open),legendScroll:[...document.querySelectorAll('.legend')].map(e=>({figure:e.closest('.figure').dataset.figure,panel:e.closest('.lane').dataset.panel,top:e.scrollTop})),positions:['chart-scroll','library-list'].map(id=>({id,top:$(id)?.scrollTop||0,left:$(id)?.scrollLeft||0})),inspector:document.querySelector('.inspector')?.scrollTop||0,windowX:scrollX,windowY:scrollY,anchor:anchor?{id:anchor.dataset.figure,top:anchor.getBoundingClientRect().top-box.top}:null,details:[...document.querySelectorAll('.figure-settings[open]')].map(e=>e.closest('.figure').dataset.figure),plots:[...document.querySelectorAll('.plot-viewport')].map(e=>({key:e.dataset.viewkey,left:e.scrollLeft}))};
 }
+// Language changes rebuild labels while retaining an unfinished import or title edit.
+function captureDialogDraft(){
+ const dialog=document.querySelector('dialog[open]');if(!dialog)return null;
+ const active=document.activeElement;
+ return {id:dialog.id,fields:[...dialog.querySelectorAll('input,textarea,select,button[id]')].filter(e=>e.id).map(e=>({id:e.id,value:e.type==='file'?null:e.value,checked:e.checked,disabled:e.disabled})),file:dialog.querySelector('input[type=file]'),details:[...dialog.querySelectorAll('details')].map(e=>e.open),status:dialog.id==='import-dialog'?$('import-status').textContent:null,focus:dialog.contains(active)?{id:active.id,start:active.selectionStart,end:active.selectionEnd}:null};
+}
+function restoreDialogDraft(draft){
+ if(!draft||!$(draft.id))return;
+ if(draft.id==='source-dialog'){showSource();return;}
+ if(draft.id==='help-dialog'){showHelp();return;}
+ const dialog=$(draft.id);
+ for(const saved of draft.fields){const e=$(saved.id);if(!e)continue;if(saved.value!==null&&saved.value!==undefined)e.value=saved.value;if(saved.checked!==undefined)e.checked=saved.checked;e.disabled=saved.disabled;}
+ if(draft.file)$(draft.file.id)?.replaceWith(draft.file);
+ [...dialog.querySelectorAll('details')].forEach((e,i)=>e.open=!!draft.details[i]);
+ if(draft.status!==null&&$('import-status'))$('import-status').textContent=resultNote(draft.status);
+ showDialog(draft.id);
+ const focus=draft.focus&&$(draft.focus.id);if(focus){focus.focus({preventScroll:true});if(typeof focus.setSelectionRange==='function'&&Number.isInteger(draft.focus.start))focus.setSelectionRange(draft.focus.start,draft.focus.end);}
+}
 function restoreViewport(v){
  for(const id of v.openDetails)if($(id))$(id).open=true;
  for(const p of v.legendScroll){const e=[...document.querySelectorAll('.legend')].find(e=>e.closest('.figure').dataset.figure===p.figure&&e.closest('.lane').dataset.panel===p.panel);if(e)e.scrollTop=p.top;}
@@ -421,7 +456,7 @@ function restoreViewport(v){
 function axisTicks(range,log=false){const [lo,hi]=range;if(log&&hi-lo>=1){const step=Math.max(1,Math.ceil((hi-lo)/6)),out=[];for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step)out.push(v);return out;}const raw=(hi-lo)/4,base=10**Math.floor(Math.log10(raw)),step=([1,2,2.5,5,10].find(v=>v*base>=raw)||10)*base;if(!finite(step)||step===0)return [lo,hi];const first=Math.ceil(lo/step)*step,out=[];for(let i=0;i<12;i++){const v=first+i*step;if(v>hi+step*1e-8)break;out.push(Math.abs(v)<step*1e-10?0:v);}return out;}
 function seriesPaths(series){
  const groups=shownPaths();return groups.flatMap(g=>{const current=g.indices===slice,original=allPaths.indexOf(g),pin=matchingPins().find(p=>fixedKeys().every(k=>same(g.fixed[k],p.fixed[k]))),suffix=state.plotScope==='all'?'condition-'+original:current?'current':pin?.id||'condition-'+original;
- return series.map(s=>({...s,indices:g.indices,curveId:s.id+'|'+suffix,pathLabel:current?L('当前','Current')+' · '+pathName(g.fixed):pathName(g.fixed),pathIndex:current?0:original+1,dash:current?s.dash:(s.dash?s.dash+' 1 ':'')+(dashes[(original+1)%dashes.length]||'10 3')}));});
+ return series.map(s=>({...s,indices:g.indices,curveId:s.id+'|'+suffix,pathLabel:current?L('当前','Current')+' · '+pathName(g.fixed):pathName(g.fixed),pathIndex:current?0:original+1,showPathLabel:groups.length>1,dash:current?s.dash:(s.dash?s.dash+' 1 ':'')+(dashes[(original+1)%dashes.length]||'10 3')}));});
 }
 
 function renderPlots(){
@@ -509,7 +544,7 @@ function drawLane(c,g,containerWidth,count){
  if(!axes.some(a=>a.yd)||duplicates)svg+=`<text class="axis-title" x="${Lft+(W-Lft-R)/2}" y="${H/2}" text-anchor="middle">${esc(!visible.length?L('曲线全部已隐藏','All curves hidden'):duplicates?L('横轴不能唯一标识这些点','Non-unique X coordinates'):L('没有可绘制数值','No plottable values'))}</text>`;
  if(multi)for(const a of axes.filter(a=>!a.yd))messages.push(a.tag+' '+a.title+L('：无可绘制值或已隐藏',' — no plottable values or hidden'));
  svg+=`<g class="focus-overlay" clip-path="url(#clip-${gi})"></g><rect class="hit-area" data-plot="${gi}" x="${Lft}" y="${T}" width="${W-Lft-R}" height="${H-T-B}" fill="transparent"/>`;
- const legend=paths.map(s=>`<button data-legend="${esc(s.curveId)}" data-chart="${c.id}" data-gi="${gi}" class="${c.hidden.includes(s.curveId)?'off':''}" aria-pressed="${!c.hidden.includes(s.curveId)}" title="${L('悬停高亮；单击显示 / 隐藏','Hover to highlight; click to show / hide')}"><svg viewBox="0 0 24 8"><path d="M0 4H24" stroke="${s.color}" stroke-width="2" stroke-dasharray="${s.dash}"/></svg>${multi?'<span class="axis-tag">'+s.axis.tag+'</span>':''}${esc(seriesName(s))}${s.pathIndex?' · '+esc(s.pathLabel):''}</button>`).join('');
+ const legend=paths.map(s=>`<button data-legend="${esc(s.curveId)}" data-chart="${c.id}" data-gi="${gi}" class="${c.hidden.includes(s.curveId)?'off':''}" aria-pressed="${!c.hidden.includes(s.curveId)}" title="${L('悬停高亮；单击显示 / 隐藏','Hover to highlight; click to show / hide')}"><svg viewBox="0 0 24 8"><path d="M0 4H24" stroke="${s.color}" stroke-width="2" stroke-dasharray="${s.dash}"/></svg>${multi?'<span class="axis-tag">'+s.axis.tag+'</span>':''}${esc(seriesName(s))}${s.showPathLabel?' · '+esc(s.pathLabel):''}</button>`).join('');
  const controls=axes.map(a=>`<label class="axis-control"><span title="${esc(a.title)}">${multi?`<b>${a.tag}</b> · `:''}${esc(a.title)}</span><select data-scale="${esc(a.id)}" data-chart="${c.id}" aria-label="${esc(chartName(c)+' · '+a.title+' '+L('纵轴','Y scale'))}">${option('linear',L('线性','Linear'),a.log?'log':'linear')}${option('log',L('对数','Log'),a.log?'log':'linear')}</select></label>`).join('');
  const scaleLabel=c.rangeMode==='detail'?L('局部放大纵轴：视觉起伏不等于变化幅度大','Detail scale: visual steepness does not imply a large change'):L('基准尺度：线性轴包含 0；对数轴至少显示一个数量级','Context scale: linear axes include 0; log axes show at least one decade');
  const scopeLabel=c.scaleScope==='global'?L('跨条件统一范围','same range across conditions'):L('当前视野范围','visible-data range');
@@ -596,7 +631,7 @@ async function exportFigure(id){
  const specs=plotSpecs.filter(s=>s.chartId===id);if(!specs.length){document.documentElement.dataset.theme=priorTheme || 'system';c.collapsed=wasCollapsed;renderPlots();updatePoint();toast(L('先为此图选择数据。','Select data for this figure first.'));return;}
  const W=specs[0].W;let y=24,body='';const add=(text,size=12,color='#233340',x=16)=>{const t=svgText(text,x,y,W-x-16,size,color);body+=t.svg;y+=t.height;};
  add(chartName(c),16);add(contextName(),10,'#687b87');if(metricAxis())add(L('采样顺序：','Sample order: ')+withUnit(pathAxis()),10,'#687b87');y+=8;
- for(const spec of specs){add(spec.title,12);for(const a of spec.axes)add((a.tag?a.tag+' · ':'')+a.title+' · '+(a.log?L('对数','Log'):L('线性','Linear')),10);add(c.rangeMode==='detail'?L('局部放大纵轴','Detail Y scale'):L('基准尺度','Context Y scale'),10,'#687b87');if(spec.axes.length>1)add(L('原值多轴；曲线高度不能直接互相比数值。','Raw values on separate axes; curve heights are not directly comparable.'),10,'#687b87');for(const s of spec.paths.filter(s=>!c.hidden.includes(s.curveId))){body+=`<path d="M16 ${y-4}H36" stroke="${s.color}" stroke-width="2" stroke-dasharray="${s.dash}"/>`;add((s.axis.tag?s.axis.tag+' · ':'')+seriesName(s)+(s.pathIndex?' · '+s.pathLabel:''),10,'#233340',43);}const svg=document.querySelector(`svg[data-gi="${spec.gi}"]`).cloneNode(true);svg.querySelectorAll('.hit-area').forEach(n=>n.remove());svg.setAttribute('x','0');svg.setAttribute('y',String(y));svg.setAttribute('width',W);svg.setAttribute('height',spec.H);body+=new XMLSerializer().serializeToString(svg);y+=spec.H+4;const note=document.querySelector(`svg[data-gi="${spec.gi}"]`).closest('.lane').querySelector('.plot-note');if(note)add(note.textContent,10,'#886127');y+=12;}
+ for(const spec of specs){add(spec.title,12);for(const a of spec.axes)add((a.tag?a.tag+' · ':'')+a.title+' · '+(a.log?L('对数','Log'):L('线性','Linear')),10);add(c.rangeMode==='detail'?L('局部放大纵轴','Detail Y scale'):L('基准尺度','Context Y scale'),10,'#687b87');if(spec.axes.length>1)add(L('原值多轴；曲线高度不能直接互相比数值。','Raw values on separate axes; curve heights are not directly comparable.'),10,'#687b87');for(const s of spec.paths.filter(s=>!c.hidden.includes(s.curveId))){body+=`<path d="M16 ${y-4}H36" stroke="${s.color}" stroke-width="2" stroke-dasharray="${s.dash}"/>`;add((s.axis.tag?s.axis.tag+' · ':'')+seriesName(s)+(s.showPathLabel?' · '+s.pathLabel:''),10,'#233340',43);}const svg=document.querySelector(`svg[data-gi="${spec.gi}"]`).cloneNode(true);svg.querySelectorAll('.hit-area').forEach(n=>n.remove());svg.setAttribute('x','0');svg.setAttribute('y',String(y));svg.setAttribute('width',W);svg.setAttribute('height',spec.H);body+=new XMLSerializer().serializeToString(svg);y+=spec.H+4;const note=document.querySelector(`svg[data-gi="${spec.gi}"]`).closest('.lane').querySelector('.plot-note');if(note)add(note.textContent,10,'#886127');y+=12;}
  const styles='<style>.chart text{fill:#687b87;font-family:monospace;font-size:10.5px}.chart .axis-title{font-family:Arial,sans-serif;font-size:11px}.cursor-line{stroke:#486a80;stroke-width:1;stroke-dasharray:3 3}</style>';
  const output=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${y+8}" viewBox="0 0 ${W} ${y+8}"><title>${esc(chartName(c))}</title><desc>${esc(contextName())}</desc>${styles}<rect width="100%" height="100%" fill="white"/>${body}</svg>`;
  document.documentElement.dataset.theme=priorTheme || 'system';c.collapsed=wasCollapsed;renderPlots();updatePoint();await download(new Blob([output],{type:'image/svg+xml;charset=utf-8'}),safeName(chartName(c),'svg'));
@@ -619,6 +654,7 @@ async function readFiles(files){
   }
   if(f.name.toLowerCase().endsWith('.json')){const p=JSON.parse(text);if(!object(p))throw new Error(L('文件内容无法识别，请选择结果文件或配套的数据说明文件。','Select a result file or its data description file.'));if(p.format==='result-explorer-1'){if(standalone)throw new Error(L('一次只能打开一组 JSON 结果。','Open one Explorer JSON result at a time.'));standalone=p;}else{if(Object.keys(metadata).length)throw new Error(L('每次只选择一份配套的数据说明文件。','Select only one data description file.'));metadata=p;}continue;}
   const t=parseCSV(text);
+  if(/^constraints?\.csv(?:\.gz)?$/i.test(f.name)||t.columns.includes('constraint_id'))throw new Error(L('此文件是平衡目标与外部物质交换明细。绘图请打开 summary.csv，其中包含相同指标的逐点数值：','This file lists equilibrium targets and external exchanges. Open summary.csv to plot their per-point values: ')+f.name);
   if(/^transfers?\.csv(?:\.gz)?$/i.test(f.name)||['rule','source','fraction','species'].every(k=>t.columns.includes(k)))throw new Error(L('此文件记录反应前的物料转移，不是平衡后的物种结果。请选择水相、矿物或气相结果表：','This file records material transfers before reaction, not equilibrium species. Choose aqueous, mineral or gas result tables: ')+f.name);
   if(/failure|audit|balance/i.test(f.name))throw new Error(L('此文件不是状态汇总或物种表：','Not a state summary or species table: ')+f.name);
   if(t.columns.includes('species'))species.push(t);else{if(summary)throw new Error(L('请选择一个状态汇总文件。','Select only one state summary.'));summary=t;}
@@ -640,11 +676,11 @@ function showSource(){
  const meta=object(rawPayload.metadata)?rawPayload.metadata:{},db=object(meta.database)?meta.database:{},config=object(meta.config)?meta.config:{};
  const readable=value=>typeof value==='string'||typeof value==='number'&&Number.isFinite(value),label=(...values)=>values.find(value=>readable(value)&&value!=='');
  const models={nacl_edh:'Extended Debye–Hückel',davies:'Davies',hkf:'HKF',phreeqc:'PHREEQC',ideal:L('理想模型','Ideal model'),peng_robinson:'Peng–Robinson'};
- const facts=[[L('数据库','Database'),label(db.name,db.embedded_name)],[L('Reaktoro 版本','Reaktoro version'),label(db.runtime_version,meta.reaktoro_version)],[L('水相活度模型','Aqueous activity model'),models[config.activity_model]||config.activity_model],[L('气相模型','Gas model'),models[config.gas_model]||config.gas_model],[L('循环次数','Cycles'),config.cycles],[L('计算方式','Calculation method'),meta.execution?.mode==='custom'?L('自定义 Python 代码','Custom Python code'):meta.execution?.mode==='standard'?L('标准平衡计算','Standard equilibrium calculation'):null]].filter(([,value])=>readable(value)&&value!=='');
+ const facts=[[L('数据库','Database'),label(db.name,db.embedded_name)],[L('Reaktoro 版本','Reaktoro version'),label(db.runtime_version,meta.runtime_version,meta.reaktoro_version)],[L('水相活度模型','Aqueous activity model'),models[config.activity_model]||config.activity_model],[L('气相模型','Gas model'),models[config.gas_model]||config.gas_model],[L('反应轮数','Reaction rounds'),config.cycles],[L('计算方式','Calculation method'),meta.execution?.mode==='custom'?L('自定义 Python 代码','Custom Python code'):meta.execution?.mode==='standard'?L('标准平衡计算','Standard equilibrium calculation'):null]].filter(([,value])=>readable(value)&&value!=='');
  const files=Array.isArray(rawPayload.sources)?rawPayload.sources.filter(item=>typeof item==='string'||object(item)):[],ions=Array.isArray(meta.ion_size_audit)?meta.ion_size_audit.filter(object):[];
  const rows=items=>'<dl class="source-facts">'+items.map(([name,value])=>'<div><dt>'+esc(name)+'</dt><dd>'+esc(String(value))+'</dd></div>').join('')+'</dl>';
  const fileRows=files.map(item=>{const name=typeof item==='string'?item:label(item.name,item.path)||L('未命名文件','Unnamed file');const size=typeof item.size==='number'&&Number.isFinite(item.size)&&item.size>=0?(item.size/1024).toFixed(1)+' KB':'';return [name,size||L('大小未记录','Size not recorded')];});
- $('source-info').innerHTML='<p><strong>'+esc(rawPayload.name||L('计算结果','Results'))+'</strong></p><p class="note">'+model.points.length+' '+L('计算点','calculation points')+' · '+model.linked.toLocaleString()+' '+L('条物种记录','species records')+' · '+model.valid.filter(x=>!x).length+' '+L('个未成功的计算点','unsuccessful points')+'</p>'+rows(facts)+'<h3>'+L('来源文件','Source files')+'</h3>'+(fileRows.length?rows(fileRows):'<p class="note">'+L('结果中未记录文件名称。','Filenames were not recorded in these results.')+'</p>')+'<h3>'+L('如何对应计算点','Matching calculation points')+'</h3><p class="note">'+L('状态和物种数据根据以下条件对应：','State and species data are matched using: ')+'</p><p>'+unique(model.identities.flat()).map(k=>esc(withUnit(k))).join(' · ')+'</p>'+(ions.length?'<details><summary>'+L('离子尺寸与来源','Ion sizes and sources')+'</summary>'+rows(ions.map(item=>[label(item.species,item.name)||'—',(label(item.a_angstrom)??'—')+' Å · '+(label(item.source,item.reference,item.reason)||L('来源未记录','Source not recorded'))]))+'</details>':'')+(Array.isArray(meta.warnings)?meta.warnings.filter(readable).map(note=>'<p class="note">'+esc(note)+'</p>').join(''):'')+'<p class="note">'+L('此处显示保存时记录的信息。完整设置随计算结果保存。','This information was recorded when the results were saved. Full settings are saved with the calculation results.')+'</p>';showDialog('source-dialog');
+ $('source-info').innerHTML='<p><strong>'+esc(rawPayload.name||L('计算结果','Results'))+'</strong></p><p class="note">'+model.points.length+' '+L('计算点','calculation points')+' · '+model.linked.toLocaleString()+' '+L('条物种记录','species records')+' · '+model.valid.filter(x=>!x).length+' '+L('个未成功的计算点','unsuccessful points')+'</p>'+rows(facts)+'<h3>'+L('来源文件','Source files')+'</h3>'+(fileRows.length?rows(fileRows):'<p class="note">'+L('结果中未记录文件名称。','Filenames were not recorded in these results.')+'</p>')+'<h3>'+L('如何对应计算点','Matching calculation points')+'</h3><p class="note">'+L('状态和物种数据根据以下条件对应：','State and species data are matched using: ')+'</p><p>'+unique(model.identities.flat()).map(k=>esc(withUnit(k))).join(' · ')+'</p>'+(ions.length?'<details><summary>'+L('离子尺寸与来源','Ion sizes and sources')+'</summary>'+rows(ions.map(item=>[label(item.species,item.name)||'—',(label(item.a_angstrom)??'—')+' Å · '+(label(item.source,item.reference,item.reason)||L('来源未记录','Source not recorded'))]))+'</details>':'')+(Array.isArray(meta.warnings)?meta.warnings.filter(readable).map(note=>'<p class="note">'+esc(resultNote(note))+'</p>').join(''):'')+'<p class="note">'+L('此处显示保存时记录的信息。完整设置随计算结果保存。','This information was recorded when the results were saved. Full settings are saved with the calculation results.')+'</p>';showDialog('source-dialog');
 }
 
 // The optional notebook adapter is documentation in the HTML, not a dependency.
@@ -716,7 +752,7 @@ document.addEventListener('input',e=>{if(model&&e.target.id==='x-search'){render
 });
 document.addEventListener('change',e=>{
  const el=e.target,id=el.id;
- if(id==='language'){const viewport=captureViewport();stop();cancelPointer();clearTimeout(toastTimer);$('toast').classList.add('hide');language=el.value;if(state)state.language=language;buildShell();if(model)render(false);restoreViewport(viewport);return;}
+ if(id==='language'){const viewport=captureViewport(),dialog=captureDialogDraft();stop();cancelPointer();clearTimeout(toastTimer);$('toast').classList.add('hide');language=el.value;if(state)state.language=language;buildShell();if(model)render(false);restoreViewport(viewport);restoreDialogDraft(dialog);return;}
  if(!model)return;
  if(id==='x-search'){renderXAxisOptions();return;}
  if(el.matches('[data-select]')){stop();const c=chart(),key=c.tab==='species'?'selectedSpecies':'selectedStates';c[key]=el.checked?unique([...c[key],el.dataset.select]):c[key].filter(x=>x!==el.dataset.select);if(el.checked)c.hidden=c.hidden.filter(id=>!id.startsWith(el.dataset.select+'|'));state.changePage=0;render(false);return;}

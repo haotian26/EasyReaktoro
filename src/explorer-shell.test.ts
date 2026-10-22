@@ -497,3 +497,51 @@ it('switches host language in place with two figures, measured X, exact cursor, 
  const standalone=setup(false,html);await vi.waitFor(()=>expect(standalone.qa.model()?.points.length).toBe(8));expect(standalone.w.document.getElementById('language').getAttribute('aria-label')).toBe('Interface language');expect(standalone.w.ResultExplorer.getSnapshot().activeId).toBe(active);
  select(standalone.w,'language','zh');expect(standalone.qa.state().charts).toEqual(saved.view.charts);expect(standalone.qa.state().bookmarks).toEqual([1,6]);expect(standalone.w.ResultExplorer.getSnapshot().activeId).toBe(active);
 });
+
+describe('equilibrium target tables',()=>{
+ it('keeps target detail records out of state summaries even after renaming the CSV',async()=>{
+  const {qa}=setup();qa.install(payload);
+  for(const name of ['constraints.csv','renamed.csv']){
+   const text='run_index,pass,step,constraint_id,target,actual,exchange_mol\n0,1,1,acid,4,4,0.1\n0,1,1,gas,0.01,0.01,0.2';
+   await expect(qa.readFiles([{name,size:text.length,lastModified:0,text:async()=>text}])).rejects.toThrow(/summary.csv/);
+  }
+  expect(qa.model().points.length).toBe(2);
+  expect(()=>qa.install({...payload,summary:{columns:['run_index','constraint_id','target'],rows:[[0,'ph',4],[0,'co2',.01]]}})).toThrow(/summary.csv/);
+ });
+ it('exposes per-point targets, actual values and exchanges as independently labelled X and Y fields',()=>{
+  const {qa,w}=setup();const key='constraint_acid_exchange_mol';
+  qa.install({...payload,summary:{columns:['id','pH',key],rows:[[1,4,.01],[2,5,.02]]},metadata:{field_info:{[key]:['HCl 净加入量','HCl net addition','mol']}}});
+  select(w,'x-axis','state:'+key);expect(qa.state().axis).toBe('state:'+key);
+  expect(w.document.getElementById('x-axis').textContent).toContain('HCl 净加入量');
+  expect(qa.model().points[1][key]).toBe(.02);
+ });
+});
+
+describe('English results without changing saved scientific data',()=>{
+ it('localizes loading, known phases, provenance and system notices while retaining user labels',()=>{
+  const {w,qa,send}=setup();const note='使用自定义 Python 求解逻辑；请核对修改后的模型、约束与结果。';
+  const data={...payload,name:'试样 A',species_tables:[{columns:['id','species','phase_type','amount_mol','molality'],rows:[[1,'矿物甲','固相',1,null],[2,'矿物甲','固相',.9,null]]}],metadata:{runtime_version:'2.13.0',config:{cycles:2},warnings:[note,'现场备注：保留原样']}};
+  const before=JSON.stringify(data);qa.install(data);w.document.getElementById('source-button').click();
+  send({type:'appearance',language:'en',theme:'dark'});
+  const source=w.document.getElementById('source-dialog');expect(source.open).toBe(true);expect(source.textContent).toContain('Custom Python calculation logic');expect(source.textContent).toContain('Reaction rounds');expect(source.textContent).toContain('2.13.0');expect(source.textContent).toContain('现场备注：保留原样');expect(source.textContent).not.toContain(note);
+  expect(w.document.getElementById('loading-title').textContent).toBe('Loading results');expect(w.document.getElementById('loading-text').textContent).toBe('Local processing');
+  source.close();w.document.getElementById('tab-species').click();expect(w.document.getElementById('library-list').textContent).toContain('Mineral');expect(w.document.getElementById('library-list').textContent).not.toContain('固相');
+  expect(qa.model().species[0].phase).toBe('固相');expect(qa.model().species[0].name).toBe('矿物甲');expect(JSON.stringify(data)).toBe(before);
+ });
+ it('keeps an unfinished imported table structure and selected filenames when the app language changes',()=>{
+  const {w,qa,send}=setup();qa.install(payload);w.document.getElementById('open-results').click();
+  const file=w.document.getElementById('result-files');w.document.getElementById('custom-keys').value='run_index, 实验编号';w.document.getElementById('custom-dimensions').value='distance_m';w.document.querySelector('#import-dialog details').open=true;
+  send({type:'selected-result-files',files:[{name:'我的 summary.csv',text:'',size:0}]});
+  send({type:'appearance',language:'en'});
+  expect(w.document.getElementById('import-dialog').open).toBe(true);expect(w.document.getElementById('import-dialog').textContent).toContain('Custom table structure');
+  expect(w.document.getElementById('custom-keys').value).toBe('run_index, 实验编号');expect(w.document.getElementById('custom-dimensions').value).toBe('distance_m');expect(w.document.querySelector('#import-dialog details').open).toBe(true);expect(w.document.getElementById('result-files')).toBe(file);expect(w.document.getElementById('choose-result-files').textContent).toBe('我的 summary.csv');
+  expect(qa.model().points).toHaveLength(2);
+ });
+ it('keeps an uncommitted figure title and focus through a language change',()=>{
+  const {w,qa,send}=setup();qa.install(payload);w.document.querySelector('[data-rename]').click();
+  const input=w.document.getElementById('figure-title-input');input.value='pH 与方解石';input.focus();input.setSelectionRange(3,4);
+  send({type:'appearance',language:'en'});
+  const restored=w.document.getElementById('figure-title-input');expect(w.document.getElementById('rename-dialog').open).toBe(true);expect(restored.value).toBe('pH 与方解石');expect(w.document.activeElement).toBe(restored);expect(restored.selectionStart).toBe(3);expect(qa.state().charts[0].title).toBe('');
+  w.document.getElementById('rename-confirm').click();expect(qa.state().charts[0].title).toBe('pH 与方解石');
+ });
+});

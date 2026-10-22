@@ -81,7 +81,7 @@ buildShell=()=>{
  if(embedded){
   $('language')?.remove();
   const input=$('result-files'),choose=document.createElement('button');input.hidden=true;
-  choose.type='button';choose.id='choose-result-files';choose.style.cssText='max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left';choose.textContent=L('选择结果文件…','Choose result files…');choose.onclick=()=>notifyHost({type:'choose-result-files'});input.after(choose);
+  choose.type='button';choose.id='choose-result-files';choose.style.cssText='max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left';choose.textContent=nativeResultFiles.length?nativeResultFiles.map(file=>file.name).join(' · '):L('选择结果文件…','Choose result files…');choose.onclick=()=>notifyHost({type:'choose-result-files'});input.after(choose);
   document.querySelector('label[for="result-files"]').textContent=L('CSV / CSV.GZ / JSON / HTML，可多选配套表格','CSV / CSV.GZ / JSON / HTML; select related tables together');
  }
  document.title=L('结果','Results');
@@ -178,7 +178,7 @@ async function receiveHostMessage(event){
  if(message.type==='appearance'){
   if(typeof message.language==='string'){
    const next=message.language.startsWith('en')?'en':'zh';
-   if(next!==hostLanguage){const viewport=captureViewport();stop();cancelPointer();clearTimeout(toastTimer);$('toast')?.classList.add('hide');hostLanguage=next;language=next;if(state)state.language=next;buildShell();if(model)render(false);restoreViewport(viewport);}
+   if(next!==hostLanguage){const viewport=captureViewport(),dialog=captureDialogDraft();stop();cancelPointer();clearTimeout(toastTimer);$('toast')?.classList.add('hide');hostLanguage=next;language=next;if(state)state.language=next;buildShell();if(model)render(false);restoreViewport(viewport);restoreDialogDraft(dialog);}
   }
   applyAppearance(message.theme);return;
  }

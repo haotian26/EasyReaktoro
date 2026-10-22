@@ -125,6 +125,8 @@ def normalize_config(raw, records, source):
             else:
                 row.setdefault("amount", None)
             require(row.get("unit") in {"mol", "g", "kg"}, "SIMULATION_INPUT", "error.simulationInput", "投料单位只支持 mol、g、kg")
+    from .simulation_constraints import normalize_constraints, validate_constraints
+    normalize_constraints(cfg)
     normalize_loops(cfg)
     loop_plan = LoopPlan(cfg) if cfg.get('schedule') or cfg.get('loops') else None
     if cfg.get('schedule'):
@@ -172,10 +174,12 @@ def normalize_config(raw, records, source):
         # Check every active round, plus saved overrides outside the active run.
         # Checking only endpoints misses a changed middle round or a masked endpoint.
         for cycle in sorted(set(range(cfg["cycles"])) | {n - 1 for n in seen_rounds}):
+            if hasattr(loop_plan, 'active') and not loop_plan.active(cycle, i): continue
             actual = loop_plan.point(cycle, i) if loop_plan else actual_point(p, cycle)
             require(all(math.isfinite(actual[k]) for k in ("temperature_c", "pressure_bar")) and actual["temperature_c"] > -273.15 and actual["pressure_bar"] > 0,
                     "SIMULATION_INPUT", "error.simulationInput", f"第 {i+1} 点在第 {cycle+1} 轮超出有效温压范围")
     groups = {phase: [n for n in selected if available[n]["phase"] == phase] for phase in ("aqueous", "mineral", "gas")}
+    validate_constraints(cfg, records, loop_plan)
     validate_process(cfg, groups)
     validate_material_bases(cfg, groups, loop_plan)
     require(not aqueous_selected or varied_water or any(row["species"] == water and not missing_amount(row["amount"]) and row["amount"] > 0 for material in materials for row in material["inputs"]), "SIMULATION_INPUT", "error.simulationInput", "请在物质配方中添加正量的水溶剂")
@@ -245,15 +249,20 @@ class Simulation:
         self.source = snapshot["source"]
         self.records = {x["name"]: x for x in snapshot["records"]}
         cfg = self.cfg
+        if cfg.get("equilibrium_constraints"):
+            for index, point in enumerate(cfg["points"]):
+                point["_inner"] = index
+        from .simulation_constraints import reference_species, ConstraintEngine
+        database_species = list(dict.fromkeys([*cfg["species"], *reference_species(cfg)]))
         if self.source["kind"] == "official":
             from .service import _database, official_record
             self.database = _database(self.source["group"], self.source["name"])
-            for name in cfg["species"]:
+            for name in database_species:
                 live = official_record(self.database.species(name), self.source["group"], self.source["name"])
                 expected = self.records[name].get("provenance", {}).get("source_fingerprint")
                 require(live["provenance"]["source_fingerprint"] == expected, "NATIVE_SOURCE_CHANGED", "error.simulationInput", f"运行时物种数据已改变：{name}")
         else:
-            self.database = build_database(required_records(snapshot["records"], cfg["species"]),
+            self.database = build_database(required_records(snapshot["records"], database_species),
                                            runtime_version=self.source.get("required_reaktoro_version"), enforce_declared_ranges=False)
         self.groups = {phase: [name for name in cfg["species"] if phase_of(self.records[name]) == phase]
                        for phase in ("aqueous", "mineral", "gas")}
@@ -310,6 +319,7 @@ class Simulation:
         self.tolerance = cfg["balance_tolerance_mol"]
         self.process_balance = []
         self.warnings = set()
+        self.constraints = ConstraintEngine(self)
 
     def vector(self, amounts):
         return self.np.array([amounts.get(n, 0) for n in self.names], dtype=float)
@@ -335,10 +345,13 @@ class Simulation:
         require(abs(target_components[-1]) <= self.tolerance, "INPUT_CHARGE", "error.simulationInput", f"本次汇合物料净电荷为 {target_components[-1]:.3e} mol；当前计算要求总输入电中性，请调整此处加入的物种及用量。各份配方不必单独中性")
         if self.dynamic:
             self.dynamic.activate(point["temperature_c"], point["pressure_bar"])
-        conditions = self.r.EquilibriumConditions(self.specs)
+        specs, solver, active_constraints = self.constraints.prepare(point)
+        self.constraints.validate_input(target_components, active_constraints)
+        conditions = self.r.EquilibriumConditions(specs)
         conditions.setInitialComponentAmountsFromState(target)
         conditions.temperature(point["temperature_c"], "celsius")
         conditions.pressure(point["pressure_bar"], "bar")
+        self.constraints.set_conditions(conditions, active_constraints)
         diagnostics = []
         for guess in [*guesses, None]:
             work = (guess if guess is not None else target).clone()
@@ -346,9 +359,10 @@ class Simulation:
             work.temperature(point["temperature_c"], "celsius")
             work.pressure(point["pressure_bar"], "bar")
             try:
-                result = self.solver.solve(work, conditions)
+                result = solver.solve(work, conditions)
                 if not result.succeeded():
-                    diagnostics.append("求解器未收敛")
+                    directions = [row["titrant"] for row, _ in active_constraints if row["kind"] == "ph" and row["exchange"] == "add_only"]
+                    diagnostics.append("求解器未收敛" + ("；当前仅允许加入 " + "、".join(directions) + "，请检查目标能否通过该物质达到" if directions else ""))
                     continue
             except Exception as exc:
                 diagnostics.append(str(exc))
@@ -356,7 +370,12 @@ class Simulation:
             values = self.np.asarray(work.speciesAmounts(), dtype=float)
             require(bool(self.np.all(self.np.isfinite(values))) and bool(self.np.all(values >= 0)),
                     "INVALID_EQUILIBRIUM", "error.simulationFailed", "平衡输出包含非有限或负物种量")
-            delta = self.formula @ values - target_components
+            try:
+                external_exchange = self.constraints.audit(work, active_constraints)
+            except BridgeError as exc:
+                diagnostics.append(str(exc))
+                continue
+            delta = self.formula @ values - target_components - external_exchange
             error = float(self.np.max(self.np.abs(delta)))
             if error <= self.tolerance:
                 return work, target_components, delta, "warm" if guess is not None else "cold"
@@ -427,9 +446,12 @@ class Simulation:
                     "molality": amount/water_mass if phase == "aqueous" and name != self.water else None,
                     "activity": self.safe(lambda: props.speciesActivity(name)),
                     "activity_coefficient": self.safe(lambda: props.speciesActivityCoefficient(name))})
-        balances = [{**common, "component": n, "input_mol": float(v), "output_mol": float(v+d), "error_mol": float(d)}
-                    for n, v, d in zip(self.components, target, delta)]
-        return {"summary": summary, "species": rows, "balances": balances}
+        output_components = self.formula @ self.np.asarray(work.speciesAmounts(), dtype=float)
+        balances = [{**common, "component": n, "input_mol": float(v), "output_mol": float(output_components[i]), "error_mol": float(d),
+                     **({"external_exchange_mol": float(self.constraints.exchange[i])} if self.constraints.rows else {})}
+                    for i, (n, v, d) in enumerate(zip(self.components, target, delta))]
+        constraints = self.constraints.collect(summary)
+        return {"summary": summary, "species": rows, "balances": balances, **({"constraints": [{**common, **row} for row in constraints]} if self.constraints.rows else {})}
 
     def run(self, emit):
         cfg = self.cfg
@@ -438,7 +460,9 @@ class Simulation:
         for cycle in range(cfg["cycles"]):
             neighbour = None
             for i, base in enumerate(cfg["points"]):
+                if hasattr(self.loop_plan, 'active') and not self.loop_plan.active(cycle, i): continue
                 point = actual_point(base, cycle)
+                point.update(_outer=cycle, _inner=i)
                 self.progress(stage="solving", current={"pass": cycle+1, "step": i+1, **point},
                               message=f"反应轮次 {cycle+1}/{cfg['cycles']} · {point['label']} ({i+1}/{len(cfg['points'])})")
                 amounts, fresh, consumed, transfers = inventory.assemble(cycle, i)
@@ -461,7 +485,7 @@ class Simulation:
                 work, target, delta, method = self.solve(fluid, rock, point, guesses)
                 record = self.collect(work, target, delta, method, fluid, rock, point, cycle+1, i+1, run_index)
                 output = {n: float(work.speciesAmount(n)) for n in self.names}
-                ledger = inventory.commit(cycle, i, output, fresh, consumed)
+                ledger = inventory.commit(cycle, i, output, fresh, consumed, self.constraints.exchange)
                 record["transfers"] = transfers
                 record["process_balance"] = ledger
                 self.process_balance = ledger  # Latest cumulative balance, also streamed per point.
@@ -471,6 +495,8 @@ class Simulation:
                 self.progress(completed=run_index, warnings=sorted(self.warnings))
             inventory.finish_cycle(cycle)
         loop_metadata = {'loop_axes': inventory.loops.metadata(), 'field_info': inventory.loops.field_info()} if inventory.loops else {}
+        from .simulation_constraints import field_info
+        loop_metadata["field_info"] = {**loop_metadata.get("field_info", {}), **field_info(cfg)}
         return {**loop_metadata, "config": getattr(self, 'original_config', cfg), "ion_size_audit": self.audit, "process_balance": self.process_balance,
                 "warnings": sorted(self.warnings), "dynamic_parameter_evaluations": len(self.dynamic.cache) if self.dynamic else 0,
                 "species_count": len(self.names), "runtime_version": self.r.__version__,

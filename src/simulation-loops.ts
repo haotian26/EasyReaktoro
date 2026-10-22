@@ -1,11 +1,11 @@
 import {t} from './i18n';
-import {scheduleIssue} from './simulation-schedule';
+import {compileSchedule,scheduleIssue} from './simulation-schedule';
 import type {Config,Point,Route} from './simulation-types';
 import {activeRouteEntries,stageInfo} from './reaction-stages';
 import {saturationPressure} from './process-layout';
 
 export type RouteBinding={route_id:string;field:'fraction'|'fallback_fraction'};
-export type LoopTarget = {kind:'temperature'} | {kind:'pressure'} | {kind:'material_amount';material_id:string;species:string} | ({kind:'route_fraction';bindings?:RouteBinding[]}&RouteBinding);
+export type LoopTarget = {kind:'equilibrium_constraint';constraint_id:string} | {kind:'temperature'} | {kind:'pressure'} | {kind:'material_amount';material_id:string;species:string} | ({kind:'route_fraction';bindings?:RouteBinding[]}&RouteBinding);
 export type Loop = {mode:'repeat';count:number} | {mode:'range';target:LoopTarget;start:number;end:number;step:number} | {mode:'list';target:LoopTarget;values:number[]};
 export type LoopRoundConditions={round:number;pressure_mode:'fixed'|'water_saturation';pressure_bar?:number};
 export type LoopDefinition = {round_conditions?:LoopRoundConditions[];base:{temperature_c:number;pressure_bar:number;pressure_mode?:'fixed'|'water_saturation'};inner:Loop;outer:Loop};
@@ -15,6 +15,7 @@ export const routeId=(route:Route,index:number)=>route.id||`route-${index+1}`;
 export function routeTargetBindings(target:Extract<LoopTarget,{kind:'route_fraction'}>):RouteBinding[]{return target.bindings===undefined?[{route_id:target.route_id,field:target.field}]:Array.isArray(target.bindings)?target.bindings:[];}
 const bindingKey=(binding:RouteBinding)=>JSON.stringify(['route_fraction',binding?.route_id,binding?.field]);
 export function targetKey(target:LoopTarget):string{
+  if(target.kind==='equilibrium_constraint')return JSON.stringify([target.kind,target.constraint_id]);
   if(target.kind==='material_amount')return JSON.stringify([target.kind,target.material_id,target.species]);
   if(target.kind!=='route_fraction')return target.kind;
   const keys=routeTargetBindings(target).map(bindingKey).sort();return keys.length===1?keys[0]:JSON.stringify([target.kind,keys]);
@@ -75,12 +76,13 @@ export function loopPoint(definition:LoopDefinition,innerIndex:number,outerIndex
 }
 
 export function loopCounts(config:Config){
-  if(config.schedule)return {inner:config.schedule.positions,outer:config.schedule.rounds,total:config.schedule.positions*config.schedule.rounds};
+  if(config.schedule){try{return compileSchedule(config).counts;}catch{return {inner:config.schedule.positions,outer:config.schedule.rounds,total:config.schedule.positions*config.schedule.rounds};}}
   if(!config.loops)return {inner:config.points.length,outer:config.cycles,total:config.points.length*config.cycles};
   try{const inner=loopValues(config.loops.inner).length,outer=loopValues(config.loops.outer).length;return {inner,outer,total:inner*outer};}
   catch{return {inner:NaN,outer:NaN,total:NaN};}
 }
-export function targetDescription(target:LoopTarget,config:Config):{label:string;unit:string;quantityKind:'temperature'|'pressure'|'amount'|'portions'|'fraction';value:number;available:boolean}{
+export function targetDescription(target:LoopTarget,config:Config):{label:string;unit:string;quantityKind:'temperature'|'pressure'|'amount'|'portions'|'fraction'|'ph'|'fugacity';value:number;available:boolean}{
+  if(target.kind==='equilibrium_constraint'){const row=config.equilibrium_constraints?.find(c=>c.id===target.constraint_id);return {label:row?.kind==='ph'?`pH${row.titrant?' · '+row.titrant:''}`:row?.kind==='fugacity'?t(`${row.species||'未选择气体'} 逸度`,`${row.species||'Select gas'} fugacity`):t('已移除的平衡目标','Removed equilibrium target'),quantityKind:row?.kind==='ph'?'ph':'fugacity',unit:row?.kind==='ph'?'':'bar',value:row?.value??NaN,available:!!row};}
   if(target.kind==='temperature')return {label:t('温度',"Temperature"),quantityKind:'temperature',unit:'°C',value:config.loops?.base.temperature_c??config.points[0]?.temperature_c??25,available:true};
   if(target.kind==='pressure')return {label:t('压力',"Pressure"),quantityKind:'pressure',unit:'bar',value:config.loops?.base.pressure_bar??config.points[0]?.pressure_bar??1,available:true};
   if(target.kind==='material_amount'){

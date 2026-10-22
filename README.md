@@ -2,7 +2,7 @@
 
 **English and 简体中文** — switch instantly in Settings → General → Interface language. Database management, equilibrium simulations and the result viewer share the same language. Switching preserves your inputs, code, plots and saved data.
 
-EasyReaktoro 是面向 Reaktoro 的非官方 macOS 图形界面。v0.16.0 提供数据库发现、浏览、组建、编辑、验证、导出、Python/notebook RTDB 读取接口，以及平衡模拟工作台。模拟用路径位置与反应轮次组织单点平衡、温压扫描和多轮水岩反应，可在同一次反应中同时改变温压、composition 每份含量、加入份数和物料取用比例。首次起点、首轮后续位置、后续轮起点和后续轮其余位置分别列出实际加入的 composition 或反应后物料，可按相态或指定 species 取用，支持分流、混合与回流。可一键切换图形设置与完整分模块 Python 程序，保留参数与自定义求解代码；全部代码随设置和结果保存。
+EasyReaktoro 是面向 Reaktoro 的非官方 macOS 图形界面。v0.17.0 提供数据库发现、浏览、组建、编辑、验证、导出、Python/notebook RTDB 读取接口，以及平衡模拟工作台。模拟用路径位置与反应轮次组织单点平衡、温压扫描和多轮水岩反应，可在同一次反应中同时改变温压、composition 每份含量、加入份数和物料取用比例。首次起点、首轮后续位置、后续轮起点和后续轮其余位置分别列出实际加入的 composition 或反应后物料，可按相态或指定 species 取用，支持分流、混合与回流。可一键切换图形设置与完整分模块 Python 程序，保留参数与自定义求解代码；全部代码随设置和结果保存。
 
 应用依赖用户自行安装的外部 Reaktoro Python 环境，不打包 Python、Reaktoro、官方数据库或个人数据库。
 
@@ -10,15 +10,27 @@ EasyReaktoro 是面向 Reaktoro 的非官方 macOS 图形界面。v0.16.0 提供
 
 ## 运行
 
-支持 Apple Silicon macOS 13 及以上；已在独立用户的 Apple Silicon macOS 虚拟机验收；Intel Mac 与 Windows 尚未验收。从 [v0.16.0 Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.16.0) 下载 `EasyReaktoro-v0.16.0.dmg`，打开后将 EasyReaktoro 拖入 Applications。安装包采用 ad-hoc 签名，未经 Apple 公证；仍需自行安装外部 Reaktoro Python 环境。Git 仓库不包含 `.app`，从源码运行请按下文构建。已有本地构建包的用户可在 Finder 双击 `release/EasyReaktoro-v0.16.0.app`，或运行：
+支持 Apple Silicon macOS 13 及以上；已在装有外部 Reaktoro 的独立用户 Apple Silicon macOS 虚拟机验收；尚未覆盖从零安装 Reaktoro，Intel Mac 与 Windows 也尚未验收。从 [v0.17.0 Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.17.0) 下载 `EasyReaktoro-v0.17.0.dmg`，打开后将 EasyReaktoro 拖入 Applications。安装包采用 ad-hoc 签名，未经 Apple 公证；仍需自行安装外部 Reaktoro Python 环境。Git 仓库不包含 `.app`，从源码运行请按下文构建。已有本地构建包的用户可在 Finder 双击 `release/EasyReaktoro-v0.17.0.app`，或运行：
 
 ```bash
-open release/EasyReaktoro-v0.16.0.app
+open release/EasyReaktoro-v0.17.0.app
 ```
 
 首次启动时，应用会自动探测可用的 Reaktoro 环境。也可以选择具体的 Reaktoro Python，或选择 Conda/Reaktoro 环境目录。存在多个环境时可在“设置 → Reaktoro 环境”中切换、测试连接并查看诊断。
 
 自动探测不是固定路径：应用会检查环境变量、`/Applications` 下的应用环境、常见 Homebrew/Conda/Mamba 安装位置、用户级 Conda/Micromamba/Pyenv 环境以及系统 Python，并只显示能够真实导入 Reaktoro 的候选项。候选项按 Python 规范路径、环境根目录和 Reaktoro 版本去重。
+
+## v0.17.0
+
+- **直接定义反应步骤**：首轮与后续轮次分别填写初始步、后续步的 T、P、Composition；数值、公式和结束条件都在同一页编辑。预览、Python 参数代码与实际计算使用同一份设置。
+- **可展开的流程示意图**：短流程直接显示，长流程按重复步骤概括；显示实际物料传递、数值范围和局部条件，可跳到任意位置查看连续的附近步骤。
+- **局部设置保持原规则**：只覆盖实际修改的参数，例如修改温度后，未改动的 Psat(T) 仍随温度计算。各轮长度不同时，拒绝引用上一轮不存在的位置。
+
+- **数据库历史版本**：保存有改动的个人数据库时保留上一版，默认每库保留 10 份。在“操作 → 历史版本”中查看变化、恢复为新副本、删除版本或调整保留设置。历史存放在当前用户的应用数据目录，不修改原来的导出文件。
+- **Reaktoro 连接帮助**：未找到环境时提供官方安装说明、选择环境文件夹和选择 Python；区分所选 Python 缺少 Reaktoro 与其他连接错误。Reaktoro 仍由用户自行安装。
+- **pH 与气体逸度目标**：在“计算流程 → 添加指定条件”添加，指定调节物质或气体、作用范围及变化方式。目标可按步、轮次和局部设置变化；所需外部物质交换量计入逐点与累计元素收支，随结果保存。
+
+
 
 ## 当前工作区
 
@@ -58,23 +70,17 @@ open release/EasyReaktoro-v0.16.0.app
 
 当前数据库中已不存在的 species 单独列出，可逐项或全部移除。清理同时处理 composition 投料、各处物料来源中的指定 species、水溶剂、离子尺寸和关联投料变化量，支持撤销；只移除失效的参数引用，保留计算步数、轮数和其他参数。
 
-计算流程先填写路径位置数和总轮数，再在“条件与用量”“物料来源”之间切换。一轮依次完成整条路径，总轮数包含第 1 轮；1 步、1 轮就是单点平衡。计算规模独立于参数选择，同时改变温度、压力及投料不会增加额外位置或轮次。
+计算流程在同一页展示首轮与后续轮次，各自填写第一步和后续步的 T、P、Composition。直接输入数值或公式，例如 `250`、`T-50`、`Psat(T)`，无需先选择变化方式。用 `i = 3` 指定 4 步，用 `N = 2` 指定 3 轮；也可按 `P < 150` 等条件结束，各轮长度可以不同。满足结束条件的当前步仍计算。
 
-“条件与用量”集中设置温度、压力、composition 中某个 species 的每份含量、composition 加入份数及已有结果的取用比例。每份含量沿用 mol、g 或 kg，实际新投料为筛选后的每份含量乘以份数；取用比例在界面以百分比输入，以来源位置原始输出为基准。创建或修改 composition 本身不会自动把它加入反应。
+Composition 每项选择来源、相态或指定 species，再填写乘数。新 composition 的乘数表示份数，已有输出的乘数表示取用比例：`0.5` 表示半份或 50%。用量、温压均可按步或轮次变化；参数承接与物料传递分别设置。四处组成可以一次性复制后分别编辑，单点与多点沿用同一页面布局。
 
-每项参数可使用固定值、同时按步与轮次增减、指定数列，或承接前一步／上一轮同位置的实际数值。数列支持重复值及往返变化；按起止值批量生成可一次建立长路径，并明确调整对应步数或轮数。单独修改某点后，普通数列的后续值保持原序列，承接方式的后续值则继续从修改后的实际值变化。参数数值的承接与物料传递分别设置。
+预览显示横向路径与纵向轮次，箭头只表示实际物料传递并标明相态。短流程直接显示；长流程概括重复步骤、实际变化范围和局部条件，展开后显示所选位置附近的连续步骤。选中点显示实际条件与用量，可直接单独修改。长路径可输入确切坐标；已结束的位置不绘制虚假计算点。旧配置保留原含义，无法无损转换的复杂逐位置来源保留原编辑方式。
 
-“只调整某些轮次或位置”可选择任意范围、间隔及要改的参数，其他参数继续沿用通常设置。例如通常采用 Psat(T)，仅第 2 轮改为 700 bar，并独立调整该轮的盐含量。缩小计算范围会保留暂不经过的设置。预览可选择确切轮次和位置，直接显示本次温压、实际加入量、来源取用比例，并可从选中点进入单独调整。
-
-“物料来源”用固定的 2 × 2 总览按“第 1 轮／第 2 轮起”和“起点／其余位置”排列，点击任一格，在同一编辑区增删物料。“添加物料”统一选择来源、相态或指定 species，以及 composition 份数或结果取用比例；列表之外的物料不会自动加入。新 composition 的 species 选项仅来自该 composition，反应后结果可从全体系选择。切换来源若需移除已有选择或重置已填用量，会先在原位置列出变化，确认后应用。组成可从其他位置一次性复制，再分别编辑；当前不经过的格保留设置。单点与多点沿用同一页面布局。
-
-示意图始终以路径位置和反应轮次组织反应点，多项参数可在同一位置同时变化。箭头仅表示实际投料与物料传递，标明相态；较长路径抽样显示，仍可直接选择未画出的确切位置。进入下一轮不表示末端物料自动回流。每个位置汇合其组成列表后求平衡，逐点约束与累计库存检查重复分配和守恒。旧配置按原含义兼容读取，复杂逐位置来源保留原编辑方式。
-
-压力的“纯水饱和蒸汽压”根据每次反应的实际温度计算，适用 0.01 ≤ T < 373.946 °C；也可通过通用局部设置，仅在指定轮次或位置采用。它是纯水参考压力，不计算含盐或混合气体系的泡点，也不会自动加入气相。数据库声明的温压范围仅用行内提示说明。
+压力公式 `Psat(T)` 使用本步温度，适用 0.01 ≤ T < 373.946 °C。它是纯水参考压力，不计算盐水或混合气泡点，也不会自动加入气相。温压、物料和其他指定条件可独立设置。更多语法、停止规则及兼容性说明见 [模拟说明](docs/SIMULATION.md)。
 
 Extended Debye–Hückel、Davies、HKF、PHREEQC 与理想水相，以及气相模型，都提供渲染后的方程、参数解释和对应引用；页末列出文献及外部链接。数据库标准态数据和活度模型分别选择、分别记录。
 
-运行前通过系统窗口选择保存位置，以模拟名称创建文件夹，结果逐点写入。同名结果已存在时，可明确选择“覆盖结果”或“另存为…”；另存只改变本次结果名称，不改模拟名称，不自动添加随机后缀。无法安全识别为计算结果的已有文件或目录不提供覆盖。取消不会启动计算。退出后可重新打开，异常中断可恢复已完成点。保存与载入通用 `.ersim.json` 设置，旧版设置自动迁移。
+运行前通过系统窗口选择保存位置，以模拟名称创建文件夹，结果逐点写入。同名结果已存在时，可明确选择“覆盖结果”或“另存为…”；另存只改变本次结果名称，不改模拟名称，不自动添加随机后缀。无法安全识别为计算结果的已有文件或目录不提供覆盖。取消不会启动计算。退出后可重新打开，异常中断后仍可查看已完成点的结果。保存与载入通用 `.ersim.json` 设置，旧版设置自动迁移。
 
 “查看结果”进入同级结果页；“打开已保存结果”读取整个计算文件夹，“保存位置”在 Finder 中定位该文件夹。图表可返回“结果首页”，通过“继续查看”恢复原视图。结果跟随应用语言和浅色/深色主题，两侧面板可折叠、调整宽度，也可专注图表。以 pH、系统性质或 species 数值为横轴时，默认使用散点，X/Y 来自同一采样点；可比较当前轮次或全部已载入轮次，也可按采样顺序分别连线。矿物的 molality 不适用，应查看已输出的平衡量 amount / mol、入口量或净变化量。提供多图、条件叠加、长按按钮连续浏览、参考点、书签、变化定位及 SVG/CSV/HTML 工作区导出；运行目录另存完整独立探索器。
 
@@ -110,9 +116,10 @@ cargo test --manifest-path src-tauri/Cargo.toml
 CARGO_PROFILE_RELEASE_STRIP=none npx tauri build --bundles app
 codesign --force --deep --sign - src-tauri/target/release/bundle/macos/EasyReaktoro.app
 codesign --verify --deep --strict src-tauri/target/release/bundle/macos/EasyReaktoro.app
+bash scripts/package-macos.sh
 ```
 
-默认构建产物为 `src-tauri/target/release/bundle/macos/EasyReaktoro.app`；可用 `open src-tauri/target/release/bundle/macos/EasyReaktoro.app` 启动。`release/` 是本地交付目录，不由上述构建命令自动填充，也不进入 Git。图标资源与原生保存面板补丁均随源码提供；构建不下载或打包 Reaktoro 数据库。
+默认构建产物为 `src-tauri/target/release/bundle/macos/EasyReaktoro.app`；可用 `open src-tauri/target/release/bundle/macos/EasyReaktoro.app` 启动。打包脚本将版本一致的应用和 Applications 链接放入 `release/EasyReaktoro-v<version>.dmg`；`release/` 不进入 Git。图标资源与原生保存面板补丁均随源码提供；构建不下载或打包 Reaktoro 数据库。
 
 Bridge 集成测试需要外部 Reaktoro：
 
@@ -134,18 +141,17 @@ Rust 使用所选外部 Python 启动持久 NDJSON Bridge。应用包只包含�
 
 ## 已知限制
 
-- 模拟目前为指定温压的平衡点与物料传递，尚不包含动力学、流速/弥散、固溶体、自动 pH/Eh/逸度开放储库约束或中断续算。
-- 界面本轮统一为中文；i18n 接口保留，英文资源尚未精确翻译。
+- 模拟支持平衡点、物料传递、指定 pH 与气体逸度目标；尚不包含动力学、流速/弥散、固溶体、指定 Eh 或中断续算。
 - 当前 Reaktoro 2.13.0 的部分 PHREEQC 基础物种未暴露原生模型参数；不能将其伪造为零 Gibbs 能模型。`phreeqc.dat` 的 Native YAML 导出因此不可用（依赖这些基础物种的记录也必须排除）。SUPCRT 原生导出和重新加载已测试通过。真实依赖环也可能阻止整库复制。
 - Interpolation 仅对能真实计算的记录采样，并在每个网格单元的中点由正式 Reaktoro 重新加载后检验。误差指标是各 SI 属性的 `abs(interpolated-source)/max(1,abs(source))`；这是有限采样检查，不是连续温压域的严格全局误差保证。不应在导出范围之外使用。
 - 从零创建目前开放三种已有完整参数定义和数值回归的模型：Modified Ryzhenko–Bryzgalin、Extended Maier–Kelley、Akinfiev–Diamond。water/OH、gas-reference 和未知模型仅可随已有来源记录保留，不能从界面伪造。
 - 通用读取器支持显式的 `converted-standard-state/v1` 数据记录，包括分段热容、MRB、AD、water/OH 和气相参考。它不执行数据库中的 Python，不自动把任意第三方文件夹转换为此格式。来源系数、反应及身份在通用编辑器中保护，名称、有效范围、文献、活度参数和备注可编辑；未知模型仍不能计算。
 - Reaktoro 2.13.0 的便捷 `EquilibriumSolver(system)` 路径可在含 Python 标准态回调的进程退出时触发缓存析构错误。Python 示例使用显式 `EquilibriumSpecs`，已测试重复读取、求解和正常退出；不修改或替换 Reaktoro。
-- 本地应用为 ad-hoc 签名的 Apple Silicon 构建，未经过 Apple 公证。系统可能要求用户确认来源；项目没有提供公证安装包，也没有发布 GitHub Release 或 DMG。
+- 已通过 [GitHub Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.17.0) 发布 Apple Silicon macOS DMG 安装包。应用采用 ad-hoc 签名，尚未经过 Apple 公证；系统可能要求用户确认来源。安装包不包含 Python 或 Reaktoro。
 
 - 模型数值回归不等于对任意物种、任意温压的科学验证。MRB/AD 仍需用户核对参数来源、适用范围与形成反应。Extended Debye–Hückel 使用数据库明确保存的 aᵢ，缺少参数时阻止计算；是否采用数据库默认尺寸及有理由但无文献的已记录尺寸，由活度模型页的选项控制；新模拟默认允许这两类记录。
 - 新复制的原生物种保存来源索引与参数 fingerprint；来源模型或 Reaktoro 版本改变时拒绝静默代用。旧文件若存在无法区分的同名原生记录，需要从当前运行时重新创建副本。
 - 文件夹导入仅识别已有的转换记录/YAML，不执行 Python；多个候选主文件不明确时拒绝导入。不支持原始 HCh/Unitherm 转换或所有第三方文件夹布局。
-- 数据库编辑尚未实现自动恢复、轮换备份或多人并发编辑；普通关闭和 Command-Q 有未保存保护。模拟结果另采用逐点持久记录，重新打开可恢复完整保存的点。
+- 数据库保存时可保留历史版本；尚未实现崩溃后的未保存草稿恢复或多人并发编辑。普通关闭和 Command-Q 有未保存保护。模拟结果另采用逐点持久记录，重新打开可恢复完整保存的点。
 
 详细检查范围和未验证项见 [测试报告](docs/TEST_REPORT.md)。

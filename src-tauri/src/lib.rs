@@ -866,7 +866,8 @@ async fn rtdb_save(
     state: State<'_, AppState>,
     handle_id: String,
 ) -> Result<Value, String> {
-    dispatch(app, state, "rtdb.save", json!({"handle_id":handle_id})).await
+    let root = app.path().app_data_dir().map_err(|e| e.to_string())?.join("DatabaseBackups");
+    dispatch(app, state, "rtdb.save", json!({"handle_id":handle_id,"backups_root":root})).await
 }
 #[tauri::command]
 async fn rtdb_save_as(
@@ -875,13 +876,24 @@ async fn rtdb_save_as(
     handle_id: String,
     path: String,
 ) -> Result<Value, String> {
+    let root = app.path().app_data_dir().map_err(|e| e.to_string())?.join("DatabaseBackups");
     dispatch(
         app,
         state,
         "rtdb.save_as",
-        json!({"handle_id":handle_id,"path":path}),
+        json!({"handle_id":handle_id,"path":path,"backups_root":root}),
     )
     .await
+}
+#[tauri::command]
+async fn rtdb_versions(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    handle_id: String,
+    payload: Value,
+) -> Result<Value, String> {
+    let root = app.path().app_data_dir().map_err(|e| e.to_string())?.join("DatabaseBackups");
+    dispatch(app, state, "rtdb.versions", json!({"handle_id":handle_id,"payload":payload,"backups_root":root})).await
 }
 #[tauri::command]
 async fn compose_preview(
@@ -1046,6 +1058,7 @@ pub fn run() {
             rtdb_list_info,
             rtdb_save,
             rtdb_save_as,
+            rtdb_versions,
             compose_preview,
             compose_commit,
             import_preview,

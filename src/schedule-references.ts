@@ -10,6 +10,7 @@ export function atomicTargets(target:LoopTarget):LoopTarget[]{
  return (target.bindings||[{route_id:target.route_id,field:target.field}]).map(binding=>({kind:'route_fraction',...binding}));
 }
 export function referenceKey(target:LoopTarget):string{
+ if(target.kind==='equilibrium_constraint')return JSON.stringify([target.kind,target.constraint_id]);
  if(target.kind==='material_amount')return JSON.stringify([target.kind,target.material_id,target.species]);
  if(target.kind==='route_fraction')return JSON.stringify([target.kind,target.route_id,target.field]);
  return target.kind;

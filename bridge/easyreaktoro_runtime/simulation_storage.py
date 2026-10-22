@@ -61,6 +61,8 @@ class TableWriter:
             self.row('component_balance', row)
         for row in record.get('process_balance', []):
             self.row('process_balance', row)
+        for row in record.get('constraints', []):
+            self.row('constraints', row)
         for rule, transfer in enumerate(record.get('transfers', []), 1):
             for species, amount in transfer['amounts_mol'].items():
                 if amount:
@@ -76,7 +78,7 @@ class TableWriter:
 
 
 def rebuild_tables(root):
-    for kind in ('summary', 'aqueous', 'mineral', 'gas', 'component_balance', 'process_balance', 'transfers'):
+    for kind in ('summary', 'aqueous', 'mineral', 'gas', 'component_balance', 'process_balance', 'transfers', 'constraints'):
         (Path(root)/f'{kind}.csv').unlink(missing_ok=True)
     writer = TableWriter(root)
     try:

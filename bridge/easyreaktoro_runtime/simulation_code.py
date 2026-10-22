@@ -16,7 +16,7 @@ CELLS = (
      ("materials",),
      '# In inputs, specify species names, amounts and units; each species must belong to the system.\n# amount=None retains an unset base amount. Fill it only where a material input actually uses that base amount.'),
     ("conditions", "反应路径与条件", "沿路径依次反应，完成后开始下一轮；按设置更新条件与投料量。",
-     ("schedule", "loops", "points", "cycles"),
+     ("schedule", "loops", "points", "cycles", "equilibrium_constraints"),
      '# loops: base defines initial T/P; inner/outer support repeat(count), range(start,end,step) or list(values).\n# target.kind: temperature / pressure / material_amount(material_id,species) / route_fraction(route_id,field).\n# Values override the target parameter; composition amounts retain input-row units; fraction field is fraction or fallback_fraction.\n# loops.round_conditions sets pressure_mode and optional pressure_bar for a specific round, overriding pressure variation without changing temperature.\n# pressure_mode: fixed specifies pressure; water_saturation uses pure-water saturation pressure at the actual temperature (0.01 <= T < 373.946 degC).\n# loops=None uses the retained points/cycles below; an active loops definition does not run the old point table.\n# Legacy points: temperature_increment_c / pressure_increment_bar are per-round increments; round_conditions sets absolute T/P for a round.'),
     ("transfers", "反应物料", "四类位置独立选择反应物料；执行顺序本身不会转移任何物质。",
      ("reaction_stages", "routes"),
@@ -162,13 +162,16 @@ def render_code(config, previous=None):
     cells = []
     for cell_id, title, description, fields, comment in CELLS:
         if cell_id == 'conditions' and config.get('schedule'):
-            fields = ('schedule',)
-            comment = ("# schedule: positions is the number of positions per round; rounds is the total round count. parameters sets general values; overrides defines local ranges.\n# target.kind: temperature / pressure / material_amount(material_id,species) / route_fraction(route_id,field).\n# value.mode: fixed holds a value; linear varies over selected positions/rounds; list uses a sequence; relative continues from the actual neighboring final parameter value.\n# pressure also accepts water_saturation, using pure-water saturation pressure at this point's final temperature.\n# Numeric pressure values specify pressure. Composition amounts retain input-row units; source fractions apply only to the selected material.\n# Local start/end/step use 1-based positions; an omitted end means the current endpoint. linear/list follow selected ordinals; relative follows actual adjacent positions or rounds.\n# Local ranges for the same parameter cannot overlap. Other parameters use general settings; retained loops/points/cycles are inactive in this schedule.")
+            fields = ('schedule', 'equilibrium_constraints')
+            comment = ("# schedule: positions/rounds give fixed counts when stop rules are absent. stop.first/stop.later end each path; stop.rounds ends the model. The triggering reaction is included.\n# With stop rules, actual path lengths may differ between rounds. i and N are zero-based position/round indices.\n# value.mode expression accepts arithmetic, comparisons, min/max/abs/sqrt/ln/log10/exp, list(index,...), and Psat(T).\n# For temperature, T/P refer to the previous step (previous round start at i=0); for pressure, T is the current temperature and P is the previous pressure.\n# For amounts/fractions, T/P are current conditions. Tr/Pr are the previous round at the same position; X/Xr are the previous value of this target.\n# parameters sets general values; overrides defines local ranges.\n# target.kind: temperature / pressure / material_amount(material_id,species) / route_fraction(route_id,field).\n# value.mode: fixed holds a value; linear varies over selected positions/rounds; list uses a sequence; relative continues from the actual neighboring final parameter value.\n# pressure also accepts water_saturation, using pure-water saturation pressure at this point's final temperature.\n# Numeric pressure values specify pressure. Composition amounts retain input-row units; source fractions apply only to the selected material.\n# Local start/end/step use 1-based positions; an omitted end means the current endpoint. linear/list follow selected ordinals; relative follows actual adjacent positions or rounds.\n# Local ranges for the same parameter cannot overlap. Other parameters use general settings; retained loops/points/cycles are inactive in this schedule.")
         elif cell_id == 'conditions' and config.get('loops'):
-            fields = ('loops',)
+            fields = ('loops', 'equilibrium_constraints')
             comment = '\n'.join(line for line in comment.splitlines() if not line.startswith(('# loops=None', '# Legacy points')))
         if cell_id == 'transfers' and config.get('reaction_stages') is not None:
             fields = ('reaction_stages',)
+        pre_constraints_comment = comment
+        if cell_id == "conditions":
+            comment += "\n# equilibrium_constraints: kind ph uses neutral titrant formula and exchange add_only/both; fugacity uses a database Gas species and a target in bar.\n# Each constraint has id, value and optional rounds/positions scopes; schedule target equilibrium_constraint(constraint_id) varies its value.\n# Exchange is external and is recorded separately from finite composition inputs; constraints outside their scopes are inactive."
         legacy_comment = comment
         comment = parameter_comment(cell_id, comment, config.get('reaction_stages') is not None)
         unchanged = all(config.get(key) == old_config.get(key) for key in fields)
@@ -185,7 +188,8 @@ def render_code(config, previous=None):
         if source is not None and cell_id in ('conditions', 'transfers'):
             old_comment = parameter_comment(cell_id, legacy_comment, old_config.get('reaction_stages') is not None)
             standards = (parameter_source(old_config, fields, legacy_comment, ordered_stages=False),
-                         parameter_source(old_config, fields, old_comment))
+                         parameter_source(old_config, fields, old_comment),
+                         parameter_source(old_config, tuple(key for key in fields if key != "equilibrium_constraints"), pre_constraints_comment, ordered_stages=False))
             if source in standards:
                 source = None
         if not isinstance(source, str):
@@ -283,6 +287,15 @@ def check_parameter(name, value, context=None):
                     seen.add(row['round'])
                     number(row['temperature_c'],q+'.temperature_c');number(row['pressure_bar'],q+'.pressure_bar')
                     if 'pressure_mode' in row: require(row['pressure_mode'] in ('fixed','water_saturation'),q+'.pressure_mode','使用 fixed 或 water_saturation')
+    elif name == 'equilibrium_constraints':
+        from .simulation_constraints import normalize_constraints
+        from .errors import BridgeError
+        try:
+            checked = copy.deepcopy(context or {})
+            checked['equilibrium_constraints'] = value
+            normalize_constraints(checked)
+        except BridgeError as exc:
+            raise CodeProblem(str(exc)) from None
     elif name == 'schedule':
         from .simulation_schedule import normalize_schedule
         from .errors import BridgeError
@@ -367,13 +380,15 @@ def parse_code(document, config, parameters_only=False):
                 field_nodes[name] = statement
             # Accept older cell formats and explicit None switches. The actual
             # assignments below determine which representation remains active.
-            optional = {'schedule', 'loops', 'reaction_stages'} | ({'points', 'cycles'} if cell['id'] == 'conditions' and ('schedule' in values or 'loops' in values) else set()) | ({'routes'} if cell['id'] == 'transfers' and 'reaction_stages' in values else set())
+            optional = {'schedule', 'loops', 'reaction_stages', 'equilibrium_constraints'} | ({'points', 'cycles'} if cell['id'] == 'conditions' and ('schedule' in values or 'loops' in values) else set()) | ({'routes'} if cell['id'] == 'transfers' and 'reaction_stages' in values else set())
             missing = set(CELL_FIELDS[cell["id"]]) - set(values) - optional
             if missing:
                 raise CodeProblem("缺少参数：" + "、".join(sorted(missing)))
             # Visible parameter assignments select the active representation.
             # A schedule introduced during UI migration must not mask edits to
             # an older loops/points cell; the same applies to stages/routes.
+            if cell['id'] == 'conditions' and 'equilibrium_constraints' not in values:
+                parsed.pop('equilibrium_constraints', None)
             if cell['id'] == 'conditions' and 'schedule' not in values:
                 parsed.pop('schedule', None)
                 if 'loops' not in values:
@@ -381,7 +396,7 @@ def parse_code(document, config, parameters_only=False):
             if cell['id'] == 'transfers' and 'reaction_stages' not in values and 'routes' in values:
                 parsed.pop('reaction_stages', None)
             for name, value in values.items():
-                if name in ('schedule', 'loops', 'reaction_stages') and value is None:
+                if name in ('schedule', 'loops', 'reaction_stages', 'equilibrium_constraints') and value is None:
                     parsed.pop(name, None)
                     continue
                 if name == "water_species" and value is None:

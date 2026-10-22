@@ -94,6 +94,8 @@ def main(root):
         from .simulation_loops import LoopPlan
         saved_config = getattr(simulation, 'original_config', snapshot['config'])
         loop_metadata = {'loop_axes': LoopPlan(saved_config).metadata(), 'field_info': LoopPlan(saved_config).field_info()} if saved_config.get('schedule') or saved_config.get('loops') else {}
+        from .simulation_constraints import field_info
+        loop_metadata['field_info'] = {**loop_metadata.get('field_info', {}), **field_info(saved_config)}
         atomic_json(root/'metadata.json', {**loop_metadata, 'config': saved_config, 'database': snapshot['source'],
             'ion_size_audit': getattr(simulation, 'audit', []), 'process_balance': committed_balance,
             'warnings': sorted(getattr(simulation, 'warnings', [])), 'partial_results': True,

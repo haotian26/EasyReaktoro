@@ -10,7 +10,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 from .errors import BridgeError, require
 
@@ -248,7 +248,7 @@ def revision(path: str | Path) -> str | None:
 
 
 @contextmanager
-def atomic_database(target: Path, *, expected_revision: str | None = None, exclusive: bool = False) -> Iterator[sqlite3.Connection]:
+def atomic_database(target: Path, *, expected_revision: str | None = None, exclusive: bool = False, before_replace: Callable[[], None] | None = None) -> Iterator[sqlite3.Connection]:
     target = target.expanduser().resolve(); target.parent.mkdir(parents=True, exist_ok=True)
     fd, raw = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent); os.close(fd)
     temp = Path(raw)
@@ -265,6 +265,13 @@ def atomic_database(target: Path, *, expected_revision: str | None = None, exclu
         require(not Path(str(target) + "-wal").exists() and not Path(str(target) + "-journal").exists(), "RTDB_IN_USE", "error.rtdbInUse", "数据库正在被其他 SQLite 程序使用。请关闭其他程序后重试，或另存为新文件。")
         if expected_revision is not None:
             require(revision(target) == expected_revision, "RTDB_CHANGED_EXTERNALLY", "error.rtdbChangedExternally", "文件已被其他程序修改或删除。请另存为新文件，避免覆盖外部更改。")
+        if before_replace is not None:
+            before_replace()
+            require(not Path(str(target) + "-wal").exists() and not Path(str(target) + "-journal").exists(), "RTDB_IN_USE", "error.rtdbInUse", "数据库正在被其他 SQLite 程序使用。请关闭其他程序后重试，或另存为新文件。")
+            # Backup creation may take time. Check the source again immediately
+            # before replacement instead of overwriting an external edit.
+            if expected_revision is not None:
+                require(revision(target) == expected_revision, "RTDB_CHANGED_EXTERNALLY", "error.rtdbChangedExternally", "文件已被其他程序修改或删除。请另存为新文件，避免覆盖外部更改。")
         if exclusive:
             try: os.link(temp, target)
             except FileExistsError as exc:
@@ -349,10 +356,10 @@ def history(path: str) -> dict[str, list[tuple]]:
     finally: conn.close()
 
 
-def save(path: str, meta: dict[str, Any], records: list[dict[str, Any]], action: str = "save", *, expected_revision: str | None = None, histories: dict | None = None, pending: list | None = None, validation: dict | None = None, exclusive: bool = False) -> dict[str, Any]:
+def save(path: str, meta: dict[str, Any], records: list[dict[str, Any]], action: str = "save", *, expected_revision: str | None = None, histories: dict | None = None, pending: list | None = None, validation: dict | None = None, exclusive: bool = False, before_replace: Callable[[], None] | None = None) -> dict[str, Any]:
     target = Path(path).expanduser().resolve()
     require(target.suffix.lower() == ".rtdb", "RTDB_EXTENSION", "error.rtdbExtension", str(target))
-    with atomic_database(target, expected_revision=expected_revision, exclusive=exclusive) as conn:
+    with atomic_database(target, expected_revision=expected_revision, exclusive=exclusive, before_replace=before_replace) as conn:
         initialize(conn)
         updated = dict(meta); updated.update({"schema": SCHEMA_ID, "modified_at": now()})
         updated.pop("migration_pending", None)

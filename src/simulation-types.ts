@@ -1,7 +1,8 @@
 import {t} from './i18n';
 import {normalizeStageRoutes} from './reaction-stages';
-import {migrateSchedule,validateScheduleShape,type Schedule} from './simulation-schedule';
+import {migrateSchedule,validateScheduleShape,type Schedule,type IndexScope} from './simulation-schedule';
 import {encodeDraft,restoreDraft} from './draft-json';
+import {validConstraintShape} from './equilibrium-constraints';
 import {loopCounts,loopRoundConditions,loopValues,type LoopDefinition} from './simulation-loops';
 export type Phase = 'aqueous' | 'mineral' | 'gas';
 export type IonSize = { a_angstrom: number; source: string; reason: string; is_default?: boolean; resolution?: string };
@@ -13,7 +14,9 @@ export type ReactionStageKey='first_start'|'first_following'|'later_start'|'late
 export type ReactionStages=Record<ReactionStageKey,Route[]>;
 export type RoundConditions = {round:number;temperature_c:number;pressure_bar:number;pressure_mode?:'fixed'|'water_saturation'};
 export type Point = {round_conditions?:RoundConditions[];id:string; label:string; temperature_c:number; pressure_bar:number; pressure_mode?:'fixed'|'water_saturation'; temperature_increment_c?:number;pressure_increment_bar?:number;routes?:Route[]};
+export type EquilibriumConstraint = {id:string;value:number;rounds?:IndexScope;positions?:IndexScope} & ({kind:'ph';titrant:string;exchange:'add_only'|'both'} | {kind:'fugacity';species:string});
 export type Config = {
+  equilibrium_constraints?:EquilibriumConstraint[];
   schema_version:2; schedule?:Schedule; loops?:LoopDefinition; reaction_stages?:ReactionStages; name:string; species:string[]; materials:Material[]; points:Point[]; cycles:number;routes:Route[];
   activity_model:'nacl_edh'|'phreeqc'|'hkf'|'davies'|'ideal';gas_model:'ideal'|'peng_robinson'; water_species?:string;
   bootstrap:boolean;allow_database_defaults:boolean;allow_recorded_assignments:boolean;allow_non_nacl:boolean;
@@ -28,7 +31,7 @@ export type Result = {summary:PointSummary[];species:SpeciesResult[];status:JobS
 export const PHASE_LABELS = {get aqueous(){return t('水相','Aqueous');},get mineral(){return t('矿物','Mineral');},get gas(){return t('气相','Gas');}};
 export const newId = () => `id-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`;
 export const makeRoute = (phase:Route['phase']='all',source:Route['source']='material',material_id='initial'):Route => ({id:newId(),phase,source,material_id,fraction:1,fallback:'material',fallback_fraction:1,when:'always'});
-export const DEFAULT_CONFIG:Config = {schema_version:2,get name(){return t('新的平衡模拟','New equilibrium simulation');},species:[],materials:[{id:'initial',get name(){return t('初始物质','Initial composition');},inputs:[]}],points:[{id:'p1',label:'P1',temperature_c:250,pressure_bar:700}],cycles:1,routes:[makeRoute()],activity_model:'nacl_edh',gas_model:'ideal',bootstrap:true,allow_database_defaults:true,allow_recorded_assignments:true,allow_non_nacl:false,allow_unsupported_water:false,balance_tolerance_mol:1e-10,ion_size_overrides:{}};
+export const DEFAULT_CONFIG:Config = {schema_version:2,get name(){return t('新的平衡模拟','New equilibrium simulation');},species:[],materials:[{id:'initial',name:'Composition 1',inputs:[]}],points:[{id:'p1',label:'P1',temperature_c:250,pressure_bar:700}],cycles:1,routes:[makeRoute()],activity_model:'nacl_edh',gas_model:'ideal',bootstrap:true,allow_database_defaults:true,allow_recorded_assignments:true,allow_non_nacl:false,allow_unsupported_water:false,balance_tolerance_mol:1e-10,ion_size_overrides:{}};
 
 export function readConfig(value:unknown,options:{allowDraft?:boolean}={}):Config {
   if(!value || typeof value!=='object')throw new Error(t('模拟设置格式无效。',"Invalid simulation settings format."));
@@ -37,11 +40,13 @@ export function readConfig(value:unknown,options:{allowDraft?:boolean}={}):Confi
   if(cfg.schema_version!==2){
     if(!['single_point','independent_points','closed_path','repeated_flushing'].includes(cfg.mode) || !Array.isArray(cfg.inputs) || !Array.isArray(cfg.points))throw new Error(t('旧版模拟设置格式不完整。',"The legacy simulation settings are incomplete."));
     const flushing=cfg.mode==='repeated_flushing';
-    cfg={...cfg,schema_version:2,materials:[{id:'initial',get name(){return t('初始物质','Initial composition');},inputs:cfg.inputs}],cycles:flushing?(cfg.passes??1):1,points:cfg.points.map((p:any,i:number)=>({...p,id:`p${i+1}`})),routes:(flushing?['aqueous','mineral','gas'] as const:['all'] as const).map(phase=>({...makeRoute(phase,flushing?(phase==='mineral'?'previous_cycle':'previous_point'):cfg.mode==='closed_path'?'previous_point':'material'),fallback_fraction:flushing && phase==='mineral' && cfg.solid_distribution==='total_evenly'?1/cfg.points.length:1}))};
+    cfg={...cfg,schema_version:2,materials:[{id:'initial',name:'Composition 1',inputs:cfg.inputs}],cycles:flushing?(cfg.passes??1):1,points:cfg.points.map((p:any,i:number)=>({...p,id:`p${i+1}`})),routes:(flushing?['aqueous','mineral','gas'] as const:['all'] as const).map(phase=>({...makeRoute(phase,flushing?(phase==='mineral'?'previous_cycle':'previous_point'):cfg.mode==='closed_path'?'previous_point':'material'),fallback_fraction:flushing && phase==='mineral' && cfg.solid_distribution==='total_evenly'?1/cfg.points.length:1}))};
     if(cfg.template_source){cfg.import_provenance=cfg.template_source;cfg.name=({'Basic Sample Template':'平衡计算','Water–Rock Interaction Sample Template':'水岩反应'} as any)[cfg.name] || cfg.name;}
     ['mode','passes','solid_distribution','inputs','template_source'].forEach(k=>delete cfg[k]);
   }
   if(options.allowDraft&&Array.isArray(cfg.materials))for(const material of cfg.materials)if(Array.isArray(material?.inputs))for(const row of material.inputs)if(row&&row.amount===null)row.amount=NaN;
+  if(options.allowDraft&&Array.isArray(cfg.equilibrium_constraints))for(const row of cfg.equilibrium_constraints)if(row&&row.value===null)row.value=NaN;
+  if(cfg.equilibrium_constraints!==undefined && (!Array.isArray(cfg.equilibrium_constraints)||cfg.equilibrium_constraints.length>100||!cfg.equilibrium_constraints.every((row:any)=>validConstraintShape(row,!!options.allowDraft))))throw new Error(t('平衡目标设置格式不完整。','The equilibrium target settings are incomplete.'));
   if(cfg.schedule===null)delete cfg.schedule;
   if(cfg.loops===null||cfg.schedule)delete cfg.loops;
   if(cfg.reaction_stages===null)delete cfg.reaction_stages;

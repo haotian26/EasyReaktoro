@@ -1,0 +1,28 @@
+.environment-help { min-width: 0; display: grid; gap: 16px; }
+.environment-heading { display: flex; align-items: flex-start; gap: 13px; }
+.environment-heading > svg { color: var(--accent); flex: 0 0 auto; margin-top: 6px; }
+.environment-heading > div { min-width: 0; }
+.environment-help h3 { margin: 10px 0 5px; font-size: 20px; line-height: 1.35; }
+.environment-help p { margin: 6px 0 0; color: var(--muted); line-height: 1.6; font-size: 13px; }
+.environment-help .environment-path { overflow-wrap: anywhere; user-select: text; }
+.environment-actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.environment-actions button { min-height: 36px; }
+.environment-help .environment-caption { margin: -7px 0 0; font-size: 12px; }
+.environment-help details > summary { cursor: pointer; color: var(--accent); font-size: 13px; width: fit-content; line-height: 1.5; }
+.environment-help details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+.environment-guide { border-top: 1px solid var(--line); padding-top: 14px; }
+.environment-guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 13px; }
+.environment-guide h4 { margin: 0; color: var(--text); font-size: 13px; }
+.environment-guide a { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; font-size: 13px; }
+.environment-guide a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.environment-guide small[role='alert'] { display: block; margin-top: 7px; overflow-wrap: anywhere; color: var(--danger); }
+.environment-issue { padding: 13px 15px; background: var(--surface-soft); border-left: 3px solid var(--amber); border-radius: 5px; }
+.environment-issue > strong { color: var(--text); font-size: 13px; }
+.environment-issue details { margin-top: 8px; }
+.environment-help pre { margin: 10px 0 0; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; max-height: 180px; overflow-y: auto; user-select: text; }
+.environment-help .environment-candidates { margin: 0; }
+.home-environment { padding: 24px; margin-bottom: 22px; }
+.home-environment .offline-access { margin: 16px 0 0; border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 13px; }
+@media (max-width: 1150px) {
+  .environment-guide-grid { grid-template-columns: 1fr; gap: 17px; }
+}

@@ -48,7 +48,7 @@ describe('simulation language switching preserves scientific inputs',()=>{
   fireEvent.click(screen.getByRole('tab',{name:'逐点条件表'}));const metric=screen.getByLabelText('条件表附加参数');fireEvent.change(metric,{target:{value:'route:flow:fraction'}});
   // Use the option identity exposed by the control, independent of translated text.
   const select=metric as HTMLSelectElement;const option=[...select.options].find(o=>o.textContent?.includes('取用比例'));if(option)fireEvent.change(metric,{target:{value:option.value}});
-  const chosen=select.value;expect(chosen).not.toBe('');switchTo('en');expect(screen.getByLabelText('Additional parameter in the conditions table')).toBe(select);expect(select.value).toBe(chosen);expect(screen.getByRole('tab',{name:'Conditions by point'}).getAttribute('aria-selected')).toBe('true');
+  const chosen=select.value;expect(chosen).not.toBe('');switchTo('en');expect(screen.getByLabelText('Additional parameter in the conditions table')).toBe(select);expect(select.value).toBe(chosen);expect(screen.getByRole('tab',{name:'Point values'}).getAttribute('aria-selected')).toBe('true');
   expect(view.container.querySelector('[data-actual-temperature]')?.textContent).toContain('50');expect(change).not.toHaveBeenCalled();expect(view.container.textContent).not.toMatch(/[\u3400-\u9fff]/);
  });
  it('preserves an incomplete Python edit and CodeMirror undo while translating standard module headings',()=>{

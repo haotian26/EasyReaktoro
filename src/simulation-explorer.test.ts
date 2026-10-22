@@ -99,3 +99,21 @@ it('sends the saved result total from the matching preview response, not the pla
   await waitFor(()=>expect(posted).toHaveBeenCalledWith(expect.objectContaining({type:'load',sourcePointCount:13,runKey:'coverage-run'}),'*'));
  }finally{cleanup();}
 });
+
+
+it('avoids duplicate round and position quantities while preserving saved aliases and distinct imported data',()=>{
+ const parser=explorerHTML.slice(explorerHTML.indexOf('"use strict";'),explorerHTML.indexOf('// View state only;'));
+ const context=vm.createContext({document:{documentElement:{lang:'en'}}});vm.runInContext(parser+';globalThis.build=buildModel;',context);
+ const payload:any={format:'result-explorer-1',key_columns:['run_index'],summary:{columns:['run_index','pass','step','inner_index','outer_index','pH'],rows:[[0,1,1,1,1,7],[1,1,2,2,1,6.8],[2,2,1,1,2,7.1]]},species_tables:[]};
+ const ordinary=context.build(payload);expect(ordinary.coordinateAxes).toEqual(expect.arrayContaining(['pass','step']));expect(ordinary.statuses.map((s:any)=>s.key)).toEqual(['pH']);
+ const saved=context.build({...payload,view:{axis:'state:inner_index',charts:[{selectedStates:['state:outer_index']}]}});expect(saved.byAxis.has('state:inner_index')).toBe(true);expect(saved.byState.has('state:outer_index')).toBe(true);
+ const imported=structuredClone(payload);imported.summary.rows[1][3]=20;expect(context.build(imported).byState.has('state:inner_index')).toBe(true);
+});
+
+it('labels every round in overlays, including the current round',()=>{
+ const source=explorerHTML.slice(explorerHTML.indexOf('function seriesPaths('),explorerHTML.indexOf('function renderPlots('));
+ const groups=[{indices:[0,1],fixed:{pass:1}},{indices:[2,3],fixed:{pass:2}},{indices:[4,5],fixed:{pass:3}}];
+ const context:any=vm.createContext({shownPaths:()=>groups,allPaths:groups,slice:groups[1].indices,state:{plotScope:'all'},matchingPins:()=>[],fixedKeys:()=>['pass'],same:(a:any,b:any)=>a===b,pathName:(f:any)=>'Round '+f.pass,L:(_z:string,en:string)=>en,dashes:['','4 2','2 2']});
+ vm.runInContext(source+';globalThis.paths=seriesPaths;',context);const paths=context.paths([{id:'Calcite',dash:''}]);expect(paths.map((p:any)=>p.pathLabel)).toEqual(['Round 1','Current · Round 2','Round 3']);expect(paths.every((p:any)=>p.showPathLabel)).toBe(true);expect(new Set(paths.map((p:any)=>p.curveId)).size).toBe(3);
+ context.shownPaths=()=>[groups[1]];expect(context.paths([{id:'Calcite',dash:''}])[0].showPathLabel).toBe(false);
+});

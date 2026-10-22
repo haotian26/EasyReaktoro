@@ -58,7 +58,7 @@ class ExecutableProgramTests(unittest.TestCase):
         saved = json.loads((root/'input.json').read_text())
         self.assertEqual(saved['program']['cells'], self.doc['cells'])
         self.assertEqual(saved['execution'], execution_identity(self.doc))
-        self.assertIn('self.solver.solve(work, conditions)', (root/'program.py').read_text())
+        self.assertIn('solver.solve(work, conditions)', (root/'program.py').read_text())
 
     def test_editing_process_changes_real_solved_conditions_and_is_preserved_on_ui_run(self):
         cell = self.cell('process')

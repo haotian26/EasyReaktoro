@@ -18,14 +18,13 @@ describe('schedule editing as a single model',()=>{
  it('selects the exact preview coordinate for a local adjustment',()=>{Element.prototype.scrollIntoView=vi.fn();const c=initial();c.schedule!.positions=4;c.schedule!.rounds=3;function Whole(){const [config,setConfig]=useState(c);return <><SimulationConditions config={config} patch={p=>setConfig(c=>({...c,...p}))} items={[]} disabled={false} onError={vi.fn()}/><output data-testid="config">{JSON.stringify(config)}</output></>;}render(<Whole/>);fireEvent.change(screen.getByLabelText('预览路径位置'),{target:{value:'3'}});fireEvent.change(screen.getByLabelText('预览反应轮次'),{target:{value:'2'}});fireEvent.click(screen.getByRole('button',{name:'单独调整此处'}));expect(current().schedule.overrides[0]).toMatchObject({positions:{start:3,end:3},rounds:{start:2,end:2}});expect(screen.getByLabelText('选择要单独修改的参数')).toBeTruthy();});
 });
 
-it('keeps a parameter method draft across the materials panel and previews empty local groups',()=>{
+it('keeps a direct sequence formula when editing a local point',()=>{
  Element.prototype.scrollIntoView=vi.fn();
  function Whole(){const [config,setConfig]=useState(initial());return <SimulationConditions config={config} patch={p=>setConfig(c=>({...c,...p}))} items={[]} disabled={false} onError={vi.fn()}/>;}
- render(<Whole/>);fireEvent.change(screen.getByLabelText('路径位置数'),{target:{value:'4'}});
- fireEvent.change(screen.getByLabelText('温度 变化方式'),{target:{value:'list'}});fireEvent.change(screen.getByLabelText('温度 数列'),{target:{value:'250, 220, 180, 100'}});
- fireEvent.change(screen.getByLabelText('温度 变化方式'),{target:{value:'fixed'}});fireEvent.click(screen.getByRole('tab',{name:'物料来源'}));fireEvent.click(screen.getByRole('tab',{name:'条件与用量'}));
- fireEvent.change(screen.getByLabelText('温度 变化方式'),{target:{value:'list'}});expect((screen.getByLabelText('温度 数列') as HTMLTextAreaElement).value).toBe('250, 220, 180, 100');
- fireEvent.click(screen.getByRole('button',{name:'添加单独设置'}));expect(screen.getByLabelText('预览路径位置')).toBeTruthy();expect(document.querySelector('[data-actual-temperature]')?.textContent).toContain('250');
+ render(<Whole/>);fireEvent.change(screen.getByLabelText('first 结束条件'),{target:{value:'i=3'}});
+ fireEvent.change(screen.getByLabelText('first_following 温度'),{target:{value:'list(i, 250, 220, 180, 100)'}});
+ fireEvent.click(screen.getByRole('button',{name:'单独调整此处'}));expect(screen.getByLabelText('温度 本点数值或公式')).toBeTruthy();
+ expect((screen.getByLabelText('first_following 温度') as HTMLInputElement).value).toBe('list(i, 250, 220, 180, 100)');expect(document.querySelector('[data-actual-temperature]')?.textContent).toContain('250');
 });
 it('does not offer unused origin inputs for a relative change wholly after the first position',()=>{
  const c=initial();c.schedule!.overrides=[{id:'local',rounds:{start:1},positions:{start:3,end:4},parameters:[{id:'local-temperature',target:{kind:'temperature'},value:{mode:'relative',along:'path',start:99,step:-10,other_step:4}}]}];

@@ -19,7 +19,7 @@ def program_cells():
     from .simulation import Simulation
     from .simulation_process import ProcessInventory
     from .simulation_code import CELL_FIELDS
-    bind_parameters = 'snapshot = copy.deepcopy(snapshot)\nsnapshot["config"].update({\n' + ''.join(f'    {name!r}: ' + (f"locals().get({name!r}, snapshot['config'].get({name!r}))" if name in ('schedule', 'loops', 'points', 'cycles', 'reaction_stages', 'routes') else name) + ',\n' for names in CELL_FIELDS.values() for name in names) + '})\n'
+    bind_parameters = 'snapshot = copy.deepcopy(snapshot)\nsnapshot["config"].update({\n' + ''.join(f'    {name!r}: ' + (f"locals().get({name!r}, snapshot['config'].get({name!r}))" if name in ('schedule', 'loops', 'points', 'cycles', 'reaction_stages', 'routes', 'equilibrium_constraints') else name) + ',\n' for names in CELL_FIELDS.values() for name in names) + '})\n'
     def methods(*names):
         chunks = []
         for name in names:
@@ -114,7 +114,7 @@ def execute_program(document, snapshot, progress, emit, output_directory, namesp
                      execution_config=execution_config, LoopPlan=LoopPlan)
     # Older custom runtime cells can refer to retained legacy coordinates even
     # when the visible conditions cell now defines only the active loops.
-    namespace.update({name: copy.deepcopy(snapshot['config'].get(name)) for name in ('schedule', 'loops', 'points', 'cycles', 'reaction_stages', 'routes')})
+    namespace.update({name: copy.deepcopy(snapshot['config'].get(name)) for name in ('schedule', 'loops', 'points', 'cycles', 'reaction_stages', 'routes', 'equilibrium_constraints')})
     for cell in document['cells']:
         progress(code_cell=cell['id'], code_cell_title=cell['title'])
         exec(compile(cell['source'], f"cell:{cell['id']}", 'exec'), namespace)
@@ -186,11 +186,29 @@ def validate_record(record, index, schemas=None):
             if not isinstance(name, str):
                 raise ValueError('转移物种名称必须为字符串。')
             number(value, 'amounts_mol', 0)
+    constraints = record.get('constraints', [])
+    if not isinstance(constraints, list):
+        raise ValueError('constraints 需要列表。')
+    seen_constraints = set()
+    for row in constraints:
+        if not isinstance(row, dict) or not isinstance(row.get('constraint_id'), str) or row['constraint_id'] in seen_constraints:
+            raise ValueError('每点平衡约束记录需要唯一编号。')
+        seen_constraints.add(row['constraint_id'])
+        if row.get('kind') not in ('ph', 'fugacity') or not isinstance(row.get('exchange_formula'), str):
+            raise ValueError('平衡约束记录需要类型及交换化学式。')
+        for key in ('target', 'actual', 'residual', 'exchange_mol', 'cumulative_exchange_mol'):
+            number(row.get(key), key)
+        if row['kind'] == 'fugacity' and (row['target'] <= 0 or row['actual'] <= 0):
+            raise ValueError('气体逸度须大于零。')
+    for kind in ('balances', 'process_balance'):
+        for row in record.get(kind, []):
+            if 'external_exchange_mol' in row:
+                number(row['external_exchange_mol'], 'external_exchange_mol')
     json.dumps(record, allow_nan=False)
     if schemas is not None:
         candidate = dict(schemas)
         row_groups = [('summary', [summary]), ('component_balance', record['balances']),
-                      ('process_balance', record.get('process_balance', []))]
+                      ('process_balance', record.get('process_balance', [])), ('constraints', record.get('constraints', []))]
         row_groups.extend((phase, [r for r in record['species'] if r['phase_type'] == phase]) for phase in ('aqueous', 'mineral', 'gas'))
         for kind, rows in row_groups:
             if not isinstance(rows, list):

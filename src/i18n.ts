@@ -34,7 +34,7 @@ const patterns:Array<[RegExp,(...values:string[])=>string]>=catalog.patterns.map
  new RegExp('^'+entry.zh.map(escapePattern).join('([\\s\\S]*?)')+'$'),
  (...values:string[])=>entry.en.map((part,index)=>part+(index<entry.order.length?values[entry.order[index]]:'')).join(''),
 ]);
-export function registerMessagePatterns(entries:Array<[RegExp,(...values:string[])=>string]>){patterns.push(...entries);}
+export function registerMessagePatterns(entries:Array<[RegExp,(...values:string[])=>string]>,options:{priority?:boolean}={}){if(options.priority)patterns.unshift(...entries);else patterns.push(...entries);}
 
 export function registerMessages(entries:Record<string,string>){Object.entries(entries).forEach(([zh,en])=>{messages.set(zh,en);reverseMessages.set(en,zh);});}
 export function translateMessage(value:string):string{

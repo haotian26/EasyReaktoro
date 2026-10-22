@@ -1,0 +1,30 @@
+import {describe,it,expect} from 'vitest';
+import {evaluateExpression} from './reaction-expression';
+import {DEFAULT_CONFIG,makeRoute,type Config} from './simulation-types';
+import {compileSchedule,defaultSchedule} from './simulation-schedule';
+import {setStageCondition} from './reaction-stage-conditions';
+import {saturationPressure} from './process-layout';
+const base=():Config=>({...structuredClone(DEFAULT_CONFIG),schedule:defaultSchedule(),reaction_stages:Object.fromEntries(['first_start','first_following','later_start','later_following'].map(stage=>[stage,[{...makeRoute('all','material','initial'),id:stage}]])) as Config['reaction_stages']});
+const formula=(c:Config,stage:any,kind:'temperature'|'pressure',expression:string)=>{c.schedule=setStageCondition(c.schedule!,stage,{kind},{mode:'expression',expression});};
+describe('direct reaction expressions',()=>{
+ it('evaluates arithmetic without evaluating code',()=>{expect(evaluateExpression('max(1, 2^3) + min(4, 3)',()=>0)).toBe(11);expect(evaluateExpression('-2^2',()=>0)).toBe(-4);expect(evaluateExpression('0.3 - 3*0.1',()=>0)).toBe(0);expect(evaluateExpression('0050',()=>0)).toBe(50);expect(evaluateExpression('list(i, 20, 30, 40)',()=>1)).toBe(30);for(const text of ['globalThis.x','1/0','sqrt(-1)','list(4,1,2)','x[0]','(()=>1)()','2;3','0x10','1_000','2**3','max(1,)' ])expect(()=>evaluateExpression(text,()=>{throw Error('Unknown');})).toThrow();});
+ it('runs the HCh-style pressure path and includes the stopping step',()=>{const c=base();for(const prefix of ['first','later']){formula(c,`${prefix}_start`,'temperature','250');formula(c,`${prefix}_following`,'temperature','T');formula(c,`${prefix}_start`,'pressure','700');formula(c,`${prefix}_following`,'pressure','P-5');}c.schedule!.stop={first:'P < 150',later:'P < 150',rounds:'N = 2'};const p=compileSchedule(c);expect(p.counts).toEqual({inner:112,outer:3,total:336});expect(p.point(111,2)).toMatchObject({temperature_c:250,pressure_bar:145});expect(p.point(110,0).pressure_bar).toBe(150);});
+ it('uses current temperature for Psat and changes round conditions independently',()=>{const c=base();for(const prefix of ['first','later']){formula(c,`${prefix}_start`,'temperature','250-10*N');formula(c,`${prefix}_following`,'temperature','T-50');formula(c,`${prefix}_start`,'pressure',prefix==='first'?'Psat(T)':'700');formula(c,`${prefix}_following`,'pressure',prefix==='first'?'Psat(T)':'P');}c.schedule!.stop={first:'T <= 100',later:'T <= 100',rounds:'N = 1'};const p=compileSchedule(c);expect(p.lengths).toEqual([4,4]);expect(p.point(1,0).pressure_bar).toBeCloseTo(saturationPressure(200));expect(p.point(3,1)).toMatchObject({temperature_c:90,pressure_bar:700});});
+ it('supports different round lengths and rejects unavailable above references',()=>{const c=base();c.schedule!.stop={first:'i = 1',later:'i = N+1',rounds:'N = 2'};const p=compileSchedule(c);expect(p.lengths).toEqual([2,3,4]);expect(p.counts.total).toBe(9);expect(p.active(3,1)).toBe(false);expect(p.runIndex(0,2)).toBe(5);const bad=structuredClone(c);bad.reaction_stages!.later_following[0].source='previous_cycle';expect(()=>compileSchedule(bad)).toThrow();bad.reaction_stages!.later_following[0].fraction=0;expect(compileSchedule(bad).counts.total).toBe(9);});
+ it('varies composition portions directly with round and position',()=>{const c=base();c.schedule!.stop={first:'i = 2',later:'i = 2',rounds:'N = 1'};const target={kind:'route_fraction' as const,route_id:'later_following',field:'fraction' as const};c.schedule!.parameters.push({id:'amount',target,value:{mode:'expression',expression:'(N+1)*(i+1)/10'}});expect(compileSchedule(c).valueAt(target,2,1)).toBeCloseTo(.6);});
+ it('rejects missing values, unreachable ends and implicit previous values at the first step',()=>{for(const expr of ['','T','P','1/0']){const c=base();formula(c,'first_start','temperature',expr);expect(()=>compileSchedule(c)).toThrow();}const c=base();c.schedule!.stop={first:'P < 0'};expect(()=>compileSchedule(c)).toThrow(/10,000/);c.schedule!.stop={first:'3'};expect(()=>compileSchedule(c)).toThrow();});
+ it('preserves defined local changes and then continues from the changed value',()=>{const c=base();formula(c,'first_start','pressure','700');formula(c,'first_following','pressure','P-5');c.schedule!.positions=4;const first=c.schedule!.overrides.find(o=>o.positions.start===2)!;first.positions.end=2;c.schedule!.overrides.push({id:'last',rounds:{start:1,end:1},positions:{start:4},parameters:[{id:'last-p',target:{kind:'pressure'},value:{mode:'expression',expression:'P-5'}}]},{id:'middle',rounds:{start:1,end:1},positions:{start:3,end:3},parameters:[{id:'middle-p',target:{kind:'pressure'},value:{mode:'fixed',value:500}}]});expect(compileSchedule(c).point(3,0).pressure_bar).toBe(495);});
+});
+
+it('rejects values inherited from a position the previous round never reached',()=>{
+ for(const value of [{mode:'expression' as const,expression:'Xr*2'},{mode:'relative' as const,along:'round' as const,start:1,step:1,other_step:0}]){
+  const c=base();c.materials[0].inputs=[{species:'H2O',amount:1,unit:'kg'}];c.schedule!.stop={first:'i=1',later:'i=2',rounds:'N=1'};
+  c.schedule!.overrides.push({id:'amount',positions:{start:1},rounds:{start:2},parameters:[{id:'amount-value',target:{kind:'material_amount',material_id:'initial',species:'H2O'},value}]});
+  expect(()=>compileSchedule(c)).toThrow(/不存在|ended/);
+ }
+ const c=base();c.schedule!.stop={first:'i=1',later:'i=2',rounds:'N=1'};c.schedule!.overrides.push({id:'temperature-recurrence',positions:{start:1},rounds:{start:2},parameters:[{id:'temperature-recurrence',target:{kind:'temperature'},value:{mode:'relative',along:'round',start:25,step:10,other_step:0}}]});
+ expect(()=>compileSchedule(c)).toThrow(/不存在|ended/);
+ // An explicit rule for the new position makes the same simulation valid.
+ c.schedule!.overrides[0].positions.end=2;c.schedule!.overrides.push({id:'new-position',positions:{start:3},rounds:{start:2},parameters:[{id:'new-position',target:{kind:'temperature'},value:{mode:'fixed',value:80}}]});
+ expect(compileSchedule(c).point(2,1).temperature_c).toBe(80);
+});

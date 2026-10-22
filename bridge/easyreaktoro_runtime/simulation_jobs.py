@@ -155,10 +155,12 @@ class Jobs:
             atomic_json(root/'simulation.ersim.json', {'format': 'easyreaktoro-simulation', 'schema_version': 2, 'config': config, 'database': source, 'code_editor': saved_editor})
             atomic_json(root/'run.json', {'format': 'easyreaktoro-run', 'schema_version': 1, 'job_id': job_id, 'created_at': time.time()})
             loop_metadata = {'loop_axes': LoopPlan(config).metadata(), 'field_info': LoopPlan(config).field_info()} if config.get('schedule') or config.get('loops') else {}
+            from .simulation_constraints import field_info
+            loop_metadata['field_info'] = {**loop_metadata.get('field_info', {}), **field_info(config)}
             atomic_json(root/'metadata.json', {**loop_metadata, 'config': config, 'database': source, 'ion_size_audit': audit, 'process_balance': [], 'partial_results': True, 'execution': execution})
             inner_count, outer_count = execution_shape(config)
             atomic_json(root/'status.json', {'status': 'running', 'stage': 'preparing', 'message': '正在建立计算体系',
-                'completed': 0, 'total': inner_count * outer_count, 'started_at': time.time(), 'warnings': [], 'execution': execution})
+                'completed': 0, 'total': LoopPlan(config).total if config.get('schedule') else inner_count * outer_count, 'started_at': time.time(), 'warnings': [], 'execution': execution})
             log = (root/'worker.log').open('w')
             env = {**os.environ, 'PYTHONPATH': str(Path(__file__).resolve().parents[1])}
             try:
@@ -393,7 +395,7 @@ class Jobs:
             config, _, _ = prepare_program(args['config'], args.get('code_editor'))
             config, audit = normalize_config(config, handle['records'], database_source(handle))
             inner_count, outer_count = execution_shape(config)
-            return {'config': config, 'ion_size_audit': audit, 'total': inner_count*outer_count}
+            return {'config': config, 'ion_size_audit': audit, 'total': LoopPlan(config).total if config.get('schedule') else inner_count*outer_count}
         if action == 'start':
             require(service.probe()['available'], 'RUNTIME_UNAVAILABLE', 'error.simulationInput', '请先连接 Reaktoro 运行时')
             return self.start(handle, args['config'], args['directory'], args.get('code_editor'), args.get('result_name'), args.get('overwrite_token'))

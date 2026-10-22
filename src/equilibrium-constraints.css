@@ -1,0 +1,19 @@
+.constraint-details{padding:14px 0 0;display:grid;gap:10px;min-width:0}
+.constraint-source-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px}
+.constraint-source-fields label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.constraint-source-fields label>span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.constraint-source-fields input,.constraint-source-fields select,.constraint-scope input,.constraint-scope select{width:100%;min-width:0;box-sizing:border-box}
+.constraint-range{border-top:1px solid var(--line);padding-top:9px;font-size:12px}
+.constraint-range summary{cursor:pointer;color:var(--muted)}
+.constraint-range p,.constraint-exchange-note{font-size:12px;color:var(--muted);line-height:1.55;margin:0}
+.constraint-scope{display:grid;grid-template-columns:minmax(120px,1.4fr) repeat(3,minmax(60px,1fr));align-items:end;gap:8px;margin:10px 0}
+.constraint-scope label{display:flex;flex-direction:column;gap:5px;color:var(--muted)}
+.schedule-target-actions{padding:0 18px 15px;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.schedule-target-actions .schedule-add{margin:0}
+.schedule-preview__targets{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+.schedule-preview__targets>p{font-size:12px;color:var(--muted);margin:5px 0}
+.schedule-preview__targets dl{display:grid;gap:8px;margin:8px 0}
+.schedule-preview__targets dl>div{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.schedule-preview__targets dt{font-size:12px;color:var(--muted)}
+.schedule-preview__targets dd{margin:0;font-variant-numeric:tabular-nums}
+@media(max-width:620px){.constraint-scope{grid-template-columns:repeat(3,minmax(0,1fr))}.constraint-scope label:first-child{grid-column:1/-1}}

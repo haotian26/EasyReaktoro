@@ -512,14 +512,38 @@ class Service:
         handle.setdefault("pending_audit", []).append({"action": f"species.{action}", "species_id": record.get("id"), "name": record["name"]})
         return {"species": record, "summary": self.summary(handle)}
 
-    def save(self, handle: dict[str, Any], path: str | None = None) -> dict[str, Any]:
+    def save(self, handle: dict[str, Any], path: str | None = None, backups_root: str | None = None) -> dict[str, Any]:
         require(not handle["read_only"], "READ_ONLY", "error.readOnly", "Official databases cannot be saved")
         target = str(Path(path or handle["path"]).expanduser().resolve()); meta = dict(handle["meta"])
         same = target == handle["path"]
-        meta = repository.save(target, meta, handle["records"], "save_as" if path else "save", expected_revision=handle.get("revision") if same else None, exclusive=not same, histories=handle.get("histories"), pending=handle.get("pending_audit"), validation=handle.get("validation"))
+        from .database_versions import VersionStore
+        store = VersionStore(backups_root, target) if backups_root and same else None
+        captured: list[str] = []
+        def preserve_previous() -> None:
+            if store is None: return
+            try:
+                version_id = store.capture(meta, handle["records"], handle.get("revision"))
+                if version_id: captured.append(version_id)
+            except BridgeError:
+                raise
+            except Exception as exc:
+                raise BridgeError("BACKUP_SAVE_FAILED", "error.backupSaveFailed", "无法保存历史版本，原数据库尚未改动。请检查保存位置的权限或可用空间，然后重试。") from exc
+        try:
+            meta = repository.save(target, meta, handle["records"], "save_as" if path else "save", expected_revision=handle.get("revision") if same else None, exclusive=not same, histories=handle.get("histories"), pending=handle.get("pending_audit"), validation=handle.get("validation"), before_replace=preserve_previous if store else None)
+        except Exception:
+            for version_id in captured:
+                try: store.delete(version_id)
+                except Exception: pass  # Retaining a valid old snapshot is safer than removing unknown data.
+            raise
+        backup_warning = None
+        if store and captured:
+            try: store.prune()
+            except Exception:
+                backup_warning = "数据库及本次历史版本已保存，但未能清理较早版本。请在历史版本中检查。"
+
         handle.update({"path": target, "name": Path(target).stem, "dirty": False, "meta": meta, "pending_audit": [], "revision": repository.revision(target), "histories": repository.history(target)})
         handle.pop("validation", None)
-        return {"success": True, "output_path": target, "summary": self.summary(handle)}
+        return {"success": True, "output_path": target, "summary": self.summary(handle), "backup_warning": backup_warning}
 
     @staticmethod
     def record_issues(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -866,8 +890,12 @@ class Service:
         if op == "species.create": return self.mutate_species(handle, "create", args)
         if op == "species.update": return self.mutate_species(handle, "update", args)
         if op == "species.delete": return self.mutate_species(handle, "delete", args)
-        if op == "rtdb.save": return self.save(handle)
-        if op == "rtdb.save_as": return self.save(handle, str(args["path"]))
+        if op == "rtdb.save": return self.save(handle, backups_root=args.get("backups_root"))
+        if op == "rtdb.save_as": return self.save(handle, str(args["path"]), backups_root=args.get("backups_root"))
+        if op == "rtdb.versions":
+            from .database_versions import VersionStore
+            require(not handle["read_only"], "READ_ONLY", "error.readOnly", "系统数据库没有个人历史版本。")
+            return VersionStore(str(args["backups_root"]), handle["path"]).request(args.get("payload") or {})
         if op == "validate.database": return self.validate(handle)
         if op == "import.preview": return self.import_preview(handle, args)
         if op == "import.commit": return self.import_commit(handle, args)

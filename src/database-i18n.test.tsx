@@ -39,7 +39,7 @@ beforeEach(()=>{
  };
  mocks.invoke.mockImplementation((command,args)=>Promise.resolve().then(()=>handler(command,args)));
 });
-afterEach(()=>{cleanup();setLanguage('zh-CN');});
+afterEach(()=>{cleanup();vi.useRealTimers();setLanguage('zh-CN');});
 
 it('normalizes and restores the chosen language',()=>{
  expect(normalizePreferences({language:'en'}).language).toBe('en');
@@ -53,6 +53,15 @@ it('starts in saved English while preserving the database filename',async()=>{
  await screen.findByText('From thermodynamic data to reactions and results');
  expect(screen.getByText('Database and species management')).toBeTruthy();
  expect(screen.getByRole('button',{name:/热液实验 \/test\/热液实验.rtdb/})).toBeTruthy();
+ expect(document.documentElement.lang).toBe('en');
+});
+it('keeps the English layout language while changing theme and density',async()=>{
+ const original=handler;handler=(command,args)=>command==='settings_load'?{...original(command,args),language:'en'}:original(command,args);
+ render(<App/>);await screen.findByText('From thermodynamic data to reactions and results');
+ fireEvent.click(screen.getByRole('button',{name:'Settings'}));
+ fireEvent.change(screen.getByRole('combobox',{name:'Appearance'}),{target:{value:'dark'}});
+ expect(document.documentElement.lang).toBe('en');
+ fireEvent.change(screen.getByRole('combobox',{name:'Interface density'}),{target:{value:'compact'}});
  expect(document.documentElement.lang).toBe('en');
 });
 it('persists a settings language change without replacing the open database or selected species',async()=>{
@@ -135,4 +144,24 @@ it('provides English import and export guidance while retaining scientific ident
 it('translates registry labels without rounding or converting the model parameter itself',()=>{
  setLanguage('en');render(<ModelParameterTable value={{G298:-12345.678901234}} definition={definition as any}/>);
  expect(screen.getByText('Reference Gibbs energy')).toBeTruthy();expect(screen.getByText('J/mol')).toBeTruthy();expect(screen.getByText('-12345.678901234')).toBeTruthy();
+});
+
+it('keeps English save failures visible until dismissed, independently of message wording',async()=>{
+ const original=handler;handler=(command,args)=>command==='settings_load'?{...original(command,args),language:'en'}:command==='settings_save'?Promise.reject(new Error('No space left on device')):original(command,args);
+ render(<App/>);await screen.findByText('From thermodynamic data to reactions and results');
+ fireEvent.click(screen.getByRole('button',{name:'Settings'}));
+ vi.useFakeTimers();
+ await act(async()=>{fireEvent.change(screen.getByRole('combobox',{name:'Appearance'}),{target:{value:'dark'}});await Promise.resolve();await Promise.resolve();});
+ const alert=screen.getByRole('alert');expect(alert.textContent).toContain('Could not save settings:');expect(alert.textContent).toContain('insufficient free space');
+ act(()=>vi.advanceTimersByTime(7000));expect(screen.getByRole('alert')).toBe(alert);
+ act(()=>setLanguage('zh-CN'));expect(screen.getByRole('alert')).toBe(alert);expect(alert.textContent).toContain('设置保存失败');
+ fireEvent.click(screen.getByRole('button',{name:'关闭提示'}));expect(screen.queryByRole('alert')).toBeNull();
+});
+it('still dismisses ordinary successful saves automatically',async()=>{
+ const original=handler;handler=(command,args)=>command==='rtdb_open'?{summary:{...summary,dirty:true}}:command==='rtdb_save'?{success:true,summary:{...summary,dirty:false}}:original(command,args);
+ render(<App/>);fireEvent.click(await screen.findByRole('button',{name:/热液实验 \/test\/热液实验.rtdb/}));await screen.findByRole('heading',{name:'热液实验'});
+ vi.useFakeTimers();
+ await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'保存'}));await Promise.resolve();await Promise.resolve();});
+ expect(screen.queryByRole('alert')).toBeNull();expect(screen.getByText('数据库已保存')).toBeTruthy();
+ act(()=>vi.advanceTimersByTime(7000));expect(screen.queryByText('数据库已保存')).toBeNull();
 });

@@ -91,6 +91,7 @@ def validate_material_bases(cfg, groups, plan=None):
     indices = {point['id']: i for i, point in enumerate(cfg['points'])}
     for cycle in range(cfg['cycles']):
         for index in range(len(cfg['points'])):
+            if hasattr(plan, 'active') and not plan.active(cycle, index): continue
             assigned = {(target['material_id'], target['species']): value for target, value in plan.assignments(cycle, index)
                         if target['kind'] == 'material_amount'} if plan else {}
             routes = plan.routes(cycle, index) if plan else reaction_routes(cfg, cycle, index)
@@ -112,7 +113,7 @@ def validate_material_bases(cfg, groups, plan=None):
 
 def validate_process(cfg, groups):
     from .simulation_loops import LoopPlan
-    loops = LoopPlan(cfg) if cfg.get('loops') else None
+    loops = LoopPlan(cfg) if cfg.get('loops') or cfg.get('schedule') else None
     points = cfg['points']
     ids = [p.get('id') for p in points]
     require(all(isinstance(i, str) and i for i in ids) and len(set(ids)) == len(ids), 'SIMULATION_INPUT', 'error.simulationInput', '每个计算点必须有唯一 ID')
@@ -145,6 +146,7 @@ def validate_process(cfg, groups):
     used = {}
     for cycle in range(cfg['cycles']):
         for i, point in enumerate(points):
+            if hasattr(loops, 'active') and not loops.active(cycle, i): continue
             routes = loops.routes(cycle, i) if loops else reaction_routes(cfg, cycle, i)
             require(stages is None or bool(routes), 'PROCESS_MISSING_SOURCE', 'error.simulationInput', f'{STAGE_LABELS[reaction_stage(cycle, i)]}没有物料来源，请为该位置添加需要参与反应的物料')
             for route in routes:
@@ -159,6 +161,7 @@ def validate_process(cfg, groups):
                     continue
                 if not route['fraction']:
                     continue
+                require(not hasattr(loops, 'active') or loops.active(*origin), 'PROCESS_MISSING_SOURCE', 'error.simulationInput', f'Round {cycle+1}, position {i+1}: the source round ended before the selected source position.')
                 allocations = used.setdefault(origin, {})
                 for name in route_species(route, groups):
                     allocations[name] = allocations.get(name, 0) + route['fraction']
@@ -180,7 +183,8 @@ def actual_point(point, cycle):
                 f"{point.get('label', '计算点')} 第 {cycle+1} 轮温度为 {temperature:g} °C；纯水饱和蒸汽压需要 0.01 ≤ T < 373.946 °C，请调整温度或改为指定压力")
         import reaktoro as rkt
         pressure = float(rkt.waterSaturationPressureWagnerPruss(temperature + 273.15)) / 1e5
-    return {**point, 'temperature_c': temperature, 'pressure_bar': pressure, 'pressure_mode': mode}
+    return {**point, 'temperature_c': temperature, 'pressure_bar': pressure, 'pressure_mode': mode,
+            **({'_outer': cycle} if '_inner' in point else {})}
 
 
 class ProcessInventory:
@@ -193,6 +197,8 @@ class ProcessInventory:
         self.outputs = {}
         self.external = simulation.np.zeros(len(simulation.components))
         self.inventory = self.external.copy()
+        self.fresh_external = self.external.copy()
+        self.reservoir_exchange = self.external.copy()
         self.transfers = []
 
     def assemble(self, cycle, index):
@@ -232,19 +238,25 @@ class ProcessInventory:
             transfers.append({'source': label, 'phase': route['phase'], 'fraction': factor, 'amounts_mol': moved})
         return amounts, fresh, consumed, transfers
 
-    def commit(self, cycle, index, output, fresh, consumed):
+    def commit(self, cycle, index, output, fresh, consumed, exchange=None):
         sim = self.sim
         self.outputs[(cycle, index)] = output
-        self.external += fresh
+        if exchange is None:
+            engine = getattr(sim, 'constraints', None)
+            exchange = engine.exchange if engine is not None else sim.np.zeros(len(sim.components))
+        self.fresh_external += fresh
+        self.reservoir_exchange += exchange
+        self.external += fresh + exchange
         self.inventory += sim.component_amounts(output) - consumed
         error = self.inventory - self.external
-        count = cycle * len(self.cfg['points']) + index + 1
+        count = self.loops.run_index(cycle, index)+1 if hasattr(self.loops, 'run_index') else cycle * len(self.cfg['points']) + index + 1
         require(float(sim.np.max(sim.np.abs(error))) <= sim.tolerance * count,
                 'PROCESS_BALANCE', 'error.simulationFailed', '累计输入与未转移库存的物料账不守恒')
         coordinates = self.loops.common(cycle, index) if self.loops else {}
         return [{**coordinates, 'pass': cycle+1, 'step': index+1, 'component': name, 'input_mol': float(a),
-                 'inventory_mol': float(b), 'error_mol': float(d)}
-                for name, a, b, d in zip(sim.components, self.external, self.inventory, error)]
+                 'inventory_mol': float(b), 'error_mol': float(d),
+                 **({'fresh_input_mol': float(self.fresh_external[i]), 'external_exchange_mol': float(self.reservoir_exchange[i])} if self.cfg.get('equilibrium_constraints') else {})}
+                for i, (name, a, b, d) in enumerate(zip(sim.components, self.external, self.inventory, error))]
 
     def finish_cycle(self, cycle):
         self.outputs = {key: value for key, value in self.outputs.items() if key[0] == cycle}

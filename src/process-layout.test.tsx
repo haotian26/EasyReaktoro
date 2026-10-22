@@ -32,16 +32,15 @@ it('shows real source points and sequential run numbers across rounds',()=>{
 it('shows temperature inside pressure when the user defines those two loop directions',()=>{
  function Harness(){const [c,patch]=useState(structuredClone(DEFAULT_CONFIG));return <SimulationConditions config={c} patch={v=>patch(c=>({...c,...v}))} items={[]} disabled={false} onError={e=>{throw Error(e);}}/>;}
  render(<Harness/>);
- fireEvent.change(screen.getByLabelText('路径位置数'),{target:{value:'2'}});fireEvent.change(screen.getByLabelText('反应轮数'),{target:{value:'2'}});
- for(const name of ['温度','压力'])fireEvent.change(screen.getByLabelText(`${name} 变化方式`),{target:{value:'linear'}});
- for(const [label,value] of [['温度 起始值','100'],['温度 每步变化','100'],['压力 起始值','10'],['压力 每轮变化','10']])fireEvent.change(screen.getByLabelText(label),{target:{value}});
- expect(screen.getAllByText(/温度/).length).toBeGreaterThan(0);expect(screen.getAllByText(/压力/).length).toBeGreaterThan(0);expect(document.querySelectorAll('[data-inner-index]')).toHaveLength(4);
+ fireEvent.change(screen.getByLabelText('first 结束条件'),{target:{value:'i=1'}});fireEvent.change(screen.getByLabelText('later 结束条件'),{target:{value:'i=1'}});fireEvent.change(screen.getByLabelText('模拟结束条件'),{target:{value:'N=1'}});
+ for(const stage of ['first_start','first_following','later_start','later_following']){fireEvent.change(screen.getByLabelText(`${stage} 温度`),{target:{value:'100+100*i'}});fireEvent.change(screen.getByLabelText(`${stage} 压力`),{target:{value:'10+10*N'}});}
+ expect(screen.getAllByText(/温度/).length).toBeGreaterThan(0);expect(screen.getAllByText(/压力/).length).toBeGreaterThan(0);fireEvent.click(screen.getByRole('button',{name:'预览下一位置'}));fireEvent.click(screen.getByRole('button',{name:'预览下一轮次'}));expect(document.querySelector('[data-actual-temperature]')?.textContent).toContain('200');expect(document.querySelector('[data-actual-pressure]')?.textContent).toContain('20');
 });
 it('keeps the inferred loop definition when a legacy simulation first edits an explicit source',()=>{
  let latest:Config=structuredClone(DEFAULT_CONFIG);
  function Harness(){const [c,set]=useState(latest);return <SimulationConditions config={c} patch={v=>set(c=>{latest={...c,...v};return latest;})} items={[]} disabled={false} onError={e=>{throw Error(e);}}/>;}
- render(<Harness/>);fireEvent.change(screen.getByLabelText('路径位置数'),{target:{value:'2'}});fireEvent.click(screen.getByRole('tab',{name:'物料来源'}));fireEvent.click(screen.getByRole('tab',{name:/第 1 轮 其余位置/}));fireEvent.change(screen.getByLabelText('物料 1 来源'),{target:{value:'output'}});
- expect(latest.schedule).toBeTruthy();expect(latest.reaction_stages!.first_following[0].point_id).toBe('loop-1');expect(screen.getByLabelText('路径位置数')).toBeTruthy();
+ render(<Harness/>);fireEvent.change(screen.getByLabelText('first 结束条件'),{target:{value:'i=1'}});fireEvent.change(screen.getByLabelText('first_following 物料 1 来源'),{target:{value:'output'}});
+ expect(latest.schedule).toBeTruthy();expect(latest.reaction_stages!.first_following[0].point_id).toBe('loop-1');expect(screen.getByLabelText('first 结束条件')).toBeTruthy();
 });
 it('does not treat repeated coordinates as a complete matrix',()=>{
  const p=DEFAULT_CONFIG.points[0];expect(matrixShape([{...p,temperature_c:1,pressure_bar:1},{...p,temperature_c:2,pressure_bar:2},{...p,temperature_c:2,pressure_bar:1},{...p,temperature_c:2,pressure_bar:1}])).toBeNull();

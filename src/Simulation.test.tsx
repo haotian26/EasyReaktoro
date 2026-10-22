@@ -4,6 +4,7 @@ import {historyDocuments,trashedHistoryDocuments,resultHistoryEntries,mockHistor
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import Simulation from './Simulation';
 import {SimulationConditions} from './SimulationConditions';
+import {compileSchedule} from './simulation-schedule';
 import {ActivityEquations,MODEL_NAMES,SimulationActivity} from './SimulationActivity';
 import {DEFAULT_CONFIG,basicAqueousSpecies,sortSpecies,filterSpecies,linearRange,readConfig,SimSpecies} from './simulation-types';
 const mocks=vi.hoisted(()=>({invoke:vi.fn(),open:vi.fn(),save:vi.fn()}));
@@ -62,10 +63,10 @@ describe('equilibrium workbench',()=>{
  });
  it('undoing a species removal preserves later temperature, model and recipe changes',async()=>{
   await selectWater();fireEvent.click(screen.getByRole('tab',{name:/系统 species/}));fireEvent.click(screen.getByRole('button',{name:'参与平衡 water'}));
-  fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));fireEvent.change(screen.getByLabelText('温度 数值'),{target:{value:'180'}});
+  fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));fireEvent.change(screen.getByLabelText('first_start 温度'),{target:{value:'180'}});
   fireEvent.click(screen.getByRole('tab',{name:/初始物质/}));fireEvent.change(screen.getByLabelText('Composition 名称'),{target:{value:'Changed recipe'}});
   fireEvent.click(screen.getByRole('tab',{name:/系统 species/}));fireEvent.click(screen.getByRole('button',{name:'撤销移除'}));
-  await act(flushHistory);const c=currentHistory().config;expect(c.schedule.parameters.find((p:any)=>p.target.kind==='temperature').value.value).toBe(180);expect(c.materials[0].name).toBe('Changed recipe');expect(c.materials[0].inputs[0].amount).toBe(1);expect(c.species).toEqual(['water']);
+  await act(flushHistory);const c=currentHistory().config;expect(compileSchedule(c).point(0,0).temperature_c).toBe(180);expect(c.materials[0].name).toBe('Changed recipe');expect(c.materials[0].inputs[0].amount).toBe(1);expect(c.species).toEqual(['water']);
  });
  it('ignores malformed recent-run preferences without breaking the simulation page',async()=>{localStorage.setItem('easyreaktoro.simulation.runs','{"path":"bad"}');await loaded();expect(screen.getByRole('button',{name:'参与平衡 water'})).toBeTruthy();});
  it('does not remove a referenced output point through the point generator',()=>{
@@ -87,7 +88,7 @@ describe('equilibrium workbench',()=>{
  it('preserves an unfinished numeric edit as a blank in history',async()=>{await selectWater();fireEvent.change(screen.getByLabelText('water 投料量'),{target:{value:''}});await act(flushHistory);expect(currentHistory().config.materials[0].inputs[0].amount).toEqual({easyreaktoro_empty_number:true});});
  it('shows a real backend failure',async()=>{handler=a=>a==='catalog'?{items}:a==='validate'?Promise.reject(JSON.stringify({diagnostic:'净电荷不平衡'})):{};await selectWater();fireEvent.click(start());await screen.findByText('净电荷不平衡');expect(mocks.open).not.toHaveBeenCalled();});
  it('ignores a late catalog response from the previous database',async()=>{let old:any;handler=(a,p)=>a==='catalog'?(p.handle_id==='db'?new Promise(resolve=>old=resolve):{items:[sodium]}):{};const view=render(<Simulation summary={summary} runtime={runtime} onDatabases={()=>{}}/>);await waitFor(()=>expect(old).toBeTruthy());view.rerender(<Simulation summary={{...summary,handle_id:'new',path:'/test/new.rtdb'}} runtime={runtime} onDatabases={()=>{}}/>);await screen.findByRole('button',{name:'参与平衡 sodium'});await act(async()=>old({items:[water]}));expect(screen.queryByRole('button',{name:'参与平衡 water'})).toBeNull();});
- it('edits material sources independently from the loop variable',()=>{const patch=vi.fn();const config={...structuredClone(DEFAULT_CONFIG),cycles:3};render(<SimulationConditions config={config} patch={patch} items={items} disabled={false} onError={vi.fn()}/>);fireEvent.change(screen.getByLabelText('反应轮数'),{target:{value:'4'}});expect(patch.mock.calls.at(-1)?.[0].schedule.rounds).toBe(4);fireEvent.click(screen.getByRole('tab',{name:'物料来源'}));fireEvent.click(screen.getByRole('tab',{name:/第 2 轮起 起点/}));fireEvent.change(screen.getByLabelText('物料 1 来源'),{target:{value:'previous_cycle'}});expect(patch.mock.calls.at(-1)?.[0].reaction_stages.later_start[0].source).toBe('previous_cycle');expect(patch.mock.calls.at(-1)?.[0].schedule.positions).toBe(1);});
+ it('edits material sources independently from the loop variable',()=>{const patch=vi.fn();const config={...structuredClone(DEFAULT_CONFIG),cycles:3};render(<SimulationConditions config={config} patch={patch} items={items} disabled={false} onError={vi.fn()}/>);fireEvent.change(screen.getByLabelText('模拟结束条件'),{target:{value:'N=3'}});expect(patch.mock.calls.at(-1)?.[0].schedule.rounds).toBe(4);fireEvent.change(screen.getByLabelText('later_start 物料 1 来源'),{target:{value:'previous_cycle'}});expect(patch.mock.calls.at(-1)?.[0].reaction_stages.later_start[0].source).toBe('previous_cycle');expect(patch.mock.calls.at(-1)?.[0].schedule.positions).toBe(1);});
  it('renders every activity model as mathematical notation with no raw TeX error',()=>{for(const model of Object.keys(MODEL_NAMES)){const view=render(<ActivityEquations model={model as any}/>);expect(view.container.querySelectorAll('math').length).toBeGreaterThan(0);expect(view.container.querySelector('.katex-error')).toBeNull();view.unmount();}});
 });
 
@@ -118,8 +119,8 @@ it('deletes the active simulation without recreating it and restores its saved c
 });
 it('undo remains available after saving and reverting a blank numeric field is lossless',async()=>{
  const view=await loaded();view.rerender(<Simulation summary={summary} runtime={runtime} onDatabases={()=>{}} autoSave={false}/>);fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));
- fireEvent.change(screen.getByLabelText('温度 数值'),{target:{value:''}});fireEvent.click(screen.getByRole('button',{name:'保存当前模拟'}));await waitFor(()=>expect(currentHistory().config.schedule.parameters.find((p:any)=>p.target.kind==='temperature').value.value).toEqual({easyreaktoro_empty_number:true}));
- fireEvent.click(screen.getByRole('button',{name:'撤销模拟修改'}));expect((screen.getByLabelText('温度 数值') as HTMLInputElement).value).toBe('250');fireEvent.click(screen.getByRole('button',{name:'重做模拟修改'}));expect((screen.getByLabelText('温度 数值') as HTMLInputElement).value).toBe('');
+ fireEvent.change(screen.getByLabelText('first_start 温度'),{target:{value:''}});fireEvent.click(screen.getByRole('button',{name:'保存当前模拟'}));await waitFor(()=>expect(currentHistory().config.schedule.overrides.find((o:any)=>o.rounds.start===1&&o.positions.start===1).parameters.find((p:any)=>p.target.kind==='temperature').value).toEqual({mode:'expression',expression:''}));
+ fireEvent.click(screen.getByRole('button',{name:'撤销模拟修改'}));expect((screen.getByLabelText('first_start 温度') as HTMLInputElement).value).toBe('250');fireEvent.click(screen.getByRole('button',{name:'重做模拟修改'}));expect((screen.getByLabelText('first_start 温度') as HTMLInputElement).value).toBe('');
 });
 
 it('copies the saved checkpoint when unsaved changes are discarded before duplicating',async()=>{
@@ -179,7 +180,7 @@ it('shows deletion failure inside the confirmation and preserves the history fil
  fireEvent.click(screen.getByRole('button',{name:'永久删除'}));await waitFor(()=>expect(within(screen.getByRole('alertdialog')).getByRole('alert').textContent).toContain('没有删除权限'));expect(historyDocuments.has(id)).toBe(true);
 });
 it('invalidates a check-passed message after the user changes conditions',async()=>{
- await selectWater();fireEvent.click(screen.getByRole('button',{name:'检查设置'}));await screen.findByText(/设置检查通过/);fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));fireEvent.change(screen.getByLabelText('压力 数值'),{target:{value:'-1'}});expect(screen.queryByText(/设置检查通过/)).toBeNull();
+ await selectWater();fireEvent.click(screen.getByRole('button',{name:'检查设置'}));await screen.findByText(/设置检查通过/);fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));fireEvent.change(screen.getByLabelText('first_start 压力'),{target:{value:'-1'}});expect(screen.queryByText(/设置检查通过/)).toBeNull();
 });
 
 it('uses the same leading history entry and reopens persisted result locations',async()=>{

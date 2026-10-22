@@ -50,6 +50,6 @@ it('relabels material diagrams without changing source coordinates, phase classi
 it('keeps reaction flow labels compact and actual full values accessible in English',()=>{
  switchTo('en');const select=vi.fn(),materials:DiagramMaterialStages={first_start:[],first_following:[{source:'left',phase:'aqueous',fraction:.12345,label:'Brine'}],later_start:[],later_following:[]};
  const {container}=render(<ReactionFlowDiagram positions={3} rounds={1} selected={{inner:1,outer:0}} materials={materials} point={i=>({temperature_c:250-i*5,pressure_bar:39.761649561576,pressure_mode:'water_saturation'})} onSelect={select}/>);
- expect(container.querySelector('.reaction-flow__round')?.textContent).toBe('Round 1');expect((container.querySelector('.reaction-flow__round') as HTMLElement).style.writingMode).toBe('horizontal-tb');expect(container.querySelector('.reaction-flow__edge span')?.textContent).toBe('Aq.');
- const button=screen.getByRole('button',{name:/Round 1 · position 3;/});expect(button.title).toContain('39.761649561576');fireEvent.click(button);expect(select).toHaveBeenCalledWith(2,0);expect(container.textContent).not.toMatch(/[\u4e00-\u9fff]/);
+ expect(container.querySelector('.reaction-flow__current')?.textContent).toContain('Round 1 · position 2');expect(container.querySelector('.reaction-flow__source')?.textContent).toContain('Aqueous phase 12.345%');
+ const button=screen.getByRole('button',{name:'View source: Round 1 · position 1'});fireEvent.click(button);expect(select).toHaveBeenCalledWith(0,0);expect(container.textContent).not.toMatch(/[\u4e00-\u9fff]/);
 });

@@ -1,4 +1,5 @@
 import {t,getLanguage} from './i18n';
+import {constraintActiveAt} from './equilibrium-constraints';
 import type {Config,Route,SimSpecies} from './simulation-types';
 import {decimalSum,scheduleTargets,type CompiledSchedule} from './simulation-schedule';
 import {routeId,targetKey,type LoopTarget} from './simulation-loops';
@@ -20,7 +21,7 @@ function readingCache(config:Config,plan:CompiledSchedule,items?:readonly SimSpe
  let plans=caches.get(config);if(!plans){plans=new WeakMap();caches.set(config,plans);}
  let catalogs=plans.get(plan);if(!catalogs){catalogs={withItems:new WeakMap()};plans.set(plan,catalogs);}
  const existing=items?catalogs.withItems.get(items):catalogs.withoutItems;if(existing&&existing.language===getLanguage())return existing;
- const created:ReadingCache={language:getLanguage(),entries:activeRouteEntries(config),targets:scheduleTargets(config).filter(item=>item.available&&(item.target.kind==='temperature'||item.target.kind==='pressure'||plan.hasSetting(item.target))),path:new Map(),round:new Map()};
+ const created:ReadingCache={language:getLanguage(),entries:activeRouteEntries(config),targets:scheduleTargets(config).filter(item=>item.available&&(item.target.kind==='temperature'||item.target.kind==='pressure'||item.target.kind==='equilibrium_constraint'||plan.hasSetting(item.target))),path:new Map(),round:new Map()};
  if(items)catalogs.withItems.set(items,created);else catalogs.withoutItems=created;
  return created;
 }
@@ -59,6 +60,7 @@ function validValue(target:LoopTarget,value:number,entry?:RouteEntry){
  if(!finite(value))return false;
  if(target.kind==='temperature')return value>-273.15;
  if(target.kind==='pressure')return value>0;
+ if(target.kind==='equilibrium_constraint')return true;
  if(value<0)return false;
  return target.kind!=='route_fraction'||target.field!=='fraction'||entry?.route.source==='material'||value<=1;
 }
@@ -68,11 +70,11 @@ function formatter(values:number[]){
  while(precision<17&&new Set(samples.map(value=>Number(value.toPrecision(precision)).toString())).size<samples.length)precision++;
  return (value:number)=>Number(value.toPrecision(precision)).toString();
 }
-function summarize(samples:Sample[],unit:string,direction:'path'|'round',isPressure:boolean):string|null{
+function summarize(samples:Sample[],unit:string,direction:'path'|'round',isPressure:boolean,isConstraint=false):string|null{
  const valid=samples.filter(sample=>sample.used&&finite(sample.value)),missing=samples.some(sample=>sample.used&&!finite(sample.value));
  if(!valid.length)return missing?t('实际值待填写',"Values needed"):null;
  const changed=valid.some(sample=>sample.value!==valid[0].value||isPressure&&sample.mode!==valid[0].mode);
- if(!changed)return missing?t('部分位置的实际值待填写',"Values needed at some positions"):null;
+ if(!changed&&!(isConstraint&&samples.some(sample=>!sample.used)))return missing?t('部分位置的实际值待填写',"Values needed at some positions"):null;
  const values=valid.map(sample=>sample.value),first=values[0],last=values.at(-1)!,minimum=Math.min(...values),maximum=Math.max(...values),delta=values.length>1?decimalSum([last,1],[first,-1])/(values.length-1):0;
  const number=formatter(samples.length<=4?[...values,delta]:[first,last,minimum,maximum,delta]);
  const suffix=unit?` ${unit}`:'';
@@ -80,9 +82,10 @@ function summarize(samples:Sample[],unit:string,direction:'path'|'round',isPress
  const sameMode=!isPressure||valid.every(sample=>sample.mode===valid[0].mode);
  const pressurePrefix=isPressure&&sameMode&&valid[0].mode==='water_saturation'?'Psat(T) · ':'';
  if(samples.length<=4){
-  if(sameMode)return pressurePrefix+samples.map(sample=>!sample.used?t('未使用',"Not used"):!finite(sample.value)?t('待填写',"Value needed"):number(sample.value)).join(' → ')+suffix;
-  return samples.map(sample=>!sample.used?t('未使用',"Not used"):!finite(sample.value)?t('待填写',"Value needed"):`${sample.mode==='water_saturation'?'Psat(T) ':t('指定 ',"Fixed ")}${value(sample.value)}`).join(' → ');
+  if(sameMode)return pressurePrefix+samples.map(sample=>!sample.used?(isConstraint?t('不施加',"Not applied"):t('未使用',"Not used")):!finite(sample.value)?t('待填写',"Value needed"):number(sample.value)).join(' → ')+suffix;
+  return samples.map(sample=>!sample.used?(isConstraint?t('不施加',"Not applied"):t('未使用',"Not used")):!finite(sample.value)?t('待填写',"Value needed"):`${sample.mode==='water_saturation'?'Psat(T) ':t('指定 ',"Fixed ")}${value(sample.value)}`).join(' → ');
  }
+ if(isConstraint&&!changed)return t(`${value(first)} · ${valid.length} / ${samples.length} ${direction==='path'?'处':'轮'}施加`,`${value(first)} · applied at ${valid.length} / ${samples.length} ${direction==='path'?'positions':'rounds'}`);
  const complete=valid.length===samples.length,monotonic=values.every((n,i)=>!i||(last>first?n>=values[i-1]:n<=values[i-1]));
  const uniform=complete&&sameMode&&monotonic&&delta!==0&&finite(delta)&&values.every((n,i)=>{
   if(!i)return true;
@@ -103,11 +106,13 @@ export function actualVariationSummaries(config:Config,plan:CompiledSchedule,sel
   // Separate bounded LRUs retain nearby selections without keeping every coordinate.
   const saved=cache[along],coordinate=along==='path'?outer:inner,existing=saved.get(coordinate);
   if(existing){saved.delete(coordinate);saved.set(coordinate,existing);return existing;}
-  const count=along==='path'?plan.counts.inner:plan.counts.outer,rows:ActualVariationRow[]=[];
+  const count=along==='path'?plan.lengths[outer]:plan.counts.outer,rows:ActualVariationRow[]=[];
   for(const item of targets){
    const {target}=item,route=target.kind==='route_fraction'?entries.find(entry=>routeId(entry.route,entry.index)===target.route_id):undefined;
    const samples=Array.from({length:count},(_,index):Sample=>{
     const ii=along==='path'?index:inner,oi=along==='round'?index:outer;
+    if(!plan.active(ii,oi))return {value:NaN,used:false};
+    if(target.kind==='equilibrium_constraint'){const row=config.equilibrium_constraints?.find(c=>c.id===target.constraint_id);if(!row||!constraintActiveAt(row,ii,oi))return {value:NaN,used:false};}
     if(target.kind==='route_fraction'&&(!route||!routeIsUsed(route,target,ii,oi,plan.counts.inner,config)))return {value:NaN,used:false};
     if(target.kind==='material_amount'&&!materialIsUsed(target,entries,ii,oi,config,plan,items))return {value:NaN,used:false};
     try{
@@ -116,7 +121,7 @@ export function actualVariationSummaries(config:Config,plan:CompiledSchedule,sel
      return {value:validValue(target,value,route)?value*(item.quantityKind==='fraction'?100:1):NaN,used:true,...(target.kind==='pressure'?{mode:point!.pressure_mode||'fixed'}:{})};
     }catch{return {value:NaN,used:true};}
    });
-   const value=summarize(samples,item.quantityKind==='fraction'?'%':item.unit,along,target.kind==='pressure');
+   const value=summarize(samples,item.quantityKind==='fraction'?'%':item.unit,along,target.kind==='pressure',target.kind==='equilibrium_constraint');
    if(value)rows.push({key:targetKey(target),label:item.label,value});
   }
   const result=rows.length?rows:[{key:'constant',label:t('条件',"Conditions"),value:t('保持不变',"Constant")}];
