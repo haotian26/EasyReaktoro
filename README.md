@@ -2,7 +2,7 @@
 
 **English and 简体中文** — switch instantly in Settings → General → Interface language. Database management, equilibrium simulations and the result viewer share the same language. Switching preserves your inputs, code, plots and saved data.
 
-EasyReaktoro 是面向 Reaktoro 的非官方 macOS 图形界面。v0.17.0 提供数据库发现、浏览、组建、编辑、验证、导出、Python/notebook RTDB 读取接口，以及平衡模拟工作台。模拟用路径位置与反应轮次组织单点平衡、温压扫描和多轮水岩反应，可在同一次反应中同时改变温压、composition 每份含量、加入份数和物料取用比例。首次起点、首轮后续位置、后续轮起点和后续轮其余位置分别列出实际加入的 composition 或反应后物料，可按相态或指定 species 取用，支持分流、混合与回流。可一键切换图形设置与完整分模块 Python 程序，保留参数与自定义求解代码；全部代码随设置和结果保存。
+EasyReaktoro 是面向 Reaktoro 的非官方 macOS 图形界面。v0.17.1 提供数据库发现、浏览、组建、编辑、验证、导出、Python/notebook RTDB 读取接口，以及平衡模拟工作台。模拟用路径位置与反应轮次组织单点平衡、温压扫描和多轮水岩反应，可在同一次反应中同时改变温压、composition 每份含量、加入份数和物料取用比例。首次起点、首轮后续位置、后续轮起点和后续轮其余位置分别列出实际加入的 composition 或反应后物料，可按相态或指定 species 取用，支持分流、混合与回流。可一键切换图形设置与完整分模块 Python 程序，保留参数与自定义求解代码；全部代码随设置和结果保存。
 
 应用依赖用户自行安装的外部 Reaktoro Python 环境，不打包 Python、Reaktoro、官方数据库或个人数据库。
 
@@ -10,15 +10,21 @@ EasyReaktoro 是面向 Reaktoro 的非官方 macOS 图形界面。v0.17.0 提供
 
 ## 运行
 
-支持 Apple Silicon macOS 13 及以上；已在装有外部 Reaktoro 的独立用户 Apple Silicon macOS 虚拟机验收；尚未覆盖从零安装 Reaktoro，Intel Mac 与 Windows 也尚未验收。从 [v0.17.0 Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.17.0) 下载 `EasyReaktoro-v0.17.0.dmg`，打开后将 EasyReaktoro 拖入 Applications。安装包采用 ad-hoc 签名，未经 Apple 公证；仍需自行安装外部 Reaktoro Python 环境。Git 仓库不包含 `.app`，从源码运行请按下文构建。已有本地构建包的用户可在 Finder 双击 `release/EasyReaktoro-v0.17.0.app`，或运行：
+支持 Apple Silicon macOS 13 及以上；已在装有外部 Reaktoro 的独立用户 Apple Silicon macOS 虚拟机验收；尚未覆盖从零安装 Reaktoro，Intel Mac 与 Windows 也尚未验收。从 [v0.17.1 Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.17.1) 下载 `EasyReaktoro-v0.17.1.dmg`，打开后将 EasyReaktoro 拖入 Applications。安装包采用 ad-hoc 签名，未经 Apple 公证；仍需自行安装外部 Reaktoro Python 环境。Git 仓库不包含 `.app`，从源码运行请按下文构建。已有本地构建包的用户可在 Finder 双击 `release/EasyReaktoro-v0.17.1.app`，或运行：
 
 ```bash
-open release/EasyReaktoro-v0.17.0.app
+open release/EasyReaktoro-v0.17.1.app
 ```
 
 首次启动时，应用会自动探测可用的 Reaktoro 环境。也可以选择具体的 Reaktoro Python，或选择 Conda/Reaktoro 环境目录。存在多个环境时可在“设置 → Reaktoro 环境”中切换、测试连接并查看诊断。
 
 自动探测不是固定路径：应用会检查环境变量、`/Applications` 下的应用环境、常见 Homebrew/Conda/Mamba 安装位置、用户级 Conda/Micromamba/Pyenv 环境以及系统 Python，并只显示能够真实导入 Reaktoro 的候选项。候选项按 Python 规范路径、环境根目录和 Reaktoro 版本去重。
+
+## v0.17.1
+
+- 局部条件直接编辑并保留继承规则；错误提示定位到具体输入，公式变量就地说明，连续输入按一次撤销处理。
+- 预览与校验按每轮实际长度处理；保留暂未经过的位置设置，明确显示当前生效范围，避免引用不存在的前轮位置。
+- 跨页书签可定位到实际结果；返回结果首页会取消未完成的跳转，继续查看时保留位置和图表设置。
 
 ## v0.17.0
 
@@ -147,7 +153,7 @@ Rust 使用所选外部 Python 启动持久 NDJSON Bridge。应用包只包含�
 - 从零创建目前开放三种已有完整参数定义和数值回归的模型：Modified Ryzhenko–Bryzgalin、Extended Maier–Kelley、Akinfiev–Diamond。water/OH、gas-reference 和未知模型仅可随已有来源记录保留，不能从界面伪造。
 - 通用读取器支持显式的 `converted-standard-state/v1` 数据记录，包括分段热容、MRB、AD、water/OH 和气相参考。它不执行数据库中的 Python，不自动把任意第三方文件夹转换为此格式。来源系数、反应及身份在通用编辑器中保护，名称、有效范围、文献、活度参数和备注可编辑；未知模型仍不能计算。
 - Reaktoro 2.13.0 的便捷 `EquilibriumSolver(system)` 路径可在含 Python 标准态回调的进程退出时触发缓存析构错误。Python 示例使用显式 `EquilibriumSpecs`，已测试重复读取、求解和正常退出；不修改或替换 Reaktoro。
-- 已通过 [GitHub Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.17.0) 发布 Apple Silicon macOS DMG 安装包。应用采用 ad-hoc 签名，尚未经过 Apple 公证；系统可能要求用户确认来源。安装包不包含 Python 或 Reaktoro。
+- 已通过 [GitHub Release](https://github.com/haotian26/EasyReaktoro/releases/tag/v0.17.1) 发布 Apple Silicon macOS DMG 安装包。应用采用 ad-hoc 签名，尚未经过 Apple 公证；系统可能要求用户确认来源。安装包不包含 Python 或 Reaktoro。
 
 - 模型数值回归不等于对任意物种、任意温压的科学验证。MRB/AD 仍需用户核对参数来源、适用范围与形成反应。Extended Debye–Hückel 使用数据库明确保存的 aᵢ，缺少参数时阻止计算；是否采用数据库默认尺寸及有理由但无文献的已记录尺寸，由活度模型页的选项控制；新模拟默认允许这两类记录。
 - 新复制的原生物种保存来源索引与参数 fingerprint；来源模型或 Reaktoro 版本改变时拒绝静默代用。旧文件若存在无法区分的同名原生记录，需要从当前运行时重新创建副本。
