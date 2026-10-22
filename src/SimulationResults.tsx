@@ -20,22 +20,32 @@ export function SimulationResults({openRequest=0,workspaceRequest,onWorkspaceRec
   const workspaceRequestRef=useRef(workspaceRequest);workspaceRequestRef.current=workspaceRequest;
   const preferencesRef=useRef(preferences);preferencesRef.current=preferences;
   const downloadLock=useRef(false);
-  const navigation=useRef({serial:0,locating:false,target:undefined as string|undefined}),context=useRef({jobId:job?.job_id,external});context.current={jobId:job?.job_id,external};
+  const navigation=useRef({serial:0,locating:false,target:undefined as {runIndex:string;navigationId:number}|undefined}),context=useRef({jobId:job?.job_id,external});context.current={jobId:job?.job_id,external};
   const cancelNavigation=()=>{navigation.current.serial++;navigation.current.locating=false;navigation.current.target=undefined;};
   useEffect(()=>{
     const receive=async(e:MessageEvent)=>{
       if(e.source!==frame.current?.contentWindow || e.data?.channel!==channel)return;
       if(e.data.type==='ready'){setReady(true);return;}
       if(e.data.type==='locate-point'){
-        const id=context.current.jobId,key=e.data.runIndex;
-        if(!id||context.current.external||e.data.runKey!==id||typeof key!=='string'||!/^\d+$/.test(key)||!Number.isSafeInteger(Number(key)))return;
+        const id=context.current.jobId,key=e.data.runIndex,navigationId=e.data.navigationId;
+        if(!id||context.current.external||e.data.runKey!==id||typeof key!=='string'||!/^\d+$/.test(key)||!Number.isSafeInteger(Number(key))||!Number.isSafeInteger(navigationId)||navigationId<1)return;
         cancelNavigation();const serial=navigation.current.serial;navigation.current.locating=true;setLoading(true);
         frame.current?.contentWindow?.postMessage({channel,type:'cancel-load',revision:++seq.current},'*');
         try{
           const point=await simulationCall<{cycle:number;page:number;run_index:number}>('locate_point',{job_id:id,run_index:Number(key)});
           if(serial!==navigation.current.serial||context.current.jobId!==id||context.current.external)return;
-          navigation.current.locating=false;navigation.current.target=key;setCycle(String(point.cycle));setPage(String(point.page));setRefresh(value=>value+1);
+          navigation.current.locating=false;navigation.current.target={runIndex:key,navigationId};setCycle(String(point.cycle));setPage(String(point.page));setRefresh(value=>value+1);
         }catch(error){if(serial===navigation.current.serial&&context.current.jobId===id&&!context.current.external){cancelNavigation();setLoading(false);handlers.current.onError(simulationError(error));}}
+        return;
+      }
+      if(e.data.type==='cancel-navigation'){
+        const id=context.current.jobId;
+        if(id&&e.data.runKey===id&&!context.current.external&&(navigation.current.locating||navigation.current.target!==undefined)){
+          cancelNavigation();setLoading(false);frame.current?.contentWindow?.postMessage({channel,type:'cancel-load',revision:++seq.current},'*');
+          // Keep the pickers on the dataset still displayed when the user left.
+          const key=e.data.datasetKey,position=typeof key==='string'&&key.startsWith(id+':')?/^(\d*):(\d*)$/.exec(key.slice(id.length+1)):null;
+          if(position){setCycle(position[1]);setPage(position[2]);}
+        }
         return;
       }
       if(e.data.type==='annotations'){
@@ -105,7 +115,7 @@ export function SimulationResults({openRequest=0,workspaceRequest,onWorkspaceRec
   useEffect(()=>{
     const revision=++seq.current;
     if(!ready || !job?.completed || !visible || external || navigation.current.locating)return;
-    const id=job.job_id,focusRunIndex=navigation.current.target;
+    const id=job.job_id,focus=navigation.current.target;
     let disposed=false;
     const timer=setTimeout(async()=>{
       setLoading(true);
@@ -117,8 +127,8 @@ export function SimulationResults({openRequest=0,workspaceRequest,onWorkspaceRec
         if(result.choose_page){setPageCount(result.page_count);setPreviewPoints(result.cycle_points);setPerPage(result.points_per_page);setPage(String(result.page_count));setLoading(false);return;}
         setPageCount(result.page_count || 1);setPreviewPoints(result.cycle_points || 0);setPerPage(result.points_per_page || 0);
         if(!result.point_count){setLoading(false);return;}
-        frame.current?.contentWindow?.postMessage({channel,type:'load',data:result.data,sourcePointCount:result.status?.completed ?? job.completed,runKey:id,datasetKey:`${id}:${cycle}:${page}`,revision,...(focusRunIndex!==undefined?{focusRunIndex}:{})},'*');
-      }catch(error){if(!disposed){setLoading(false);handlers.current.onError(simulationError(error));}}
+        frame.current?.contentWindow?.postMessage({channel,type:'load',data:result.data,sourcePointCount:result.status?.completed ?? job.completed,runKey:id,datasetKey:`${id}:${cycle}:${page}`,revision,...(focus?{focusRunIndex:focus.runIndex,navigationId:focus.navigationId}:{})},'*');
+      }catch(error){if(!disposed&&seq.current===revision){setLoading(false);handlers.current.onError(simulationError(error));}}
     },job.status==='running'?300:0);
     return()=>{disposed=true;clearTimeout(timer);};
   },[job?.job_id,job?.completed,job?.status,openRequest,ready,refresh,cycle,page,visible,channel,external]);

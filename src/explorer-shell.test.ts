@@ -12,7 +12,7 @@ function setup(embedded=true,sourceHTML?:string){
  w.matchMedia=()=>({matches:false,addEventListener:vi.fn()});w.HTMLElement.prototype.scrollIntoView=vi.fn();
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
  const script=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].at(-1)![1];
- vm.runInContext(script+';globalThis.qa={install:p=>install(p),readFiles,installHost:p=>{installingHost=true;try{install(p);}finally{installingHost=false;}},state:()=>state,panels:()=>panels,model:()=>model,specs:()=>plotSpecs,appearance:applyAppearance,download:(b,n)=>download(b,n)};',dom.getInternalVMContext());
+ vm.runInContext(script+';globalThis.qa={receiveHost:p=>receiveHostMessage({source:parent,data:{channel:hostChannel,...p}}),install:p=>install(p),readFiles,installHost:p=>{installingHost=true;try{install(p);}finally{installingHost=false;}},state:()=>state,panels:()=>panels,model:()=>model,specs:()=>plotSpecs,appearance:applyAppearance,download:(b,n)=>download(b,n)};',dom.getInternalVMContext());
  return {w,parent,qa:w.qa,dom,send:(message:any)=>w.dispatchEvent(new w.MessageEvent('message',{source:parent,data:{channel:'shell-test',...message}}))};
 }
 const payload={format:'result-explorer-1',name:'Test run',key_columns:['id'],summary:{columns:['id','temperature_c','pressure_bar','pH'],rows:[[1,25,100,7],[2,25,50,6.8]]},species_tables:[{columns:['id','species','phase_type','amount_mol'],rows:[[1,'Na+','aqueous',.1],[2,'Na+','aqueous',.2]]}],view:{charts:[{id:'chart-1',selectedStates:['state:pH']}],bookmarks:[0],reference:0}};
@@ -551,14 +551,36 @@ it('navigates off-page bookmarks by stable IDs, preserves chart choices and remo
  const {w,qa,parent,send}=setup();w.Blob=Blob;w.Response=Response;w.DecompressionStream=DecompressionStream;
  const page=(ids:number[],round:number)=>({format:'result-explorer-1',name:'Unequal rounds',key_columns:['run_index'],summary:{columns:['run_index','pass','step','pH'],rows:ids.map((id,i)=>[id,round,i+1,7+id/100])},species_tables:[]});
  let revision=0;
- const load=async(key:string,data:any,focusRunIndex?:string,runKey='run-a')=>{const current=++revision;send({type:'load',runKey,datasetKey:key,revision:current,data:gzipSync(JSON.stringify(data)).toString('base64'),...(focusRunIndex!==undefined?{focusRunIndex}:{})});await vi.waitFor(()=>expect(parent.postMessage.mock.calls.some(([m]:any)=>m.type==='loaded'&&m.revision===current)).toBe(true));};
+ const load=async(key:string,data:any,focusRunIndex?:string,runKey='run-a')=>{const current=++revision;send({type:'load',runKey,datasetKey:key,revision:current,data:gzipSync(JSON.stringify(data)).toString('base64'),...(focusRunIndex!==undefined?{focusRunIndex,navigationId:1}:{})});await vi.waitFor(()=>expect(parent.postMessage.mock.calls.some(([m]:any)=>m.type==='loaded'&&m.revision===current)).toBe(true));};
  await load('round-2',page([10,12],2));qa.state().bookmarks=[1];qa.state().charts[0].selectedStates=['state:pH'];qa.state().charts[0].title='Keep my plot';
  await load('round-4',page([20,21],4));
  const bookmark=w.document.querySelector('[data-run-bookmark="12"]');expect(bookmark.textContent).toBe('第 2 轮 · 位置 2');expect(w.document.getElementById('bookmark-count').textContent).toBe('1');
- bookmark.click();expect(parent.postMessage).toHaveBeenLastCalledWith({channel:'shell-test',type:'locate-point',runKey:'run-a',runIndex:'12'},'*');
+ bookmark.click();expect(parent.postMessage).toHaveBeenLastCalledWith({channel:'shell-test',type:'locate-point',runKey:'run-a',runIndex:'12',navigationId:1},'*');
  await load('round-2',page([10,12],2),'12');expect(qa.state().index).toBe(1);expect(qa.state().bookmarks).toEqual([1]);expect(qa.state().charts[0].title).toBe('Keep my plot');expect(qa.state().charts[0].selectedStates).toEqual(['state:pH']);
  await load('round-4',page([20,21],4));send({type:'appearance',language:'en',theme:'light'});expect(w.document.querySelector('[data-run-bookmark="12"]').textContent).toBe('Round 2 · position 2');
  w.document.querySelector('[data-remove-run-bookmark="12"]').click();expect(w.document.getElementById('bookmark-count').textContent).toBe('0');
  await load('round-2',page([10,12],2));expect(qa.state().bookmarks).toEqual([]);
  qa.state().bookmarks=[0];await load('other-run',page([10,12],2),undefined,'run-b');expect(qa.state().bookmarks).toEqual([]);expect(w.document.querySelector('[data-run-bookmark]')).toBeNull();
+});
+
+
+it.each(['queued','decoding'])('cancels a %s bookmark load when returning home, even after resuming the current plot',async phase=>{
+ const {w,qa,parent}=setup();w.Blob=Blob;w.Response=Response;w.DecompressionStream=DecompressionStream;
+ const page=(id:number,round:number)=>({format:'result-explorer-1',name:'Run',key_columns:['run_index'],summary:{columns:['run_index','pass','step','pH'],rows:[[id,round,1,7]]},species_tables:[]});
+ const load=(revision:number,id:number,round:number,extra={})=>qa.receiveHost({type:'load',runKey:'run-a',datasetKey:`run-a:${round}:1`,revision,data:gzipSync(JSON.stringify(page(id,round))).toString('base64'),...extra});
+ await load(1,10,1);w.document.getElementById('bookmark-point').click();await load(2,20,2);
+ qa.state().charts[0].selectedStates=['state:pH'];qa.state().charts[0].title='Retain this view';
+ const originalModel=qa.model(),originalState=JSON.stringify(qa.state());
+ w.document.querySelector('[data-run-bookmark="10"]').click();const request=parent.postMessage.mock.calls.at(-1)![0];
+ let finish:(text:string)=>void=()=>{},pending:Promise<void>|undefined;
+ if(phase==='decoding'){w.Response=class{text(){return new Promise<string>(resolve=>{finish=resolve;});}};pending=load(3,10,1,{focusRunIndex:'10',navigationId:request.navigationId});}
+ w.document.getElementById('results-home').click();expect(w.document.querySelector('.results-onboarding').hidden).toBe(false);
+ expect(parent.postMessage).toHaveBeenCalledWith({channel:'shell-test',type:'cancel-navigation',runKey:'run-a',datasetKey:'run-a:2:1'},'*');
+ if(phase==='queued')await load(3,10,1,{focusRunIndex:'10',navigationId:request.navigationId});
+ else {finish(JSON.stringify(page(10,1)));await pending;}
+ expect(w.document.querySelector('.results-onboarding').hidden).toBe(false);expect(qa.model()).toBe(originalModel);expect(JSON.stringify(qa.state())).toBe(originalState);
+ w.document.getElementById('resume-results').click();w.document.querySelector('[data-run-bookmark="10"]').click();const next=parent.postMessage.mock.calls.at(-1)![0];
+ expect(next.navigationId).toBeGreaterThan(request.navigationId);w.Response=Response;
+ await load(4,10,1,{focusRunIndex:'10',navigationId:request.navigationId});expect(qa.model()).toBe(originalModel);
+ await load(5,10,1,{focusRunIndex:'10',navigationId:next.navigationId});expect(qa.model().points[0].run_index).toBe(10);expect(qa.state().charts[0].title).toBe('Retain this view');expect(w.document.querySelector('.workspace').hidden).toBe(false);
 });

@@ -15,7 +15,7 @@ const notifyHost=message=>{if(embedded)parent.postMessage({channel:hostChannel,.
 let resultDefaults={x_direction:'asc',layout:'stack',playback_ms:600,inspector:'auto',library:true};
 const originalInitialState=initialState;initialState=()=>({...originalInitialState(),xDirection:resultDefaults.x_direction,layout:resultDefaults.layout==='grid'?'two':'stack',speed:resultDefaults.playback_ms});
 let latestRevision=-1,datasetKey='',installingHost=false,externalMode=false,focusPanels=null,deferredLoad=null;
-let runKey='',savedReference=null,referenceWasVisible=false;
+let runKey='',savedReference=null,referenceWasVisible=false,bookmarkNavigation=0;
 const savedBookmarks=new Set(),savedPointDetails=new Map();
 const pointIdentity=p=>p && p.run_index!==undefined?String(p.run_index):null;
 function rememberRunBookmarks(){
@@ -47,7 +47,7 @@ document.addEventListener('click',event=>{
  if(!runKey||externalMode||(!jump&&!remove))return;
  event.preventDefault();event.stopImmediatePropagation();
  if(remove){savedBookmarks.delete(remove.dataset.removeRunBookmark);savedPointDetails.delete(remove.dataset.removeRunBookmark);renderBookmarks();return;}
- stop();notifyHost({type:'locate-point',runKey,runIndex:jump.dataset.runBookmark});
+ stop();notifyHost({type:'locate-point',runKey,runIndex:jump.dataset.runBookmark,navigationId:++bookmarkNavigation});
 },true);
 function preservedRunView(payload,sameSlice=false){
  rememberRunBookmarks();
@@ -75,6 +75,8 @@ function syncHome(){
  if(home)home.hidden=!show;if(top)top.hidden=show;if(workspace)workspace.hidden=show;
 }
 function showResultsHome(){endHeldNavigation();
+ // Invalidate queued and decoding bookmark loads before the host can reply.
+ bookmarkNavigation++;if(deferredLoad?.focusRunIndex!==undefined)deferredLoad=null;notifyHost({type:'cancel-navigation',runKey,datasetKey});
  stop();cancelPointer();homeViewport=captureViewport();homeVisible=true;syncHome();
  $('resume-results')?.focus();
 }
@@ -225,7 +227,7 @@ async function receiveHostMessage(event){
  if(message.type==='save-workspace'){requestWorkspaceSave();return;}
  if(message.type==='download-result'){const pending=pendingDownloads.get(message.id);if(pending){pendingDownloads.delete(message.id);message.error?pending.reject(new Error(message.error)):pending.resolve(message.ok);}return;}
  if(!['load','clear','cancel-load'].includes(message.type) || !Number.isFinite(message.revision) || message.revision<latestRevision)return;
- if(message.type==='load' && externalMode)return;
+ if(message.type==='load' && (externalMode || message.focusRunIndex!==undefined&&message.navigationId!==bookmarkNavigation))return;
  latestRevision=message.revision;
  if(message.type==='cancel-load'){deferredLoad=null;return;}
  if(message.type==='clear'){
@@ -235,7 +237,7 @@ async function receiveHostMessage(event){
   if(document.querySelector('dialog[open]')){deferredLoad=message;notifyHost({type:'deferred',revision:message.revision});return;}
   const bytes=Uint8Array.from(atob(message.data),c=>c.charCodeAt(0));
   const text=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-  if(message.revision!==latestRevision || externalMode)return;
+  if(message.revision!==latestRevision || externalMode || message.focusRunIndex!==undefined&&message.navigationId!==bookmarkNavigation)return;
   if(document.querySelector('dialog[open]')){deferredLoad=message;notifyHost({type:'deferred',revision:message.revision});return;}
   const payload=JSON.parse(text),nextRun=message.runKey || message.datasetKey;
   if(Number.isSafeInteger(message.sourcePointCount)&&Array.isArray(payload.summary?.rows)&&message.sourcePointCount>=payload.summary.rows.length){payload.metadata={...(object(payload.metadata)?payload.metadata:{}),workspace_scope:{version:1,loaded_points:payload.summary.rows.length,source_points:message.sourcePointCount}};}
@@ -248,7 +250,7 @@ async function receiveHostMessage(event){
   if(message.focusRunIndex!==undefined){const index=model.points.findIndex(point=>pointIdentity(point)===String(message.focusRunIndex));if(index<0)throw new Error(L('保存的结果中未找到此书签点。','The bookmarked point is not present in the saved results.'));jumpTo(index);homeVisible=false;syncHome();}
   renderBookmarks();
   $('loading').classList.add('hide');notifyHost({type:'loaded',revision:message.revision,offscreenBookmarks:Math.max(0,savedBookmarks.size-state.bookmarks.length),offscreenReference:savedReference!==null && !referenceWasVisible});
- }catch(e){if(message.revision===latestRevision)notifyHost({type:'error',message:e.message,revision:message.revision});}
+ }catch(e){if(message.revision===latestRevision && (message.focusRunIndex===undefined||message.navigationId===bookmarkNavigation))notifyHost({type:'error',message:e.message,revision:message.revision});}
 }
 window.addEventListener('message',receiveHostMessage);
 document.addEventListener('close',()=>{
