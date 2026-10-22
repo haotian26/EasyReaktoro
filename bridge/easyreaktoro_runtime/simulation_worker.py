@@ -108,7 +108,7 @@ def main(root):
             write_explorer(root)
         except Exception as finalization_error:
             print(f'Result finalization: {finalization_error}', file=sys.stderr, flush=True)
-        progress(status='interrupted' if isinstance(exc, InterruptedError) else 'failed', stage='stopped', diagnostic=diagnostic,
+        progress(status='interrupted' if isinstance(exc, InterruptedError) else 'failed', stage='stopped', diagnostic=diagnostic, error_location=exc.location if isinstance(exc, BridgeError) else None,
                  completed=completed, message=f'计算已停止，已保存 {completed} 个完整结果点', finished_at=time.time())
     finally:
         # Drop function-global cycles before Reaktoro/Python callback teardown.

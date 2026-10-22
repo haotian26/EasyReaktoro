@@ -325,3 +325,65 @@ class OpenEquilibriumTests(unittest.TestCase):
                 saved = json.loads((root/'input.json').read_text())
                 self.assertEqual(next(cell['source'] for cell in saved['program']['cells'] if cell['id'] == 'process'), original)
             finally: jobs.close()
+
+
+@unittest.skipIf(r is None, 'External Reaktoro required')
+class ConstraintFeedbackTests(unittest.TestCase):
+    setUpClass = classmethod(OpenEquilibriumTests.setUpClass.__func__)
+    tearDownClass = classmethod(OpenEquilibriumTests.tearDownClass.__func__)
+    run_cfg = OpenEquilibriumTests.run_cfg
+    def test_actual_lengths_determine_active_target_definitions(self):
+        from bridge.easyreaktoro_runtime.simulation_constraints import active_definitions
+        cfg = scheduled(1, 1)
+        cfg['schedule']['stop'] = dict(first='i = 2', later='i = 0', rounds='N = 1')
+        cfg['equilibrium_constraints'] = [ph(None, '', positions={'start': 2}, rounds={'start': 2}), gas(None, '', positions={'start': 2}, rounds={'start': 2})]
+        before = copy.deepcopy(cfg)
+        self.assertEqual(active_definitions(cfg), [])
+        rows, _ = self.run_cfg(cfg)
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(all(not row['constraints'] for row in rows))
+        self.assertEqual(cfg, before)
+        cfg['equilibrium_constraints'][0]['value'] = 4
+        cfg['schedule']['stop']['later'] = 'i = 2'
+        with self.assertRaises(BridgeError) as caught:
+            normalize_config(cfg, self.handle['records'], self.source)
+        self.assertEqual(caught.exception.response()['error']['location'], dict(kind='constraint', constraintId='acidity', field='titrant'))
+
+    def test_backend_error_has_a_readable_target_and_a_separate_input_reference(self):
+        cfg = scheduled(); cfg['equilibrium_constraints'] = [ph(4, 'HBr', identity='internal-uuid')]
+        with self.assertRaises(BridgeError) as caught:
+            normalize_config(cfg, self.handle['records'], self.source)
+        error = caught.exception.response()['error']
+        self.assertIn('pH · HBr', error['diagnostic'])
+        self.assertNotIn('internal-uuid', error['diagnostic'])
+        self.assertEqual(error['location'], dict(kind='constraint', constraintId='internal-uuid', field='titrant'))
+
+    def test_reactivated_targets_and_saved_code_match_actual_points(self):
+        cfg = scheduled(1, 1)
+        cfg['schedule']['stop'] = dict(first='i = 2', later='i = 1', rounds='N = 1')
+        cfg['equilibrium_constraints'] = [ph(4, positions={'start': 2})]
+        _, document, _ = prepare_program(cfg)
+        parsed = parse_code(document, cfg)
+        self.assertTrue(parsed['valid'], parsed)
+        rows, _ = self.run_cfg(parsed['config'])
+        self.assertEqual(len(rows), 5)
+        self.assertEqual([len(row['constraints']) for row in rows], [0, 1, 1, 0, 1])
+        for row in rows:
+            if row['constraints']:
+                self.assertAlmostEqual(row['summary']['pH'], 4, delta=1e-7)
+
+    def test_failed_run_keeps_its_actionable_location_in_saved_status(self):
+        cfg = scheduled(); cfg['equilibrium_constraints'] = [ph(10)]
+        with self.assertRaises(BridgeError) as caught:
+            self.run_cfg(cfg)
+        self.assertEqual(caught.exception.location, dict(kind='constraint', constraintId='acidity', field='exchange'))
+        with tempfile.TemporaryDirectory() as directory:
+            job = self.service.simulation_jobs.start(self.handle, cfg, directory)
+            deadline = time.monotonic()+30
+            while job['status'] == 'running' and time.monotonic() < deadline:
+                time.sleep(.05)
+                job = self.service.simulation_jobs.status(job['job_id'])
+            self.assertEqual(job['status'], 'failed', job)
+            self.assertEqual(job['error_location'], caught.exception.location)
+            status = json.loads((Path(job['output_path'])/'status.json').read_text())
+            self.assertEqual(status['error_location'], caught.exception.location)

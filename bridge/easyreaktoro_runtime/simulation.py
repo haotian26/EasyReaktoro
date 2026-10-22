@@ -352,7 +352,7 @@ class Simulation:
         conditions.temperature(point["temperature_c"], "celsius")
         conditions.pressure(point["pressure_bar"], "bar")
         self.constraints.set_conditions(conditions, active_constraints)
-        diagnostics = []
+        diagnostics, failure_location = [], None
         for guess in [*guesses, None]:
             work = (guess if guess is not None else target).clone()
             work.setSpeciesAmounts(self.np.maximum(self.np.asarray(work.speciesAmounts(), dtype=float), 1e-30))
@@ -362,6 +362,10 @@ class Simulation:
                 result = solver.solve(work, conditions)
                 if not result.succeeded():
                     directions = [row["titrant"] for row, _ in active_constraints if row["kind"] == "ph" and row["exchange"] == "add_only"]
+                    if len(directions) == 1:
+                        from .simulation_constraints import source_location
+                        row = next(row for row, _ in active_constraints if row['kind'] == 'ph')
+                        failure_location = source_location(row, 'exchange')
                     diagnostics.append("求解器未收敛" + ("；当前仅允许加入 " + "、".join(directions) + "，请检查目标能否通过该物质达到" if directions else ""))
                     continue
             except Exception as exc:
@@ -373,6 +377,7 @@ class Simulation:
             try:
                 external_exchange = self.constraints.audit(work, active_constraints)
             except BridgeError as exc:
+                failure_location = exc.location
                 diagnostics.append(str(exc))
                 continue
             delta = self.formula @ values - target_components - external_exchange
@@ -380,7 +385,7 @@ class Simulation:
             if error <= self.tolerance:
                 return work, target_components, delta, "warm" if guess is not None else "cold"
             diagnostics.append(f"守恒误差 {error:.3e} mol 超过 {self.tolerance:.3e}")
-        raise BridgeError("EQUILIBRIUM_FAILED", "error.simulationFailed", f"{point['temperature_c']:g} °C / {point['pressure_bar']:g} bar：" + "；".join(diagnostics)[-4000:])
+        raise BridgeError("EQUILIBRIUM_FAILED", "error.simulationFailed", f"{point['temperature_c']:g} °C / {point['pressure_bar']:g} bar：" + "；".join(diagnostics)[-4000:], location=failure_location)
 
     def bootstrap(self, point, fluid, rock):
         """Same-model continuation is only a numerical guess for full rock."""

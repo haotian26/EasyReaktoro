@@ -6,7 +6,7 @@ import type {ReactionStageKey} from './simulation-types';
 import type {ScheduleDiagnostic,ScheduleIssueLocation} from './schedule-diagnostics';
 
 export const FormulaDiagnosticContext=createContext<ScheduleDiagnostic|undefined>(undefined);
-export type FormulaReference={target?:LoopTarget;settingIds?:string[];stage?:ReactionStageKey;overrideId?:string;stop?:'first'|'later'|'rounds';scope?:{overrideId:string;axis:'positions'|'rounds';field:'start'|'end'|'step'};routeId?:string;routeField?:'source'|'position'|'round';constraint?:{id:string;field:'titrant'|'species'|'rounds'|'positions';bound?:'start'|'end'|'step'}};
+export type FormulaReference={target?:LoopTarget;settingIds?:string[];stage?:ReactionStageKey;overrideId?:string;stop?:'first'|'later'|'rounds';scope?:{overrideId:string;axis:'positions'|'rounds';field:'start'|'end'|'step'};routeId?:string;routeField?:'source'|'position'|'round';constraint?:{id:string;field:'titrant'|'species'|'rounds'|'positions'|'exchange';bound?:'start'|'end'|'step'}};
 export function matchesFormulaInput(field:FormulaReference,location?:ScheduleIssueLocation):boolean{
  if(!location)return false;
  if(location.kind==='stop')return field.stop===location.rule;

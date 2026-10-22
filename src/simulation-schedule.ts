@@ -1,7 +1,7 @@
 import {t} from './i18n';
 import {evaluateExpression,parseExpression} from './reaction-expression';
 import {atScheduleInput,ScheduleInputError,type ScheduleDiagnostic} from './schedule-diagnostics';
-import {constraintActiveAt,constraintDefinitionsDiagnostic} from './equilibrium-constraints';
+import {constraintActiveAt,constraintDefinitionsDiagnostic,constraintStructureDiagnostic} from './equilibrium-constraints';
 import type {Config,Point} from './simulation-types';
 import {activeRouteEntries,stageAt,reactionSourceDiagnostic} from './reaction-stages';
 import {pointConditions,saturationPressure} from './process-layout';
@@ -128,7 +128,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  check(schedule&&validateScheduleShape(schedule),()=>t('反应条件设置不完整，请补全当前编辑。',"Complete the reaction conditions before continuing."));
  const existing=caches.get(config)?.get(schedule);if(existing)return existing;
  const counts=scheduleCounts(schedule);check([counts.inner,counts.outer].every(n=>Number.isInteger(n)&&n>=1&&n<=10000),()=>t('路径位置数和反应轮数须为 1–10,000 的整数。',"Enter a whole number from 1 to 10,000 for path positions and reaction rounds."));check(!!schedule.stop||counts.total<=20000,()=>t('本次计算超过 20,000 个平衡点，请减少位置数或轮数。',"This simulation exceeds 20,000 equilibrium points. Reduce the number of positions or rounds."));
- const constraintIssue=constraintDefinitionsDiagnostic(config);if(constraintIssue){if(constraintIssue.location)throw new ScheduleInputError(constraintIssue.message,constraintIssue.location);throw new Error(constraintIssue.message);}
+ const constraintIssue=constraintStructureDiagnostic(config);if(constraintIssue){if(constraintIssue.location)throw new ScheduleInputError(constraintIssue.message,constraintIssue.location);throw new Error(constraintIssue.message);}
  const stopValue=(expression:string,variable:(name:string)=>number)=>{
   const parsed=parseExpression(expression);check('operator'in parsed.node&&['<','>','<=','>=','=','==','!=','<>'].includes(parsed.node.operator),()=>t('结束条件需要比较，例如 i = 3 或 P < 150。','Use a comparison to end the calculation, for example i = 3 or P < 150.'));
   return evaluateExpression(parsed,variable)!==0;
@@ -207,6 +207,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  counts.total=lengths.reduce((a,b)=>a+b,0);
  check(counts.inner*counts.outer<=20000,()=>t('路径与轮次的网格超过 20,000 个位置，请缩小范围。','The path and round grid exceeds 20,000 positions. Reduce its extent.'));
  const active=(ii:number,oi:number)=>oi>=0&&oi<lengths.length&&ii>=0&&ii<lengths[oi];
+ const activeConstraintIssue=constraintDefinitionsDiagnostic(config,lengths);if(activeConstraintIssue){if(activeConstraintIssue.location)throw new ScheduleInputError(activeConstraintIssue.message,activeConstraintIssue.location);throw new Error(activeConstraintIssue.message);}
  const offsets=lengths.map((_,o)=>lengths.slice(0,o).reduce((a,b)=>a+b,0));
  const table=(target:LoopTarget):Float64Array=>{
   const key=targetKey(target),old=tables.get(key);if(old)return old;

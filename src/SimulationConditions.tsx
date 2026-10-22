@@ -1,8 +1,8 @@
-import {t as tr,useLanguage,englishCount} from './i18n';
+import {t as tr,useLanguage,englishCount,translateMessage} from './i18n';
 import {useMemo,useState,useEffect,useRef} from 'react';
 import {FormulaDiagnosticContext,ReactionFormulaInput,formulaField,revealInput} from './ReactionFormulaInput';
 import {stageAt} from './reaction-stages';
-import type {ScheduleIssueLocation} from './schedule-diagnostics';
+import type {ScheduleDiagnostic,ScheduleIssueLocation} from './schedule-diagnostics';
 import type {ParameterEditLocation} from './schedule-references';
 import {Config,SimSpecies,ReactionStageKey,newId} from './simulation-types';
 import {LegacySimulationConditions} from './LegacySimulationConditions';
@@ -16,19 +16,23 @@ import {profileFormula,replaceParameterFormula} from './reaction-formula';
 import {targetDescription,targetKey} from './simulation-loops';
 import {EquilibriumConstraintFields} from './EquilibriumConstraintFields';
 import {removeConstraint} from './equilibrium-constraints';
-import {atPoint,pointSetting,isLegacyPoint,setPointSetting,resetPointSetting} from './local-point-settings';
+import {atPoint,pointSetting,isLegacyPoint,setPointSetting,resetPointSetting,inheritedPointRule} from './local-point-settings';
 import './wave-editor.css';
 export {NumberField,RouteEditor} from './LegacySimulationConditions';
-type Props={config:Config;patch:(value:Partial<Config>)=>void;items:SimSpecies[];disabled:boolean;onError:(e:string)=>void;onMaterials?:()=>void;editParameter?:ParameterEditLocation & {serial:number}};
+type Props={config:Config;patch:(value:Partial<Config>)=>void;items:SimSpecies[];disabled:boolean;onError:(e:string)=>void;onMaterials?:()=>void;editParameter?:ParameterEditLocation & {serial:number};diagnostic?:ScheduleDiagnostic;locateDiagnostic?:number};
 
 export function SimulationConditions(props:Props){
  useLanguage();const {config,patch,items,disabled,onMaterials}=props;
  const workspace=useRef<HTMLFieldSetElement>(null),[pendingFocus,setPendingFocus]=useState<ScheduleIssueLocation>();
  useEffect(()=>{if(!pendingFocus)return;const field=formulaField(workspace.current,pendingFocus);if(field)revealInput(field);setPendingFocus(undefined);},[pendingFocus]);
+ useEffect(()=>{const location=props.diagnostic?.location;if(!props.locateDiagnostic||!location)return;
+  if(!formulaField(workspace.current,location)&&location.kind==='parameter'){setLocalId(location.overrideId||'point');setSelected({inner:location.inner,outer:location.outer});}
+  setPendingFocus(location);
+ },[props.locateDiagnostic]);
  const [selected,setSelected]=useState<ScheduleSelection>({inner:0,outer:0}),[localId,setLocalId]=useState('');
  useEffect(()=>{if(props.editParameter){setLocalId(props.editParameter.overrideId||'');const scope=config.schedule?.overrides.find(o=>o.id===props.editParameter!.overrideId);if(scope)setSelected({inner:scope.positions.start-1,outer:scope.rounds.start-1});Array.from(document.querySelectorAll('[data-setting-id]')).find(el=>el.getAttribute('data-setting-id')===props.editParameter!.settingId)?.scrollIntoView?.({block:'center'});}},[props.editParameter]);
  const effective=useMemo(()=>{const schedule=migrateSchedule(config);if(!schedule)return null;const normalized=toStageConfig({...config,schedule,loops:undefined}),points=schedulePoints(normalized);return {...normalized,points:points.length?points:config.points};},[config]);
- if(!effective?.schedule)return <LegacySimulationConditions {...props}/>;
+ if(!effective?.schedule)return <FormulaDiagnosticContext.Provider value={props.diagnostic&&{...props.diagnostic,message:translateMessage(props.diagnostic.message)}}><LegacySimulationConditions {...props} workspaceRef={workspace}/></FormulaDiagnosticContext.Provider>;
  const schedule=effective.schedule;let plan;try{plan=compileSchedule(effective);}catch{}
  const counts=plan?.counts??{inner:schedule.positions,outer:schedule.rounds,total:NaN};
  const outer=Math.max(0,Math.min(selected.outer,(counts.outer||1)-1)),inner=Math.max(0,Math.min(selected.inner,(plan?.lengths[outer]??counts.inner??1)-1));
@@ -40,7 +44,7 @@ export function SimulationConditions(props:Props){
  const stopText=(kind:keyof StopRules)=>schedule.stop?.[kind]??`${kind==='rounds'?'N':'i'} = ${(kind==='rounds'?schedule.rounds:schedule.positions)-1}`;
  const stop=(kind:keyof StopRules,expression:string)=>update({...schedule,stop:{first:stopText('first'),later:stopText('later'),rounds:stopText('rounds'),[kind]:expression}});
  const adjust=(ii:number,oi:number)=>{setLocalId('point');setSelected({inner:ii,outer:oi});};
- const issue=scheduleDiagnostic(effective),extra=[...schedule.parameters.filter(s=>!['temperature','pressure','route_fraction'].includes(s.target.kind)),...(effective.equilibrium_constraints||[]).filter(c=>!schedule.parameters.some(s=>s.target.kind==='equilibrium_constraint'&&s.target.constraint_id===c.id)).map(c=>({id:`base-${c.id}`,target:{kind:'equilibrium_constraint' as const,constraint_id:c.id},value:{mode:'fixed' as const,value:c.value}}))];
+ const issue=scheduleDiagnostic(effective)??(props.diagnostic&&{...props.diagnostic,message:translateMessage(props.diagnostic.message)}),extra=[...schedule.parameters.filter(s=>!['temperature','pressure','route_fraction'].includes(s.target.kind)),...(effective.equilibrium_constraints||[]).filter(c=>!schedule.parameters.some(s=>s.target.kind==='equilibrium_constraint'&&s.target.constraint_id===c.id)).map(c=>({id:`base-${c.id}`,target:{kind:'equilibrium_constraint' as const,constraint_id:c.id},value:{mode:'fixed' as const,value:c.value}}))];
  const available=scheduleTargets(effective).filter(s=>s.target.kind==='material_amount'&&!extra.some(e=>targetKey(e.target)===targetKey(s.target)));
  const add=(key:string)=>{if(key==='ph'||key==='fugacity'){const id=newId(),row=key==='ph'?{id,kind:'ph' as const,value:7,titrant:'',exchange:'add_only' as const}:{id,kind:'fugacity' as const,value:1,species:''};apply({equilibrium_constraints:[...(effective.equilibrium_constraints||[]),row],schedule:{...schedule,parameters:[...schedule.parameters,{id:newId(),target:{kind:'equilibrium_constraint',constraint_id:id},value:{mode:'fixed',value:row.value}}]}});}else{const row=available.find(r=>targetKey(r.target)===key);if(row)update({...schedule,parameters:[...schedule.parameters,{id:newId(),target:row.target,value:{mode:'fixed',value:row.value}}]});}};
  const local=!!localId;
@@ -81,11 +85,12 @@ export function SimulationConditions(props:Props){
    <p className="wave-range-note">{tr('species 详情中可查看数据库记录的温压适用范围。','Species details show the temperature and pressure ranges recorded in the database.')}</p>
   </div><div className="wave-preview"><SchedulePreview config={effective} items={items} selected={{inner,outer}} onSelect={(inner,outer)=>{setSelected({inner,outer});setLocalId('');}} onAdjust={adjust} onLocateIssue={issue?.location?locateIssue:undefined}/>{local&&<section className="wave-local" aria-label={tr('此点单独设置','Local point conditions')}>
    <h3>{tr(`单独设置 · 第 ${outer+1} 轮，位置 ${inner+1}`,`Local conditions · round ${outer+1}, position ${inner+1}`)}</h3>
-   {localFields.map(({target,scope,setting,changed})=>{const description=targetDescription(target,effective),stage=stageAt(inner,outer);return <div className="wave-local-field" key={targetKey(target)} data-state={changed?'modified':'inherited'}>
+   {localFields.map(({target,scope,setting,changed})=>{const description=targetDescription(target,effective),stage=stageAt(inner,outer),source=inheritedPointRule(schedule,target,inner,outer);return <div className="wave-local-field" key={targetKey(target)} data-state={changed?'modified':'inherited'}>
     <label><span className="wave-local-label"><span>{description.label}{description.unit?` / ${description.unit}`:''}</span><small>{changed?tr('本点修改','Modified here'):tr('沿用规则','Inherited rule')}</small></span>
      <ReactionFormulaInput reference={{target,settingIds:[setting.id],overrideId:scope?.id}} help={{kind:target.kind==='temperature'?'temperature':target.kind==='pressure'?'pressure':'value',stage}} aria-label={`${description.label} ${tr('本点数值或公式','value or expression at this point')}`} value={profileFormula(setting.value,stage,scope).replace(/\bV\b/g,target.kind==='temperature'?'T':target.kind==='pressure'?'P':'X').replace(/\bR\b/g,target.kind==='temperature'?'Tr':target.kind==='pressure'?'Pr':'Xr')} onChange={e=>editLocal(target,e.target.value)}/>
     </label>
     {changed&&scope&&<button type="button" className="text-btn wave-local-reset" aria-label={`${scope.point?tr('恢复沿用','Restore inherited rule'):tr('恢复通常规则','Use general rule')} · ${description.label}`} onClick={e=>{const field=e.currentTarget.closest('.wave-local-field')?.querySelector('input');update(resetPointSetting(schedule,scope.id,target));field?.focus();}}>{scope.point?tr('恢复沿用','Restore inherited rule'):tr('恢复通常规则','Use general rule')}</button>}
+    <div className="wave-local-source"><span>{changed?tr('恢复后沿用','Inherits after reset'):tr('沿用','Inherits from')}</span>{source.location&&(!source.scope||['temperature','pressure','route_fraction'].includes(target.kind))?<button type="button" className="text-btn" onClick={()=>{const field=formulaField(workspace.current,source.location);if(field)revealInput(field);}}>{source.label} <ArrowRight size={12}/></button>:<span>{source.setting?source.label:tr('默认值','Default value')} · <code>{source.setting?profileFormula(source.setting.value,stage,source.scope):description.value}</code></span>}</div>
    </div>;})}
    <p className="wave-local-note">{tr('仅本点修改会覆盖已有规则；恢复沿用后，继续随原规则变化。','Only edits at this point override existing rules. Restoring a rule keeps this point linked to it.')}</p>
    <select aria-label={tr('选择要单独修改的参数','Choose a parameter for this point')} value="" onChange={e=>{const row=scheduleTargets(effective).find(r=>targetKey(r.target)===e.target.value);if(row)update(setPointSetting(schedule,row.target,inner,outer,{mode:'fixed',value:plan?.valueAt(row.target,inner,outer,row.value)??row.value}));}}><option value="">{tr('＋ 添加本点条件','＋ Add a condition at this point')}</option>{scheduleTargets(effective).filter(row=>!localFields.some(p=>targetKey(p.target)===targetKey(row.target))).map(row=><option key={targetKey(row.target)} value={targetKey(row.target)}>{row.label}</option>)}</select>

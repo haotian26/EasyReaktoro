@@ -71,3 +71,10 @@
  .wave-local-field{grid-template-columns:minmax(0,1fr)}
  .wave-local-reset{justify-self:start;text-align:left;min-height:28px;padding:2px 0}
 }
+
+.wave-local-source{grid-column:1/-1;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;min-width:0;font-size:11px;line-height:1.6;color:var(--muted)}
+.wave-local-source .text-btn{display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:100%;padding:0;font-size:11px;line-height:1.6;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.wave-local-source svg{flex:none}
+.sim-message.error>.text-btn{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12px}
+
+.sim-run-diagnostic .text-btn{display:inline-flex;margin-left:12px;font-size:12px}

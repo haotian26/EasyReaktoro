@@ -1306,6 +1306,7 @@
     "新建模拟": "New simulation",
     "新建模拟，保留当前历史": "Create a new simulation and keep the current history",
     "新建": "New",
+    "前往修改": "Go to input",
     "模拟历史已保存。": "Simulation history saved.",
     "重试保存": "Retry save",
     "关闭模拟错误": "Dismiss simulation error",
@@ -1506,6 +1507,9 @@
     "本点数值或公式": "value or expression at this point",
     "恢复沿用": "Restore inherited rule",
     "恢复通常规则": "Use general rule",
+    "恢复后沿用": "Inherits after reset",
+    "沿用": "Inherits from",
+    "默认值": "Default value",
     "仅本点修改会覆盖已有规则；恢复沿用后，继续随原规则变化。": "Only edits at this point override existing rules. Restoring a rule keeps this point linked to it.",
     "＋ 添加本点条件": "＋ Add a condition at this point",
     "导入的结果": "Imported results",
@@ -1662,6 +1666,12 @@
     "请补全平衡目标适用的轮次和位置范围。": "Complete the rounds and positions where the equilibrium target applies.",
     "请指定用于调整 pH 的中性物质。": "Specify an electrically neutral substance to adjust pH.",
     "请选择需要指定逸度的气体。": "Choose the gas whose fugacity should be specified.",
+    "首轮 · 第一步": "First round · initial step",
+    "首轮 · 后续每一步": "First round · following steps",
+    "后续轮次 · 第一步": "Subsequent rounds · initial step",
+    "后续轮次 · 后续每一步": "Subsequent rounds · following steps",
+    "末": "end",
+    "通常规则": "General rule",
     "物料份数尚未填完整": "Enter the number of material portions",
     "缺失的配方": "Missing composition",
     "本轮不加入": "Not added in this round",
@@ -3290,6 +3300,22 @@
     },
     {
       "zh": [
+        "轮次 ",
+        " · 位置 ",
+        ""
+      ],
+      "en": [
+        "Rounds ",
+        " · positions ",
+        ""
+      ],
+      "order": [
+        0,
+        1
+      ]
+    },
+    {
+      "zh": [
         "第 ",
         " 轮实际温压"
       ],
@@ -4691,6 +4717,19 @@
       "en": [
         "",
         " input amount"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "，每隔 ",
+        ""
+      ],
+      "en": [
+        ", every ",
+        ""
       ],
       "order": [
         0

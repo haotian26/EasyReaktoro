@@ -12,7 +12,7 @@ import {encodeDraft,restoreDraft} from './draft-json';
 import {setLanguage} from './i18n';
 const mocks=vi.hoisted(()=>({invoke:vi.fn()}));vi.mock('@tauri-apps/api/core',()=>({invoke:mocks.invoke}));
 const documentFor=(config:Config)=>({version:1,cells:['system','materials','conditions','transfers','activity','solver'].map(id=>({id,title:id,description:id,source:id==='conditions'?JSON.stringify(encodeDraft(config)):'# parameters'}))});
-const ph=(value=7):EquilibriumConstraint=>({id:'acid',kind:'ph',value,titrant:'HCl',exchange:'add_only'});
+const ph=(value=7):Extract<EquilibriumConstraint,{kind:'ph'}>=>({id:'acid',kind:'ph',value,titrant:'HCl',exchange:'add_only'});
 const target={kind:'equilibrium_constraint' as const,constraint_id:'acid'};
 function base():Config{return {...structuredClone(DEFAULT_CONFIG),schedule:defaultSchedule({temperature_c:25,pressure_bar:1}),activity_model:'ideal'};}
 beforeEach(()=>{const values=new Map<string,string>();Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>values.set(k,v),removeItem:(k:string)=>values.delete(k)}});setLanguage('zh-CN');mocks.invoke.mockReset();mocks.invoke.mockImplementation(async(_command,{payload})=>payload.action==='code_render'?documentFor(restoreDraft(payload.config)):payload.action==='code_parse'?{valid:true,config:restoreDraft(JSON.parse(payload.document.cells.find((c:any)=>c.id==='conditions').source)),errors:[]}:{});});
@@ -53,4 +53,15 @@ it('undo and redo preserve target identities, scopes, and unfinished numbers',()
  const initial=base();initial.equilibrium_constraints=[ph(6)];let state:Config=initial;
  const hook=renderHook(({config})=>useSimulationUndo('target-undo',true,{config},value=>{state=value.config;}),{initialProps:{config:initial}});
  const changed=readConfig(encodeDraft({...initial,equilibrium_constraints:[{...ph(NaN),positions:{start:2,end:3}}]}),{allowDraft:true});hook.rerender({config:changed});act(()=>hook.result.current.undo());expect(state.equilibrium_constraints).toEqual(initial.equilibrium_constraints);hook.rerender({config:state});act(()=>hook.result.current.redo());expect(state.equilibrium_constraints![0].id).toBe('acid');expect(state.equilibrium_constraints![0].value).toBeNaN();expect(state.equilibrium_constraints![0].positions).toEqual({start:2,end:3});
+});
+
+it('keeps shortened-path drafts through UI/code and save/reload, then checks reactivated points',async()=>{
+ const c=base();c.schedule!.positions=3;c.schedule!.stop={first:'i = 0',rounds:'N = 0'};
+ c.equilibrium_constraints=[{...ph(NaN),titrant:'',positions:{start:3}}];
+ const restored=readConfig(encodeDraft(c),{allowDraft:true}),hook=await editor(restored);
+ await act(async()=>{await hook.result.current.showCode();});expect(hook.errors).not.toHaveBeenCalled();
+ await act(async()=>{await hook.result.current.showUI();});expect(hook.result.current.mode).toBe('ui');
+ const returned=hook.setConfig.mock.calls.at(-1)![0];expect(returned.equilibrium_constraints[0].value).toBeNaN();expect(returned.equilibrium_constraints[0].titrant).toBe('');
+ returned.schedule={...returned.schedule,stop:{first:'i = 2',rounds:'N = 0'}};hook.rerender({config:returned});
+ await expect(hook.result.current.resolveConfig()).rejects.toThrow(/调整 pH/);
 });

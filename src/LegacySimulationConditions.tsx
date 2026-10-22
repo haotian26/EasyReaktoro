@@ -1,5 +1,5 @@
 import {t as tr,useLanguage} from './i18n';
-import {useEffect,useState} from 'react';
+import {useEffect,useState,type RefObject} from 'react';
 import {Plus,Trash2,Check} from 'lucide-react';
 import {Config,fmt,makeRoute,newId,numeric,ReactionStageKey,Route,SimSpecies} from './simulation-types';
 import {HelpTip} from './HelpTip';
@@ -12,7 +12,7 @@ import {LoopDiagram,type DiagramMaterialStages} from './LoopDiagram';
 import {controlledBy,defaultLoops,inferLoops,Loop,loopCounts,LoopDefinition,loopIssue,loopPoint,loopPoints,loopValues,routeId,targetDescription} from './simulation-loops';
 import {ConditionSchedule} from './ConditionSchedule';
 import {LegacyEquilibriumConstraints} from './LegacyEquilibriumConstraints';
-type Props={config:Config;patch:(value:Partial<Config>)=>void;items:SimSpecies[];disabled:boolean;onError:(e:string)=>void;onMaterials?:()=>void};
+type Props={config:Config;patch:(value:Partial<Config>)=>void;items:SimSpecies[];disabled:boolean;onError:(e:string)=>void;onMaterials?:()=>void;workspaceRef?:RefObject<HTMLFieldSetElement>};
 export function NumberField({label,value,onChange,help,...props}:{label:string;value:number;onChange:(n:number)=>void;help?:string;[key:string]:any}){return <label className="sim-field"><span>{label}{help && <HelpTip label={label}>{help}</HelpTip>}</span><input type="number" step="any" value={Number.isFinite(value)?value:''} onChange={e=>onChange(numeric(e.target.value))} {...props}/></label>;}
 export function RouteEditor({routes,config,onChange}:{routes:Route[];config:Config;onChange:(routes:Route[])=>void}){
  useLanguage();
@@ -25,7 +25,7 @@ export function RouteEditor({routes,config,onChange}:{routes:Route[];config:Conf
 
   </section>;})}<div className="sim-inline"><button className="secondary" disabled={routes.length>=30} onClick={()=>onChange([...routes,makeRoute('all','material',config.materials[0]?.id)])}><Plus size={14}/>{tr("添加物料来源","Add material source")}</button>{routes.length===1 && routes[0].phase==='all' && <button className="text-btn" onClick={()=>onChange((['aqueous','mineral','gas'] as const).map(phase=>({...routes[0],id:newId(),phase})))}>{tr("拆分为水相、矿物、气相","Separate aqueous, mineral and gas sources")}</button>}</div></div>;
 }
-export function LegacySimulationConditions({config,patch,disabled,onError,onMaterials,items}:Props){
+export function LegacySimulationConditions({config,patch,disabled,onError,onMaterials,items,workspaceRef}:Props){
  useLanguage();
   const inferred=inferLoops({...config,loops:undefined}),definition=config.loops||inferred;
   const [selectedStage,setSelectedStage]=useState<ReactionStageKey>('first_start');
@@ -44,7 +44,7 @@ export function LegacySimulationConditions({config,patch,disabled,onError,onMate
   const outerAnnotations=activeDefinition?.round_conditions?.length?axis(activeDefinition.outer).values.map((_,oi)=>{try{const first=loopPoint(activeDefinition,0,oi),last=loopPoint(activeDefinition,Math.max(0,counts.inner-1),oi);return first.pressure_mode==='water_saturation'?'Psat(T)':first.pressure_bar===last.pressure_bar?`${fmt(first.pressure_bar)} bar`:`${fmt(first.pressure_bar)} → ${fmt(last.pressure_bar)} bar`;}catch{return tr('压力待填写',"Pressure not set");}}):undefined;
   const materialStages:DiagramMaterialStages|undefined=effective.reaction_stages?{first_start:[],first_following:[],later_start:[],later_following:[]}:undefined;
   if(materialStages)for(const key of stageKeys)materialStages[key]=effective.reaction_stages![key].map(r=>({source:r.source==='material'?'fresh' as const:r.source==='previous_point'?'left' as const:r.source==='previous_cycle'?'above' as const:'other' as const,phase:r.phase,species:r.phase==='species'?r.species:undefined,phaseLabel:phaseTitles[r.phase],fraction:r.fraction,label:sourceLabel(r,effective),quantityLabel:activeDefinition&&controlledBy(activeDefinition,{kind:'route_fraction',route_id:r.id!,field:'fraction'})?tr('用量随条件变化',"Quantity varies with conditions"):tr(`${fmt(r.fraction*(r.source==='material'?1:100))}${r.source==='material'?' 份':'%'}`,`${fmt(r.fraction*(r.source==='material'?1:100))}${r.source==='material'?' portions':'%'}`),fractionAt:(ii:number,oi:number)=>r.source==='material'&&!inputPreview(effective,r,key,items,[ii,oi])?0:stageValue(effective,{kind:'route_fraction',route_id:r.id!,field:'fraction'},key,r.fraction,[ii,oi])}));
-  return <fieldset className="sim-process-page process-redesign" disabled={disabled}>
+  return <fieldset ref={workspaceRef} className="sim-process-page process-redesign" disabled={disabled}>
     <div className="loop-intro"><div><h2>{tr("反应过程","Reaction process")}</h2><p>{tr("设定反应条件，再选择每个位置实际加入的物料。","Set the conditions, then choose the material supplied at each position.")}</p></div><span className="loop-shape-count">{counts.total===1?tr('单点',"Single point"):counts.inner>1&&counts.outer>1?tr('多轮反应',"Multiple rounds"):tr('反应路径',"Reaction path")} · {Number.isFinite(counts.total)?counts.total.toLocaleString():'—'} {tr("次平衡"," equilibria")}</span></div>
     {activeDefinition?<><div className="reaction-conditions-band"><LoopEditor config={effective} definition={activeDefinition} onChange={updateLoops}/></div><div className="loop-plan-layout reaction-composition-layout"><div className="reaction-plan-editor"><ReactionStageEditor config={effective} items={items} selected={selectedStage} onSelect={setSelectedStage} onChange={value=>patch({loops:activeDefinition,reaction_stages:effective.reaction_stages,...value})} onMaterials={onMaterials}/></div><LoopDiagram outerAnnotations={outerAnnotations} inner={axis(activeDefinition.inner)} outer={axis(activeDefinition.outer)} fixedConditions={fixed} materialStages={materialStages} selectedStage={selectedStage} onSelect={(ii,oi)=>setSelectedStage(stageAt(ii,oi))}/></div>{issue&&<div className="loop-error" role="status">{issue}</div>}{config.loops&&!inferred&&<button className="text-btn loop-original-route" onClick={()=>patch({loops:undefined,reaction_stages:undefined})}>{tr("使用原来的逐步路线","Keep the original stepwise path")}</button>}</>:<><div className="loop-legacy-notice"><p>{tr("这份模拟为不同位置单独设置了条件。原有设置保留在下方。","This simulation has conditions set for individual positions. Those settings are retained below.")}</p><button className="secondary" onClick={()=>updateLoops(defaultLoops(config.points[0]))}>{tr("重新定义反应路径","Redefine the reaction path")}</button></div><ConditionSchedule onPreviewRound={setPreviewCycle} config={config} patch={patch} onError={onError} onRules={id=>{setTarget(id);setAdvanced(true);}}/></>}
 

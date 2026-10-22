@@ -254,3 +254,27 @@ it('reopens the same result from the portal history without replacing its iframe
   expect(view.getByTitle('结果')).toBe(frame);
  }finally{view.unmount();toolbar.remove();}
 });
+
+it('takes a backend target failure to its field and clears the error when corrected',async()=>{
+ await selectWater();fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));
+ fireEvent.change(screen.getByLabelText('添加指定条件'),{target:{value:'ph'}});
+ fireEvent.change(screen.getByLabelText('pH 调节物质'),{target:{value:'HBr'}});
+ handler=(action,payload)=>{if(action==='validate')return Promise.reject(JSON.stringify({code:'EQUILIBRIUM_CONSTRAINT',diagnostic:'pH · HBr 的交换物质包含当前体系没有的元素，请先补充允许参与平衡的 species',location:{kind:'constraint',constraintId:payload.config.equilibrium_constraints[0].id,field:'titrant'}}));return {};};
+ fireEvent.click(screen.getByRole('tab',{name:/初始物质/}));fireEvent.click(screen.getByRole('button',{name:'检查设置'}));
+ const locate=await screen.findByRole('button',{name:'前往修改'});fireEvent.click(locate);
+ await waitFor(()=>expect(document.activeElement).toBe(screen.getByLabelText('pH 调节物质')));
+ expect(screen.getByLabelText('pH 调节物质').getAttribute('aria-invalid')).toBe('true');
+ fireEvent.change(screen.getByLabelText('pH 调节物质'),{target:{value:'HCl'}});
+ expect(screen.queryByRole('button',{name:'前往修改'})).toBeNull();expect(screen.getByLabelText('pH 调节物质').getAttribute('aria-invalid')).toBeNull();
+});
+
+it('offers input navigation for the current failed run and clears it after changing settings',async()=>{
+ await selectWater();fireEvent.click(screen.getByRole('tab',{name:/计算流程/}));
+ fireEvent.change(screen.getByLabelText('添加指定条件'),{target:{value:'ph'}});fireEvent.change(screen.getByLabelText('pH 调节物质'),{target:{value:'HCl'}});
+ mocks.open.mockResolvedValue('/results');
+ handler=(action,payload)=>action==='validate'?{total:1}:action==='start'?{job_id:'failed-run',output_path:'/results/failed',status:'failed',completed:0,total:1,elapsed_seconds:1,message:'计算已停止',diagnostic:'此 pH 目标需要移除 HCl；当前仅允许加入，请改变目标或交换方式',error_location:{kind:'constraint',constraintId:payload.config.equilibrium_constraints[0].id,field:'exchange'}}:{};
+ fireEvent.click(start());const locate=await screen.findByRole('button',{name:'前往修改'});fireEvent.click(locate);
+ await waitFor(()=>expect(document.activeElement).toBe(screen.getByLabelText('pH 物质交换方式')));
+ fireEvent.change(screen.getByLabelText('pH 物质交换方式'),{target:{value:'both'}});
+ expect(screen.queryByRole('button',{name:'前往修改',hidden:true})).toBeNull();
+});

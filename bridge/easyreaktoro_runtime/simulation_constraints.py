@@ -5,11 +5,24 @@ species. Nothing here supplies finite material or changes the selected phases.
 """
 from __future__ import annotations
 import math
-from .errors import BridgeError, require
+from .errors import BridgeError
 
 
-def check(ok, message):
-    require(ok, 'EQUILIBRIUM_CONSTRAINT', 'error.simulationInput', message)
+def check(ok, message, location=None):
+    if not ok:
+        raise BridgeError('EQUILIBRIUM_CONSTRAINT', 'error.simulationInput', message, location=location)
+
+
+def source_location(row, field=None):
+    return dict(kind='constraint', constraintId=row['id'], field=field or ('titrant' if row['kind'] == 'ph' else 'species'))
+
+
+def target_label(row):
+    return 'pH' + (' · ' + row['titrant'] if row.get('titrant') else '') if row['kind'] == 'ph' else 'f(' + row['species'] + ')'
+
+
+def value_location(row, outer, inner):
+    return dict(kind='parameter', target=dict(kind='equilibrium_constraint', constraint_id=row['id']), inner=inner, outer=outer)
 
 
 def active_at(row, outer, inner, rounds, positions):
@@ -52,20 +65,25 @@ def normalize_constraints(cfg):
     return rows
 
 
-def active_definitions(cfg):
+def active_definitions(cfg, plan=None):
     from .simulation_loops import execution_shape
     from .simulation_schedule import scope_indices
-    positions, rounds = execution_shape(cfg)
+    if plan is None and cfg.get('schedule'):
+        from .simulation_loops import LoopPlan
+        plan = LoopPlan(cfg)
+    positions, rounds = (plan.positions, plan.rounds) if hasattr(plan, 'active') else execution_shape(cfg)
     return [row for row in cfg.get('equilibrium_constraints', [])
-            if scope_indices(row.get('rounds', {'start': 1}), rounds) and scope_indices(row.get('positions', {'start': 1}), positions)]
+            if any(not hasattr(plan, 'active') or plan.active(outer, inner)
+                   for outer in scope_indices(row.get('rounds', {'start': 1}), rounds)
+                   for inner in scope_indices(row.get('positions', {'start': 1}), positions))]
 
 
 def constraint_value(row, plan, outer, inner):
     identity = ('equilibrium_constraint', row['id'])
     values = getattr(plan, '_arrays', {}).get(identity)
     value = values[outer * plan.positions + inner] if values is not None else row['value']
-    check(type(value) in (int, float) and math.isfinite(value), f"第 {outer+1} 轮、位置 {inner+1} 的 {row['id']} 目标值须为有限数")
-    check(row['kind'] != 'fugacity' or value > 0, '气体逸度必须大于零，单位为 bar')
+    check(type(value) in (int, float) and math.isfinite(value), f"第 {outer+1} 轮、位置 {inner+1} 的 {target_label(row)} 目标值须为有限数", value_location(row, outer, inner))
+    check(row['kind'] != 'fugacity' or value > 0, '气体逸度必须大于零，单位为 bar', value_location(row, outer, inner))
     return float(value)
 
 
@@ -92,28 +110,28 @@ def validate_constraints(cfg, records, plan=None):
     # element names alone is insufficient (e.g. a system containing only H2O).
     matrix = np.array([[rec['composition'].get(e, 0) for rec in selected] for e in elements] + [[rec.get('charge', 0) for rec in selected]], dtype=float)
     vectors, domains = {}, {}
-    for row in active_definitions(cfg):
-        label = row['id']
+    for row in active_definitions(cfg, plan):
+        label, location = target_label(row), source_location(row)
         if row['kind'] == 'ph':
             protons = [rec for rec in selected if rec['state'] == 'Aqueous' and rec.get('composition') == {'H': 1} and rec.get('charge') == 1]
-            check(len(protons) == 1, '固定 pH 需要在体系中选择唯一的水相 H⁺ species')
+            check(len(protons) == 1, '固定 pH 需要在体系中选择唯一的水相 H⁺ species', location)
             try:
                 formula = r.ChemicalFormula(row['titrant'])
                 composition = dict(zip(formula.symbols(), formula.coefficients()))
                 charge = float(formula.charge())
             except Exception as exc:
-                raise BridgeError('EQUILIBRIUM_CONSTRAINT', 'error.simulationInput', f"无法读取滴定物质化学式：{row['titrant']}") from exc
-            check(composition and charge == 0 and all(math.isfinite(v) and v > 0 for v in composition.values()), 'pH 滴定物质须为有明确元素组成的中性化学式；不会自动补入反离子')
+                raise BridgeError('EQUILIBRIUM_CONSTRAINT', 'error.simulationInput', f"无法读取滴定物质化学式：{row['titrant']}", location=location) from exc
+            check(composition and charge == 0 and all(math.isfinite(v) and v > 0 for v in composition.values()), 'pH 滴定物质须为有明确元素组成的中性化学式；不会自动补入反离子', location)
         else:
             found = lookup.get(row['species'], [])
-            check(len(found) == 1 and not found[0].get('disabled') and found[0].get('state') == 'Gas' and found[0].get('charge', 0) == 0, f"{row['species']} 须为当前数据库中唯一、可计算的中性气体记录")
+            check(len(found) == 1 and not found[0].get('disabled') and found[0].get('state') == 'Gas' and found[0].get('charge', 0) == 0, f"{row['species']} 须为当前数据库中唯一、可计算的中性气体记录", location)
             composition, charge = found[0]['composition'], 0
-        check(set(composition) <= set(elements), f'{label} 的交换物质包含当前体系没有的元素，请先补充允许参与平衡的 species')
+        check(set(composition) <= set(elements), f'{label} 的交换物质包含当前体系没有的元素，请先补充允许参与平衡的 species', location)
         vector = np.array([composition.get(e, 0) for e in elements] + [charge], dtype=float)
         coefficients = np.linalg.lstsq(matrix, vector, rcond=None)[0]
-        check(np.max(np.abs(matrix @ coefficients-vector)) <= 1e-10 * max(1, np.max(np.abs(vector))), f'{label} 的交换组成无法由所选 species 表示，请补充相应 species')
-        vectors[label] = vector
-        domains[label] = (scope_indices(row.get('rounds', {'start': 1}), rounds), scope_indices(row.get('positions', {'start': 1}), positions))
+        check(np.max(np.abs(matrix @ coefficients-vector)) <= 1e-10 * max(1, np.max(np.abs(vector))), f'{label} 的交换组成无法由所选 species 表示，请补充相应 species', location)
+        vectors[row['id']] = vector
+        domains[row['id']] = (scope_indices(row.get('rounds', {'start': 1}), rounds), scope_indices(row.get('positions', {'start': 1}), positions))
     checked_sets = set()
     for outer in range(rounds):
         for inner in range(positions):
@@ -125,12 +143,16 @@ def validate_constraints(cfg, records, plan=None):
             if signature in checked_sets:
                 continue
             checked_sets.add(signature)
-            check(sum(row['kind'] == 'ph' for row in active) <= 1, '同一位置不能同时指定多个 pH 目标，请调整适用范围')
-            gases = [row['species'] for row in active if row['kind'] == 'fugacity']
-            check(len(gases) == len(set(gases)), '同一位置不能重复约束同一个气体的逸度')
+            ph_rows = [row for row in active if row['kind'] == 'ph']
+            check(len(ph_rows) <= 1, '同一位置不能同时指定多个 pH 目标，请调整适用范围', source_location(ph_rows[1], 'rounds') if len(ph_rows) > 1 else None)
+            gases = set()
+            for row in active:
+                if row['kind'] == 'fugacity':
+                    check(row['species'] not in gases, '同一位置不能重复约束同一个气体的逸度', source_location(row, 'rounds'))
+                    gases.add(row['species'])
             if active:
                 vectors_here = np.column_stack([vectors[row['id']] for row in active])
-                check(np.linalg.matrix_rank(vectors_here) == len(active), '这些约束依赖相同或相互重复的交换组成，无法独立调节；请减少约束或改选滴定物质')
+                check(np.linalg.matrix_rank(vectors_here) == len(active), '这些约束依赖相同或相互重复的交换组成，无法独立调节；请减少约束或改选滴定物质', source_location(active[-1]))
 
 
 def field_info(cfg):
@@ -218,7 +240,7 @@ class ConstraintEngine:
         scale = float(sim.np.max(sim.np.abs(target_components)))
         roundoff = sim.np.finfo(float).eps * max(matrix.shape) * scale * 10
         check(float(sim.np.max(sim.np.abs(target_components-projection))) > roundoff,
-              '当前所有输入组成都可以与外界交换，缺少封闭组分确定物质总量；请减少外部交换约束或保留不会被交换的物料组成')
+              '当前所有输入组成都可以与外界交换，缺少封闭组分确定物质总量；请减少外部交换约束或保留不会被交换的物料组成', source_location(active[0][0]))
 
     def set_conditions(self, conditions, active):
         for row, value in active:
@@ -236,6 +258,7 @@ class ConstraintEngine:
         props = r.ChemicalProps(work)
         exchange, rows = np.zeros(len(sim.components)), []
         for row, target in active:
+            location = source_location(row)
             if row['kind'] == 'ph':
                 formula = r.ChemicalFormula(row['titrant'])
                 composition = dict(zip(formula.symbols(), formula.coefficients()))
@@ -243,8 +266,8 @@ class ConstraintEngine:
                 proton = next(n for n in sim.groups['aqueous'] if sim.records[n]['composition'] == {'H': 1} and sim.records[n].get('charge') == 1)
                 actual = -float(props.speciesActivityLg(proton))
                 residual = actual-target
-                check(abs(residual) <= 1e-6, f'pH 未达到目标：目标 {target:g}，实际 {actual:g}')
-                check(row['exchange'] != 'add_only' or amount >= -sim.tolerance, f"此 pH 目标需要移除 {row['titrant']}；当前仅允许加入，请改变目标或交换方式")
+                check(abs(residual) <= 1e-6, f'pH 未达到目标：目标 {target:g}，实际 {actual:g}', location)
+                check(row['exchange'] != 'add_only' or amount >= -sim.tolerance, f"此 pH 目标需要移除 {row['titrant']}；当前仅允许加入，请改变目标或交换方式", source_location(row, "exchange"))
                 substance = row['titrant']
             else:
                 gas = sim.database.species(row['species'])
@@ -266,14 +289,14 @@ class ConstraintEngine:
                     if new_rank > rank:
                         basis, rank = candidate, new_rank
                 coefficients = np.linalg.lstsq(sim.formula[:, basis], vector, rcond=None)[0]
-                check(np.max(np.abs(sim.formula[:, basis] @ coefficients-vector)) <= 1e-9, f"无法从当前平衡组成核对 {row['species']} 逸度；必要物质可能已耗尽")
+                check(np.max(np.abs(sim.formula[:, basis] @ coefficients-vector)) <= 1e-9, f"无法从当前平衡组成核对 {row['species']} 逸度；必要物质可能已耗尽", location)
                 chemical_potential = float(coefficients @ np.asarray(props.speciesChemicalPotentials(), dtype=float)[basis])
                 standard = float(gas.props(props.temperature(), props.pressure()).G0)
                 log_actual = (chemical_potential-standard)/(float(r.universalGasConstant)*float(props.temperature()))
                 residual = log_actual-math.log(target)
-                check(math.isfinite(residual) and abs(residual) <= 1e-6, f"{row['species']} 逸度未达到目标 {target:g} bar")
+                check(math.isfinite(residual) and abs(residual) <= 1e-6, f"{row['species']} 逸度未达到目标 {target:g} bar", location)
                 actual = math.exp(log_actual)
-            check(math.isfinite(amount), '外部交换量不是有限数')
+            check(math.isfinite(amount), '外部交换量不是有限数', location)
             exchange += np.array([composition.get(e, 0) for e in sim.components], dtype=float)*amount
             rows.append({'constraint_id': row['id'], 'kind': row['kind'], 'subject': row.get('species', row.get('titrant')),
                          'target': target, 'actual': actual, 'unit': '' if row['kind'] == 'ph' else 'bar',

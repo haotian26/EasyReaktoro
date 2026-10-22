@@ -24,7 +24,7 @@ export type Config = {
   import_provenance?:Record<string,unknown>;
 };
 export type DatabaseSummary = {handle_id:string;kind:string;embedded_name?:string;group?:string;path?:string;dirty:boolean};
-export type JobStatus = {job_id:string;status:'running'|'completed'|'failed'|'cancelled'|'interrupted';execution?:{mode:'standard'|'custom';sha256?:string};completed:number;total:number;stage:string;message:string;diagnostic?:string;elapsed_seconds:number;warnings?:string[];output_path:string;name?:string;source?:{name:string;records_sha256?:string;path?:string;dirty?:boolean}};
+export type JobStatus = {job_id:string;status:'running'|'completed'|'failed'|'cancelled'|'interrupted';execution?:{mode:'standard'|'custom';sha256?:string};completed:number;total:number;stage:string;message:string;diagnostic?:string;error_location?:import('./schedule-diagnostics').ScheduleIssueLocation;elapsed_seconds:number;warnings?:string[];output_path:string;name?:string;source?:{name:string;records_sha256?:string;path?:string;dirty?:boolean}};
 export type PointSummary = {run_index:number;pass:number;step:number;point_id:string;temperature_c:number;pressure_bar:number;[key:string]:any};
 export type SpeciesResult = {run_index:number;species:string;formula:string;phase_type:Phase;amount_mol:number;[key:string]:any};
 export type Result = {summary:PointSummary[];species:SpeciesResult[];status:JobStatus;metadata:{config:Config;ion_size_audit:any[];process_balance:any[];warnings?:string[];[key:string]:any}};

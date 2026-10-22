@@ -32,6 +32,6 @@ it('translates code-parse target diagnostics without changing field paths or use
 
 it('covers every static message in the backend target validator, including multiline checks',()=>{
  const source=readFileSync(new URL('../bridge/easyreaktoro_runtime/simulation_constraints.py',import.meta.url),'utf8');
- const messages=[...source.matchAll(/(?<![\w])'([^'\n]*[\u3400-\u9fff][^'\n]*)'\s*\)/g)].map(match=>match[1]).filter(message=>!message.includes('{'));
+ const messages=[...source.matchAll(/(?<![\w])'([^'\n]*[\u3400-\u9fff][^'\n]*)'\s*(?:\)|,(?=\s*(?:location|source_location|value_location)\b))/g)].map(match=>match[1]).filter(message=>!message.includes('{'));
  expect(messages.length).toBeGreaterThan(14);setLanguage('en');for(const message of messages){expect(translateMessage(message),message).not.toBe(message);expect(translateMessage(message),message).not.toMatch(/[\u3400-\u9fff]/);}
 });
