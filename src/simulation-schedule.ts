@@ -1,5 +1,6 @@
 import {t} from './i18n';
 import {evaluateExpression,parseExpression} from './reaction-expression';
+import {atScheduleInput,ScheduleInputError,type ScheduleDiagnostic} from './schedule-diagnostics';
 import {constraintActiveAt,constraintDefinitionsIssue} from './equilibrium-constraints';
 import type {Config,Point} from './simulation-types';
 import {activeRouteEntries,stageAt,reactionSourceIssue} from './reaction-stages';
@@ -121,7 +122,7 @@ export function migrateSchedule(config:Config):Schedule|null{
  return schedule;
 }
 
-type ScopedSetting={setting:ParameterSetting;path:number[];rounds:number[];pathOrdinal:Map<number,number>;roundOrdinal:Map<number,number>;scopeName:string};
+type ScopedSetting={setting:ParameterSetting;path:number[];rounds:number[];pathOrdinal:Map<number,number>;roundOrdinal:Map<number,number>;scopeName:string;overrideId?:string};
 const caches=new WeakMap<Config,WeakMap<Schedule,CompiledSchedule>>();
 export function compileSchedule(config:Config,schedule=config.schedule):CompiledSchedule{
  check(schedule&&validateScheduleShape(schedule),()=>t('反应条件设置不完整，请补全当前编辑。',"Complete the reaction conditions before continuing."));
@@ -132,15 +133,16 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
   const parsed=parseExpression(expression);check('operator'in parsed.node&&['<','>','<=','>=','=','==','!=','<>'].includes(parsed.node.operator),()=>t('结束条件需要比较，例如 i = 3 或 P < 150。','Use a comparison to end the calculation, for example i = 3 or P < 150.'));
   return evaluateExpression(parsed,variable)!==0;
  };
- if(schedule.stop?.rounds!==undefined){let n=0;for(;n<10000;n++)if(stopValue(schedule.stop.rounds,name=>{check(name==='N',()=>t('总轮数的结束条件只使用 N。','The simulation completion condition can only use N.'));return n;}))break;check(n<10000,()=>t('结束条件在 10,000 轮内未达到。','The completion condition is not reached within 10,000 rounds.'));counts.outer=n+1;}
+ const completionRule=schedule.stop?.rounds;
+ if(completionRule!==undefined)atScheduleInput({kind:'stop',rule:'rounds'},()=>{let n=0;for(;n<10000;n++)if(stopValue(completionRule,name=>{check(name==='N',()=>t('总轮数的结束条件只使用 N。','The simulation completion condition can only use N.'));return n;}))break;check(n<10000,()=>t('结束条件在 10,000 轮内未达到。','The completion condition is not reached within 10,000 rounds.'));counts.outer=n+1;});
  const hasPathStop=schedule.stop?.first!==undefined||schedule.stop?.later!==undefined;
  if(hasPathStop)counts.inner=10000;
  const lengths:number[]=[];
  const allPath=Array.from({length:counts.inner},(_,i)=>i+1),allRounds=Array.from({length:counts.outer},(_,i)=>i+1);
  const general=new Map<string,ScopedSetting>(),local=new Map<string,ScopedSetting[]>(),targets=new Map<string,LoopTarget>(),ids=new Set<string>();
- const add=(setting:ParameterSetting,path:number[],rounds:number[],scopeName:string,isGeneral:boolean)=>{
+ const add=(setting:ParameterSetting,path:number[],rounds:number[],scopeName:string,isGeneral:boolean,overrideId?:string)=>atScheduleInput({kind:'parameter',target:setting.target,settingId:setting.id,overrideId,inner:(path[0]??1)-1,outer:(rounds[0]??1)-1},()=>{
   check(!ids.has(setting.id),()=>t(`参数设置编号重复：${setting.id}。`,`Duplicate parameter setting ID: ${setting.id}.`));ids.add(setting.id);
-  const scoped={setting,path,rounds,pathOrdinal:new Map(path.map((v,i)=>[v,i])),roundOrdinal:new Map(rounds.map((v,i)=>[v,i])),scopeName};
+  const scoped={setting,path,rounds,pathOrdinal:new Map(path.map((v,i)=>[v,i])),roundOrdinal:new Map(rounds.map((v,i)=>[v,i])),scopeName,overrideId};
   const atoms=atomicTargets(setting.target),keys=atoms.map(targetKey);check(new Set(keys).size===keys.length,()=>t('同一参数设置重复引用了物料来源。',"This parameter setting refers to the same material source more than once."));
   if(setting.target.kind==='route_fraction'){const first=routeTargetBindings(setting.target)[0];check(first?.route_id===setting.target.route_id&&first?.field===setting.target.field,()=>t('物料用量设置的主来源与引用不一致。',"The main source of the material amount setting does not match its references."));}
   for(const target of atoms){const key=targetKey(target);targets.set(key,target);
@@ -148,10 +150,11 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
    if(isGeneral){check(!general.has(key),()=>t('通常设置中同一个参数出现了多次，请保留一项。',"A parameter appears more than once in the general settings. Keep one setting."));general.set(key,scoped);}
    else {const rows=local.get(key)||[];check(!rows.some(other=>path.some(v=>other.pathOrdinal.has(v))&&rounds.some(v=>other.roundOrdinal.has(v))),()=>t(`${scopeName}与另一处单独设置重复修改同一个参数，请调整范围。`,`${scopeName} overlaps another setting for the same parameter. Adjust the affected positions or rounds.`));rows.push(scoped);local.set(key,rows);}
   }
- };
+ });
  schedule.parameters.forEach(p=>add(p,allPath,allRounds,t('通常设置',"General settings"),true));
  check(general.has('temperature')&&general.has('pressure'),()=>t('通常设置中需要温度和压力。',"Temperature and pressure are required in the general settings."));
- const groupIds=new Set<string>();for(const [index,o] of schedule.overrides.entries()){check(!groupIds.has(o.id),()=>t('单独设置的编号重复。',"Duplicate individual setting ID."));groupIds.add(o.id);const path=scheduleScopeIndices(o.positions,counts.inner),rounds=scheduleScopeIndices(o.rounds,counts.outer);o.parameters.forEach(p=>add(p,path,rounds,o.name||t(`第 ${index+1} 处单独设置`,`Individual setting ${index+1}`),false));}
+ const scopedIndices=(o:ScheduleOverride,axis:'positions'|'rounds',count:number)=>{const scope=o[axis],field=!Number.isInteger(scope.start)||scope.start<1||scope.start>10000?'start':scope.end!==undefined&&(!Number.isInteger(scope.end)||scope.end<scope.start||scope.end>10000)?'end':'step';return atScheduleInput({kind:'scope',overrideId:o.id,axis,field},()=>scheduleScopeIndices(scope,count));};
+ const groupIds=new Set<string>();for(const [index,o] of schedule.overrides.entries()){check(!groupIds.has(o.id),()=>t('单独设置的编号重复。',"Duplicate individual setting ID."));groupIds.add(o.id);const path=scopedIndices(o,'positions',counts.inner),rounds=scopedIndices(o,'rounds',counts.outer);o.parameters.forEach(p=>add(p,path,rounds,o.name||t(`第 ${index+1} 处单独设置`,`Individual setting ${index+1}`),false,o.id));}
  const at=(key:string,ii:number,oi:number)=>local.get(key)?.find(s=>s.pathOrdinal.has(ii+1)&&s.roundOrdinal.has(oi+1))||general.get(key);
  const tables=new Map<string,Float64Array>(),pressureModes=new Set<string>();
  const scalars=new Map<string,number>(),evaluating=new Set<string>();
@@ -161,8 +164,9 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
   if(scalars.has(cacheKey))return scalars.get(cacheKey)!;
   check(!evaluating.has(cacheKey),()=>t('公式相互引用，无法确定计算顺序。','Expressions refer to each other in a cycle.'));
   evaluating.add(cacheKey);
+  const selected=at(key,ii,oi);
   try{
-   const selected=at(key,ii,oi),profile=selected?.setting.value;let value=targetBase(target,config);
+   const profile=selected?.setting.value;let value=targetBase(target,config);
    if(profile){const pi=selected!.pathOrdinal.get(ii+1)!,ri=selected!.roundOrdinal.get(oi+1)!;
     if(profile.mode==='fixed')value=profile.value;
     if(profile.mode==='linear')value=decimalSum([profile.start,1],[profile.path_step,pi],[profile.round_step,ri]);
@@ -184,16 +188,17 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
     }
    }
    scalars.set(cacheKey,value);return value;
-  }finally{evaluating.delete(cacheKey);}
+  }catch(error){return atScheduleInput({kind:'parameter',target,settingId:selected?.setting.id,overrideId:selected?.overrideId,inner:ii,outer:oi},()=>{throw error;});}finally{evaluating.delete(cacheKey);}
  };
  if(hasPathStop){
   for(let oi=0;oi<counts.outer;oi++){
    const rule=schedule.stop?.[oi===0?'first':'later'];let length=0;
    for(let ii=0;ii<(rule===undefined?schedule.positions:10000);ii++){
     const temperature=scalar({kind:'temperature'},ii,oi),pressure=scalar({kind:'pressure'},ii,oi);length=ii+1;
-    check(Number.isFinite(temperature)&&temperature>-273.15&&Number.isFinite(pressure)&&pressure>0,()=>t(`第 ${oi+1} 轮的位置 ${ii+1} 温压无效；结束条件尚未达到。`,`Invalid conditions at round ${oi+1}, position ${ii+1}, before the end condition is reached.`));
-    if(rule!==undefined&&stopValue(rule,name=>{if(name==='T')return temperature;if(name==='P')return pressure;if(name==='i')return ii;if(name==='N')return oi;throw new Error(t(`结束条件中的变量 ${name} 无效。`,`Invalid variable in the end condition: ${name}.`));}))break;
-    check(rule===undefined||ii<9999,()=>t('结束条件在 10,000 步内未达到。','The end condition is not reached within 10,000 steps.'));
+    const invalidTarget={kind:(!Number.isFinite(temperature)||temperature<=-273.15?'temperature':'pressure') as 'temperature'|'pressure'},invalidSetting=at(invalidTarget.kind,ii,oi);
+    atScheduleInput({kind:'parameter',target:invalidTarget,settingId:invalidSetting?.setting.id,overrideId:invalidSetting?.overrideId,inner:ii,outer:oi},()=>check(Number.isFinite(temperature)&&temperature>-273.15&&Number.isFinite(pressure)&&pressure>0,()=>t(`第 ${oi+1} 轮的位置 ${ii+1} 温压无效；结束条件尚未达到。`,`Invalid conditions at round ${oi+1}, position ${ii+1}, before the end condition is reached.`)));
+    if(rule!==undefined&&atScheduleInput({kind:'stop',rule:oi===0?'first':'later'},()=>stopValue(rule,name=>{if(name==='T')return temperature;if(name==='P')return pressure;if(name==='i')return ii;if(name==='N')return oi;throw new Error(t(`结束条件中的变量 ${name} 无效。`,`Invalid variable in the end condition: ${name}.`));})))break;
+    atScheduleInput({kind:'stop',rule:oi===0?'first':'later'},()=>check(rule===undefined||ii<9999,()=>t('结束条件在 10,000 步内未达到。','The end condition is not reached within 10,000 steps.')));
    }
    lengths.push(length);check(lengths.reduce((a,b)=>a+b,0)<=20000,()=>t('本次计算超过 20,000 个平衡点。','This simulation exceeds 20,000 equilibrium points.'));
   }
@@ -225,11 +230,13 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
    if(target.kind==='equilibrium_constraint'){const row=config.equilibrium_constraints?.find(c=>c.id===target.constraint_id);if(!row||!constraintActiveAt(row,ii,oi))continue;}
    else if(!at(key,ii,oi))continue;
    if(target.kind==='route_fraction'&&entries.length&&entries.every(e=>e.stage&&e.stage!==stageAt(ii,oi)))continue;
+   const selected=at(key,ii,oi);atScheduleInput({kind:'parameter',target,settingId:selected?.setting.id,overrideId:selected?.overrideId,inner:ii,outer:oi},()=>{
    const value=values[oi*counts.inner+ii],where=()=>t(`第 ${oi+1} 轮 · 位置 ${ii+1}`,`Round ${oi+1} · position ${ii+1}`);check(Number.isFinite(value),()=>t(`${where()}的${targetDescription(target,config).label}缺少有效数值。`,`${where()}: enter a valid value for ${targetDescription(target,config).label}.`));
    if(target.kind==='temperature')check(value>-273.15,()=>t(`${where()}温度须高于绝对零度。`,`${where()}: temperature must be above absolute zero.`));
    else if(target.kind==='pressure'){check(value>0,()=>t(`${where()}压力须大于 0 bar。`,`${where()}: pressure must be greater than 0 bar.`));if(pressureModes.has(`${oi}:${ii}`)){const temperature=table({kind:'temperature'})[oi*counts.inner+ii];check(temperature>=0.01&&temperature<373.946,()=>t(`${where()}纯水饱和蒸汽压需要 0.01–373.946 °C（不含临界温度）。`,`${where()}: pure-water saturation pressure requires 0.01–373.946 °C, excluding the critical temperature.`));}}
    else if(target.kind==='equilibrium_constraint'){const row=config.equilibrium_constraints!.find(c=>c.id===target.constraint_id)!;if(row.kind==='fugacity')check(value>0,()=>t(`${where()}气体逸度须大于 0 bar。`,`${where()}: gas fugacity must be greater than 0 bar.`));}
    else {check(value>=0,()=>t(`${where()}投料量或取用比例不能为负。`,`${where()}: input amounts and transferred fractions cannot be negative.`));if(target.kind==='route_fraction'&&target.field==='fraction'&&entries.some(e=>e.route.source!=='material'))check(value<=1,()=>t(`${where()}取用已有结果的比例不能超过 100%。`,`${where()}: no more than 100% of an existing result can be transferred.`));}
+   });
   }
  }
  for(let oi=0;oi<counts.outer;oi++)for(let ii=0;ii<lengths[oi];ii++)for(const e of activeRouteEntries(config)){
@@ -239,10 +246,14 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
   if(fraction===0)continue;
   const sourceInner=r.source==='previous_cycle'?ii:r.source==='output'?config.points.findIndex(p=>p.id===r.point_id):-1;
   const sourceOuter=r.source==='previous_cycle'?oi-1:r.source==='output'?oi-(r.lag??0):-1;
-  if(sourceInner>=0&&sourceOuter>=0)check(active(sourceInner,sourceOuter),()=>t(`第 ${oi+1} 轮位置 ${ii+1} 的物料来源在该位置之前已结束。`,`Round ${oi+1}, position ${ii+1}: the source round ended before the selected source position.`));
+  if(sourceInner>=0&&sourceOuter>=0)atScheduleInput({kind:'source',routeId:routeId(r,e.index),inner:ii,outer:oi},()=>check(active(sourceInner,sourceOuter),()=>t(`第 ${oi+1} 轮位置 ${ii+1} 的物料来源在该位置之前已结束。`,`Round ${oi+1}, position ${ii+1}: the source round ended before the selected source position.`)));
  }
  let cache=caches.get(config);if(!cache){cache=new WeakMap();caches.set(config,cache);}cache.set(schedule,compiled);return compiled;
 }
-export function scheduleIssue(config:Config,schedule=config.schedule):string|undefined{try{const plan=compileSchedule(config,schedule);return reactionSourceIssue(config,plan.counts);}catch(e){return e instanceof Error?e.message:t('请补全反应条件。',"Complete the reaction conditions.");}}
+export function scheduleDiagnostic(config:Config,schedule=config.schedule):ScheduleDiagnostic|undefined{
+ try{const plan=compileSchedule(config,schedule),message=reactionSourceIssue(config,plan.counts);return message?{message}:undefined;}
+ catch(e){return {message:e instanceof Error?e.message:t('请补全反应条件。',"Complete the reaction conditions."),...(e instanceof ScheduleInputError?{location:e.location}:{})};}
+}
+export function scheduleIssue(config:Config,schedule=config.schedule):string|undefined{return scheduleDiagnostic(config,schedule)?.message;}
 export function schedulePoints(config:Config,schedule=config.schedule):Point[]{try{const plan=compileSchedule(config,schedule);return Array.from({length:plan.counts.inner},(_,ii)=>{const baseRound=plan.lengths.findIndex(n=>ii<n),point=plan.point(ii,baseRound),round_conditions:NonNullable<Point['round_conditions']>=[];for(let oi=0;oi<plan.counts.outer;oi++){if(!plan.active(ii,oi))continue;const p=plan.point(ii,oi);if(p.temperature_c!==point.temperature_c||p.pressure_bar!==point.pressure_bar||p.pressure_mode!==point.pressure_mode)round_conditions.push({round:oi+1,temperature_c:p.temperature_c,pressure_bar:p.pressure_bar,pressure_mode:p.pressure_mode});}return {...point,...(round_conditions.length?{round_conditions}:{})};});}catch{return [];}}
 export function scheduleSettingSummary(setting:ParameterSetting,config:Config,scopeCounts?:{positions:number;rounds:number}):string{const d=targetDescription(setting.target,config),v=setting.value,scale=d.quantityKind==='fraction'?100:1,unit=d.quantityKind==='fraction'?'%':d.unit,f=(n:number)=>`${numberText(n*scale)}${unit?` ${unit}`:''}`;if(v.mode==='expression')return v.expression;if(v.mode==='water_saturation')return t('Psat(T) · 随当前温度计算',"Psat(T) · calculated at the current temperature");if(v.mode==='fixed')return f(v.value);if(v.mode==='list')return t(`${f(v.values[0])} → ${f(v.values.at(-1)!)} · ${v.values.length} 个${v.along==='path'?'位置':'轮次'}值`,`${f(v.values[0])} → ${f(v.values.at(-1)!)} · ${v.values.length} ${v.along==='path'?'positions':'rounds'}`);if(v.mode==='relative')return `${v.along==='path'?t('前一步',"Previous reaction"):t('上一轮同位置',"Same position in the previous round")} ${v.step<0?'−':'+'} ${f(Math.abs(v.step))}`;return `${f(v.start)}${v.path_step&&(scopeCounts===undefined||scopeCounts.positions>1)?t(` · 每步 ${v.path_step>0?'+':''}${f(v.path_step)}`,` · per reaction ${v.path_step>0?'+':''}${f(v.path_step)}`):''}${v.round_step&&(scopeCounts===undefined||scopeCounts.rounds>1)?t(` · 每轮 ${v.round_step>0?'+':''}${f(v.round_step)}`,` · per round ${v.round_step>0?'+':''}${f(v.round_step)}`):''}`;}

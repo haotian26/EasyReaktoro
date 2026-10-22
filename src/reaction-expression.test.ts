@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {evaluateExpression} from './reaction-expression';
 import {DEFAULT_CONFIG,makeRoute,type Config} from './simulation-types';
-import {compileSchedule,defaultSchedule} from './simulation-schedule';
+import {compileSchedule,defaultSchedule,scheduleDiagnostic} from './simulation-schedule';
 import {setStageCondition} from './reaction-stage-conditions';
 import {saturationPressure} from './process-layout';
 const base=():Config=>({...structuredClone(DEFAULT_CONFIG),schedule:defaultSchedule(),reaction_stages:Object.fromEntries(['first_start','first_following','later_start','later_following'].map(stage=>[stage,[{...makeRoute('all','material','initial'),id:stage}]])) as Config['reaction_stages']});
@@ -27,4 +27,11 @@ it('rejects values inherited from a position the previous round never reached',(
  // An explicit rule for the new position makes the same simulation valid.
  c.schedule!.overrides[0].positions.end=2;c.schedule!.overrides.push({id:'new-position',positions:{start:3},rounds:{start:2},parameters:[{id:'new-position',target:{kind:'temperature'},value:{mode:'fixed',value:80}}]});
  expect(compileSchedule(c).point(2,1).temperature_c).toBe(80);
+});
+
+it('locates a missing prior-round value at the referring rule and actual failing coordinate',()=>{
+ const c=base();c.materials[0].inputs=[{species:'H2O',amount:1,unit:'kg'}];c.schedule!.stop={first:'i=1',later:'i=2',rounds:'N=1'};
+ const target={kind:'material_amount' as const,material_id:'initial',species:'H2O'};
+ c.schedule!.overrides.push({id:'amount',positions:{start:1},rounds:{start:2},parameters:[{id:'amount-value',target,value:{mode:'expression',expression:'Xr*2'}}]});
+ expect(scheduleDiagnostic(c)?.location).toEqual({kind:'parameter',target,settingId:'amount-value',overrideId:'amount',inner:2,outer:1});
 });

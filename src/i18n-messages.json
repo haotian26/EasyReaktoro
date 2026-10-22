@@ -709,7 +709,7 @@
     "每隔": "Every",
     "起点": "Start",
     "终点": "End",
-    "间隔": "interval",
+    "间隔": "Interval",
     "用什么物质调节": "Adjust with",
     "pH 调节物质": "pH adjustment substance",
     "填写中性化学式，例如 HCl、NaOH 或 CO2。软件计算满足目标 pH 所需的物质量；这些是示例，可使用体系元素支持的其他中性物质。": "Enter an electrically neutral formula, such as HCl, NaOH or CO2. The amount needed to reach the target pH is calculated. Other neutral substances supported by the system elements can also be used.",
@@ -942,6 +942,8 @@
     "沿本轮路线": "Along this round's path",
     "从上一轮同一位置或指定位置": "From the previous round at the same or a specified position",
     "其余位置": "Following positions",
+    "起始编号": "Start",
+    "结束编号": "End",
     "末尾": "End",
     "完整反应流程": "Complete reaction flow",
     "收起附近步骤": "Hide nearby steps",
@@ -977,6 +979,20 @@
     "⋯ 表示依次重复的步骤。数值区间涵盖实际变化，每步仍按所填条件计算。点击一组步骤可展开附近流程。": "⋯ marks successive steps. Ranges cover actual variation; each step uses its own conditions. Select a group to explore nearby steps.",
     "流程中的变化": "Changes within the flow",
     "部分取用并非每步发生，已在对应箭头或投料旁标明。": "Some inputs are used only at certain steps, as marked beside each transfer or fresh input.",
+    "N：轮次编号，从 0 开始。N = 2 表示共计算 3 轮。": "N: round index, starting at 0. N = 2 runs 3 rounds.",
+    "达到条件的这一轮仍会计算。": "The round that meets the condition is included.",
+    "T、P：本步温压；i：步骤编号；N：轮次编号。编号从 0 开始。": "T, P: current temperature and pressure; i: step index; N: round index. Indices start at 0.",
+    "例如 i = 3（4 步）或 P <= 150。达到条件的这一步仍会计算。": "For example, i = 3 (4 steps) or P <= 150. The step that meets the condition is included.",
+    "上一轮起点": "the previous round’s initial step",
+    "前一步": "Previous reaction",
+    "填写初始温度，例如 250。此处没有前次温压。": "Enter the initial temperature, for example 250. There are no previous conditions here.",
+    "T：本步温度（°C）。Psat(T)：本步纯水饱和蒸汽压（bar）。": "T: current temperature (°C). Psat(T): current pure-water saturation pressure (bar).",
+    "T、P：本步温度（°C）和压力（bar）。": "T, P: current temperature (°C) and pressure (bar).",
+    "新 Composition：份数；反应结果：取用比例，0.5 = 50%。": "Fresh composition: number of portions. Reaction output: fraction taken, 0.5 = 50%.",
+    "Tr、Pr：上一轮同位置的温度、压力。": "Tr, Pr: temperature and pressure at the same position in the previous round.",
+    "Tr、Pr、Xr：上一轮同位置的温度、压力、同一参数值。": "Tr, Pr, Xr: temperature, pressure and the same parameter’s value at the same position in the previous round.",
+    "i：步骤编号；N：轮次编号，均从 0 开始。": "i: step index; N: round index. Both start at 0.",
+    "此公式也作用于首点；引用 X 或 Xr 时，应另设初始值及适用范围。": "This rule also applies to the first point. References to X or Xr need separate initial values and a valid scope.",
     "指定物种": "Selected species",
     "这里选择初始物质页中已定义的配方。流体、岩石或其他物质可分别加入；每份配方包含哪些物种及其数量，在初始物质页编辑。后续是否再次投料，由下方反应路径决定。": "Choose compositions defined on the Initial materials page. Fluids, rocks, and other materials can be added separately. Edit species and amounts per portion on that page; the reaction path below determines whether material is added again.",
     "编辑配方": "Edit compositions",
@@ -1170,6 +1186,7 @@
     "这份模拟尚未定义统一反应路径。": "This simulation has no unified reaction path yet.",
     "请补全反应条件。": "Complete the reaction conditions.",
     "反应预览": "Reaction preview",
+    "定位到输入": "Go to input",
     "横向是反应路径，纵向是轮次传递；重复流程合并展示，可展开附近步骤。": "Follow the path across and the rounds down. Repetitions are grouped; expand nearby steps for detail.",
     "预览上一位置": "Preview previous position",
     "预览下一位置": "Preview next position",
@@ -1476,12 +1493,7 @@
     "结束条件": "end condition",
     "整个模拟何时结束": "Finish the simulation when",
     "模拟结束条件": "Simulation completion condition",
-    "直接填数值或公式。i 从 0 开始计步，N 从 0 开始计轮；达到结束条件的这一步仍会计算。": "Enter a value or expression. Step index i and round index N start at 0. The step that meets the end condition is included.",
-    "温压公式取前一步的实际值；每轮起点取上一轮起点。压力公式中的 T、用量公式中的 T 和 P 使用本步条件。Tr、Pr 始终取上一轮同位置。": "Temperature and pressure expressions use the previous step, or the previous round’s start. T in a pressure expression, and T and P in an amount expression, use the current step. Tr and Pr refer to the same position in the previous round.",
-    "降温": "cooling",
-    "饱和蒸汽压": "saturation pressure",
-    "取一半物料": "take half the material",
-    "共 4 步": "4 steps",
+    "选中输入框可查看当前可用变量及其含义。": "Focus an input to see the available variables and what they mean.",
     "其他指定条件": "Additional specified conditions",
     "移除此条件": "Remove this condition",
     "添加指定条件": "Add a specified condition",
@@ -1618,6 +1630,7 @@
     "用量": "amount",
     "移除物料": "Remove material",
     "已有局部用量": "Existing local amount",
+    "局部用量": "local amount",
     "本轮": "This round",
     "搜索物料": "Search material",
     "不在此来源中": "Absent from this source",
@@ -1749,7 +1762,6 @@
     "路径与轮次的网格超过 20,000 个位置，请缩小范围。": "The path and round grid exceeds 20,000 positions. Reduce its extent.",
     "所选轮次或路径位置超出当前范围。": "The selected round or path position is outside the current range.",
     "Psat(T) · 随当前温度计算": "Psat(T) · calculated at the current temperature",
-    "前一步": "Previous reaction",
     "新的平衡模拟": "New equilibrium simulation",
     "模拟设置格式无效。": "Invalid simulation settings format.",
     "不支持此模拟设置版本。": "This version of simulation settings is not supported.",
@@ -2159,6 +2171,19 @@
       "en": [
         "Found ",
         " available environments. Choose one to connect."
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "T、P：",
+        "的温度（°C）和压力（bar）。"
+      ],
+      "en": [
+        "T, P: temperature (°C) and pressure (bar) at ",
+        "."
       ],
       "order": [
         0
@@ -3017,6 +3042,19 @@
       "order": [
         0,
         1
+      ]
+    },
+    {
+      "zh": [
+        "X：同一参数在",
+        "的值。"
+      ],
+      "en": [
+        "X: the same parameter’s value at ",
+        "."
+      ],
+      "order": [
+        0
       ]
     },
     {
@@ -3886,6 +3924,19 @@
       "en": [
         "",
         " sets of local conditions"
+      ],
+      "order": [
+        0
+      ]
+    },
+    {
+      "zh": [
+        "P：",
+        "的压力。"
+      ],
+      "en": [
+        "P: pressure at ",
+        "."
       ],
       "order": [
         0

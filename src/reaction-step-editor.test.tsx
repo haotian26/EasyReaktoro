@@ -73,3 +73,88 @@ it('keeps saturation pressure linked to temperature when only local temperature 
  expect(actual.temperature_c).toBe(100);expect(actual.pressure_mode).toBe('water_saturation');expect(actual.pressure_bar).toBeLessThan(before.pressure_bar);
  expect(compileSchedule(latest).point(1,0)).toMatchObject({temperature_c:250,pressure_mode:'water_saturation'});
 });
+
+it('locates the precise stage input and clears its error after repair without changing other rules',()=>{
+ render(<Editor/>);
+ const field=screen.getByLabelText('first_following 压力');
+ fireEvent.change(field,{target:{value:'unknown + 1'}});
+ expect(field.getAttribute('aria-invalid')).toBe('true');
+ expect(screen.getByLabelText('first_start 压力').getAttribute('aria-invalid')).toBeNull();
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);
+ expect(document.activeElement).toBe(field);
+ expect((field as HTMLInputElement).value).toBe('unknown + 1');
+ fireEvent.change(field,{target:{value:'P-5'}});
+ expect(field.getAttribute('aria-invalid')).toBeNull();
+ expect(screen.queryByRole('button',{name:'定位到输入'})).toBeNull();
+ expect(compileSchedule(latest).point(2,0).pressure_bar).toBe(690);
+ expect(compileSchedule(latest).point(2,1).pressure_bar).toBe(700);
+});
+it('locates an invalid temperature dependency rather than blaming saturation pressure',()=>{
+ const c=base();c.schedule!.parameters[1].value={mode:'water_saturation'};render(<Editor initial={c}/>);
+ fireEvent.change(screen.getByLabelText('first_start 温度'),{target:{value:'bad_T'}});
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);
+ expect(document.activeElement).toBe(screen.getByLabelText('first_start 温度'));
+ expect(screen.getByLabelText('first_start 压力').getAttribute('aria-invalid')).toBeNull();
+ expect((screen.getByLabelText('first_start 压力') as HTMLInputElement).value).toBe('Psat(T)');
+});
+it('locates both kinds of stopping conditions and preserves an invalid draft',()=>{
+ render(<Editor/>);
+ const completion=screen.getByLabelText('模拟结束条件');
+ fireEvent.change(completion,{target:{value:'P < 1'}});
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);expect(document.activeElement).toBe(completion);
+ fireEvent.change(completion,{target:{value:'N = 2'}});
+ const end=screen.getByLabelText('later 结束条件');fireEvent.change(end,{target:{value:'Tr < 1'}});
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);expect(document.activeElement).toBe(end);
+ expect((end as HTMLInputElement).value).toBe('Tr < 1');
+});
+it('locates a negative composition term instead of a temperature field',()=>{
+ render(<Editor/>);
+ const amount=screen.getByLabelText('later_following 物料 1 用量');fireEvent.change(amount,{target:{value:'-0.5'}});
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);expect(document.activeElement).toBe(amount);
+ expect(amount.getAttribute('aria-invalid')).toBe('true');
+ fireEvent.change(amount,{target:{value:'0.5'}});expect(()=>compileSchedule(latest)).not.toThrow();
+});
+it('locates an unfinished local range without silently completing it',()=>{
+ const c=base();c.schedule!.overrides=[{id:'unfinished',rounds:{start:NaN,end:3},positions:{start:1,end:1},parameters:[{id:'unfinished-temperature',target:{kind:'temperature'},value:{mode:'fixed',value:123}}]}];render(<Editor initial={c}/>);
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);
+ expect(document.activeElement?.getAttribute('aria-label')).toBe('unfinished rounds start');
+ expect(Number.isNaN(latest.schedule!.overrides[0].rounds.start)).toBe(true);
+});
+it('shows stage-specific help on focus and dismisses it with Escape without changing the formula',()=>{
+ setLanguage('en');render(<Editor/>);
+ const temperature=screen.getByLabelText('first_start Temperature');fireEvent.focus(temperature);
+ expect(temperature.parentElement?.dataset.helpOpen).toBe('true');
+ expect(temperature.parentElement?.textContent).toContain('There are no previous conditions here.');
+ fireEvent.keyDown(temperature,{key:'Escape'});expect(temperature.parentElement?.dataset.helpOpen).toBeUndefined();
+ const pressure=screen.getByLabelText('first_start Pressure');fireEvent.focus(pressure);
+ expect(pressure.parentElement?.textContent).toContain('T: current temperature');
+ expect(pressure.parentElement?.textContent).not.toContain('P: pressure at the previous');
+ const later=screen.getByLabelText('later_start Temperature');fireEvent.focus(later);
+ expect(later.parentElement?.textContent).toContain('the previous round’s initial step');
+ expect(later.parentElement?.textContent).toContain('Tr, Pr');
+ expect(document.body.textContent).not.toMatch(/[\u3400-\u9fff]/);
+ expect(compileSchedule(latest).point(0,0).temperature_c).toBe(250);
+});
+it('opens a hidden local amount error without editing or isolating the schedule',()=>{
+ const c=base();c.schedule!.overrides=[{id:'dose',rounds:{start:2,end:2},positions:{start:2,end:2},parameters:[{id:'dose-value',target:{kind:'material_amount',material_id:'initial',species:'H2O'},value:{mode:'fixed',value:-1}}]}];
+ render(<Editor initial={c}/>);const before=structuredClone(latest.schedule);
+ expect(screen.queryByLabelText('此点单独设置')).toBeNull();
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);
+ const local=screen.getByLabelText('此点单独设置');
+ expect(local.contains(document.activeElement)).toBe(true);
+ expect((document.activeElement as HTMLInputElement).value).toBe('-1');
+ expect(latest.schedule).toEqual(before);
+});
+it('shows the actual error beside the focused field and places help above a low input',()=>{
+ const rect=vi.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(this:HTMLElement){
+  const top=this.classList.contains('wave-formula-field')?window.innerHeight-40:0;
+  const height=this.classList.contains('wave-formula-help')?150:36;
+  return {x:0,y:top,top,left:0,right:300,bottom:top+height,width:300,height,toJSON:()=>({})};
+ });
+ try{
+  setLanguage('en');render(<Editor/>);
+  const field=screen.getByLabelText('first_start Temperature');fireEvent.change(field,{target:{value:'unknown'}});fireEvent.focus(field);
+  expect(field.parentElement?.dataset.helpAbove).toBe('true');
+  expect(field.parentElement?.querySelector('.wave-formula-error')?.textContent).toBe('Unknown variable: unknown.');
+ }finally{rect.mockRestore();}
+});

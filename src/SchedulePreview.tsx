@@ -14,7 +14,7 @@ import {constraintActiveAt} from './equilibrium-constraints';
 import './schedule-preview.css';
 
 export type ScheduleSelection={inner:number;outer:number};
-export type SchedulePreviewProps={config:Config;items:SimSpecies[];selected:ScheduleSelection;onSelect:(inner:number,outer:number)=>void;onAdjust:(inner:number,outer:number)=>void};
+export type SchedulePreviewProps={config:Config;items:SimSpecies[];selected:ScheduleSelection;onSelect:(inner:number,outer:number)=>void;onAdjust:(inner:number,outer:number)=>void;onLocateIssue?:()=>void};
 const finite=Number.isFinite;
 const clamped=(value:number,count:number)=>Math.max(0,Math.min(count-1,Number.isInteger(value)?value:0));
 const fraction=(plan:CompiledSchedule,route:Route,ii:number,oi:number)=>plan.valueAt({kind:'route_fraction',route_id:route.id!,field:'fraction'},ii,oi,route.fraction);
@@ -49,7 +49,7 @@ function diagramMaterials(effective:Config,plan:CompiledSchedule,items:SimSpecie
  return materialStages;
 }
 
-export function SchedulePreview({config,items,selected,onSelect,onAdjust}:SchedulePreviewProps){
+export function SchedulePreview({config,items,selected,onSelect,onAdjust,onLocateIssue}:SchedulePreviewProps){
  const language=useLanguage();
  const [view,setView]=useState<'diagram'|'table'>('diagram');
  const previewElement=useRef<HTMLElement>(null),validHeight=useRef(0);
@@ -62,7 +62,7 @@ export function SchedulePreview({config,items,selected,onSelect,onAdjust}:Schedu
   const measure=()=>{validHeight.current=el.getBoundingClientRect().height;};measure();
   if(typeof ResizeObserver==='undefined')return;const observer=new ResizeObserver(measure);observer.observe(el);return ()=>observer.disconnect();
  },[prepared.plan,view]);
- if(!prepared.plan||!prepared.effective||!prepared.schedule)return <aside ref={previewElement} style={validHeight.current?{minHeight:validHeight.current}:undefined} className="schedule-preview schedule-preview--empty" aria-label={tr("反应预览", "Reaction preview")}><h3>{tr("反应预览", "Reaction preview")}</h3><p role="status">{prepared.error}</p></aside>;
+ if(!prepared.plan||!prepared.effective||!prepared.schedule)return <aside ref={previewElement} style={validHeight.current?{minHeight:validHeight.current}:undefined} className="schedule-preview schedule-preview--empty" aria-label={tr("反应预览", "Reaction preview")}><h3>{tr("反应预览", "Reaction preview")}</h3><p role="status">{prepared.error}</p>{onLocateIssue&&<button type="button" className="text-btn" onClick={onLocateIssue}>{tr("定位到输入", "Go to input")} <ArrowRight size={14}/></button>}</aside>;
  const {plan,effective,schedule}=prepared,counts=plan.counts,oi=clamped(selected.outer,counts.outer),ii=clamped(selected.inner,plan.lengths[oi]),stage=stageAt(ii,oi),routes=effective.reaction_stages?.[stage]||[];
  let point;try{point=plan.point(ii,oi);}catch{}
  const materialStages=prepared.materialStages;
