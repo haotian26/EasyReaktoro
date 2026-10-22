@@ -235,6 +235,24 @@ class ScheduleExecutionTests(unittest.TestCase):
         self.assertTrue(all(abs(balance['error_mol']) < 1e-9 for balance in metadata['process_balance']))
         return rows, metadata
 
+    def test_point_edits_and_restore_drive_real_equilibrium_conditions(self):
+        cfg = scheduled(3)
+        cfg['schedule']['parameters'][0]['value'] = fixed(150)
+        cfg['schedule']['parameters'][1]['value'] = {'mode': 'water_saturation'}
+        cfg['schedule']['overrides'] = [
+            override('path', [setting('path-t', 'temperature', {'mode': 'expression', 'expression': 'T-20'})], positions={'start': 2}),
+            {**override('point', [setting('point-t', 'temperature', fixed(100)), setting('point-p', 'pressure', fixed(700))], {'start': 1, 'end': 1}, {'start': 2, 'end': 2}), 'point': True},
+        ]
+        rows, _ = self.run_plan(cfg)
+        self.assertEqual([row['summary']['temperature_c'] for row in rows], [150, 100, 80])
+        self.assertAlmostEqual(rows[1]['summary']['pressure_bar'], 700)
+        cfg['schedule']['overrides'][1]['parameters'].pop()
+        restored, _ = self.run_plan(cfg)
+        self.assertAlmostEqual(restored[1]['summary']['pressure_bar'], float(reaktoro.waterSaturationPressureWagnerPruss(373.15))/1e5)
+        cfg['schedule']['overrides'].pop()
+        resumed, _ = self.run_plan(cfg)
+        self.assertEqual([row['summary']['temperature_c'] for row in resumed], [150, 130, 110])
+
     def test_saturation_uses_final_temperature_and_relative_pressure_uses_actual_prior_pressure(self):
         cfg = scheduled(3)
         cfg['schedule']['parameters'][0]['value'] = {'mode': 'linear', 'start': 100, 'path_step': 50, 'round_step': 0}
@@ -384,3 +402,44 @@ class ScheduleExecutionTests(unittest.TestCase):
                     self.assertEqual(next(cell['source'] for cell in code['cells'] if cell['id'] == 'process'), next(cell['source'] for cell in document['cells'] if cell['id'] == 'process'))
         finally:
             jobs.close()
+
+
+class PointInheritanceTests(unittest.TestCase):
+    def make_config(self):
+        cfg = scheduled(3, 2)
+        cfg['schedule']['parameters'][0]['value'] = fixed(250)
+        cfg['schedule']['overrides'] = [
+            override('stage', [setting('stage-t', 'temperature', {'mode': 'expression', 'expression': 'T-20'})], {'start': 1, 'end': 1}, {'start': 2}),
+            {**override('point', [setting('point-t', 'temperature', fixed(100))], {'start': 1, 'end': 1}, {'start': 2, 'end': 2}), 'point': True},
+        ]
+        return cfg
+
+    def test_point_takes_precedence_and_reset_resumes_the_live_parent_rule(self):
+        cfg = self.make_config()
+        self.assertEqual(list(SchedulePlan(cfg)._arrays[('temperature',)][:3]), [250, 100, 80])
+        cfg['schedule']['overrides'][0]['parameters'][0]['value']['expression'] = 'T-10'
+        self.assertEqual(list(SchedulePlan(cfg)._arrays[('temperature',)][:3]), [250, 100, 90])
+        cfg['schedule']['overrides'].pop()
+        self.assertEqual(list(SchedulePlan(cfg)._arrays[('temperature',)][:3]), [250, 240, 230])
+
+    def test_point_priority_is_independent_of_order_and_round_trips_through_code(self):
+        cfg = self.make_config()
+        cfg['schedule']['overrides'].reverse()
+        prepared, document, _ = prepare_program(cfg)
+        parsed = parse_code(document, prepared)
+        self.assertTrue(parsed['valid'], parsed)
+        self.assertEqual(parsed['config']['schedule'], cfg['schedule'])
+        self.assertEqual(list(SchedulePlan(parsed['config'])._arrays[('temperature',)][:3]), [250, 100, 80])
+
+    def test_point_overrides_reject_duplicate_targets_and_multi_point_scopes(self):
+        cfg = self.make_config()
+        duplicate = copy.deepcopy(cfg['schedule']['overrides'][1])
+        duplicate['id'] = 'duplicate'
+        duplicate['parameters'][0]['id'] = 'duplicate-t'
+        cfg['schedule']['overrides'].append(duplicate)
+        with self.assertRaises(BridgeError):
+            SchedulePlan(cfg)
+        cfg = self.make_config()
+        cfg['schedule']['overrides'][1]['positions']['end'] = 3
+        with self.assertRaises(BridgeError):
+            SchedulePlan(cfg)

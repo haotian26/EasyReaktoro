@@ -16,6 +16,8 @@ export function setLanguage(value:unknown){
 const subscribe=(notify:()=>void)=>{listeners.add(notify);return()=>{listeners.delete(notify);};};
 /** Subscribe without remounting workspaces or changing scientific/user data. */
 export const useLanguage=()=>useSyncExternalStore(subscribe,getLanguage,getLanguage);
+/** English count labels; scientific values and user names are never translated. */
+export const englishCount=(count:number,singular:string,plural=singular+'s')=>`${count.toLocaleString('en')} ${count===1?singular:plural}`;
 const recentPairs=new Map<string,string>();
 const recentReverse=new Map<string,string>();
 export function t(chinese:string,english:string):string{

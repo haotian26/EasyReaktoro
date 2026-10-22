@@ -81,8 +81,9 @@ export function stageCondition(config:Config,stage:ReactionStageKey,kind:Conditi
   if(!schedule){result.issue=t('这份模拟需要保留原逐步路线。','This simulation needs its original step-by-step path.');return result;}
   result.active=Number.isInteger(schedule.positions)&&Number.isInteger(schedule.rounds)&&scope.positions.start<=schedule.positions&&scope.rounds.start<=schedule.rounds;
   const general=schedule.parameters.filter(s=>matching(s,target)).map(setting=>({setting,overrideId:undefined as string|undefined}));
-  const incomplete=schedule.overrides.filter(o=>!completeArea(o)&&possiblyIntersects(o,stage)&&o.parameters.some(s=>matching(s,target)));
-  const locals=schedule.overrides.flatMap(override=>{
+  const inherited=schedule.overrides.filter(o=>!o.point);
+  const incomplete=inherited.filter(o=>!completeArea(o)&&possiblyIntersects(o,stage)&&o.parameters.some(s=>matching(s,target)));
+  const locals=inherited.flatMap(override=>{
     const part=intersection(override,stage);
     return part?override.parameters.filter(s=>matching(s,target)).map(setting=>({setting,overrideId:override.id,whole:covers(part,scope)})):[];
   });
@@ -126,15 +127,15 @@ function shifted(profile:ParameterProfile,from:StageConditionScope,to:StageCondi
 
 /** Replace just this stage's T or P; all other targets retain their original objects and identities. */
 export function setStageCondition(schedule:Schedule,stage:ReactionStageKey,target:ConditionTarget,profile:ParameterProfile):Schedule{
-  if(schedule.overrides.some(o=>o.parameters.some(s=>matching(s,target))&&!completeArea(o)&&possiblyIntersects(o,stage)))throw new Error(incompleteRangeMessage());
+  if(schedule.overrides.some(o=>!o.point&&o.parameters.some(s=>matching(s,target))&&!completeArea(o)&&possiblyIntersects(o,stage)))throw new Error(incompleteRangeMessage());
   const scope=stageConditionScope(stage);
-  const exact=schedule.overrides.find(o=>sameArea(o,scope)&&o.parameters.some(s=>matching(s,target)));
+  const exact=schedule.overrides.find(o=>!o.point&&sameArea(o,scope)&&o.parameters.some(s=>matching(s,target)));
   const used=new Set([...schedule.parameters.map(s=>s.id),...schedule.overrides.flatMap(o=>[o.id,...o.parameters.map(s=>s.id)])]);
   const id=()=>{let next=newId();while(used.has(next))next=newId();used.add(next);return next;};
   const overrides:ScheduleOverride[]=[];
   for(const original of schedule.overrides){
     const selected=original.parameters.filter(s=>matching(s,target));
-    if(!selected.length||!intersection(original,stage)){overrides.push(original);continue;}
+    if(original.point||!selected.length||!intersection(original,stage)){overrides.push(original);continue;}
     if(original===exact){
       overrides.push({...original,parameters:original.parameters.map(s=>matching(s,target)?{...s,value:structuredClone(profile)}:s)});
       continue;

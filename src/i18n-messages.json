@@ -1018,7 +1018,7 @@
     "上一个位置的反应后物料": "Reaction output from the previous position",
     "上一轮同一位置的反应后物料": "Reaction output from the same position in the previous round",
     "另选一个位置的结果": "Result from another position",
-    "来源位置": "Source position",
+    "来源位置": "source position",
     "所属轮次": "Source round",
     "本轮已完成的位置": "A completed position in this round",
     "比例由变化设置确定": "Fraction is controlled by parameter settings",
@@ -1501,8 +1501,12 @@
     "Composition 中的含量": "Composition contents",
     "species 详情中可查看数据库记录的温压适用范围。": "Species details show the temperature and pressure ranges recorded in the database.",
     "此点单独设置": "Local point conditions",
+    "本点修改": "Modified here",
+    "沿用规则": "Inherited rule",
     "本点数值或公式": "value or expression at this point",
-    "未改动的参数继续沿用原规则。": "Unchanged parameters keep their existing rules.",
+    "恢复沿用": "Restore inherited rule",
+    "恢复通常规则": "Use general rule",
+    "仅本点修改会覆盖已有规则；恢复沿用后，继续随原规则变化。": "Only edits at this point override existing rules. Restoring a rule keeps this point linked to it.",
     "＋ 添加本点条件": "＋ Add a condition at this point",
     "导入的结果": "Imported results",
     "选择结果表格或图表工作区": "Choose result tables or a chart workspace",
@@ -1970,6 +1974,19 @@
         0,
         1,
         2
+      ]
+    },
+    {
+      "zh": [
+        "",
+        "的 Composition 已不存在，请重新选择。"
+      ],
+      "en": [
+        "",
+        " uses a composition that no longer exists. Choose a composition again."
+      ],
+      "order": [
+        0
       ]
     },
     {
@@ -2902,22 +2919,6 @@
     },
     {
       "zh": [
-        "",
-        " 个路径位置 · ",
-        " 轮"
-      ],
-      "en": [
-        "",
-        " path positions · ",
-        " rounds"
-      ],
-      "order": [
-        0,
-        1
-      ]
-    },
-    {
-      "zh": [
         "第 ",
         " 轮位置 ",
         " 的物料"
@@ -2926,22 +2927,6 @@
         "Materials at round ",
         ", position ",
         ""
-      ],
-      "order": [
-        0,
-        1
-      ]
-    },
-    {
-      "zh": [
-        "共 ",
-        " 轮 · ",
-        " 次平衡"
-      ],
-      "en": [
-        "",
-        " rounds · ",
-        " equilibria"
       ],
       "order": [
         0,
@@ -3596,19 +3581,6 @@
       "order": [
         0,
         1
-      ]
-    },
-    {
-      "zh": [
-        "依次执行 ",
-        " 轮"
-      ],
-      "en": [
-        "",
-        " rounds"
-      ],
-      "order": [
-        0
       ]
     },
     {
@@ -4314,19 +4286,6 @@
     },
     {
       "zh": [
-        "每轮 ",
-        " 步"
-      ],
-      "en": [
-        "",
-        " steps per round"
-      ],
-      "order": [
-        0
-      ]
-    },
-    {
-      "zh": [
         "移除物料 ",
         ""
       ],
@@ -4943,19 +4902,6 @@
       "en": [
         "",
         " values"
-      ],
-      "order": [
-        0
-      ]
-    },
-    {
-      "zh": [
-        "",
-        " 步"
-      ],
-      "en": [
-        "",
-        " steps"
       ],
       "order": [
         0

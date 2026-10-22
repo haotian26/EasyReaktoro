@@ -4,7 +4,8 @@ export type ScheduleIssueLocation =
  | {kind:'parameter';target:LoopTarget;settingId?:string;overrideId?:string;inner:number;outer:number}
  | {kind:'stop';rule:'first'|'later'|'rounds'}
  | {kind:'scope';overrideId:string;axis:'positions'|'rounds';field:'start'|'end'|'step'}
- | {kind:'source';routeId:string;inner:number;outer:number};
+ | {kind:'source';routeId:string;field?:'source'|'position'|'round';inner:number;outer:number}
+ | {kind:'constraint';constraintId:string;field:'titrant'|'species'|'rounds'|'positions';bound?:'start'|'end'|'step'};
 export type ScheduleDiagnostic={message:string;location?:ScheduleIssueLocation};
 export class ScheduleInputError extends Error {
  constructor(message:string,readonly location:ScheduleIssueLocation){super(message);this.name='ScheduleInputError';}

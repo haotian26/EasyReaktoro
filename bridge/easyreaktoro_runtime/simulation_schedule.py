@@ -139,17 +139,18 @@ def normalize_schedule(cfg, check_references=True):
         from .simulation_loops import ensure_route_ids
         ensure_route_ids(cfg.get('routes', []))
     _check(isinstance(schedule['overrides'], list), '局部参数设置须为列表')
-    groups = [(None, schedule['parameters'], {'start': 1}, {'start': 1})]
+    groups = [(None, schedule['parameters'], {'start': 1}, {'start': 1}, False)]
     rule_ids, setting_ids = set(), set()
     for override in schedule['overrides']:
-        _check(isinstance(override, dict) and {'id', 'rounds', 'positions', 'parameters'} <= set(override) <= {'id', 'name', 'rounds', 'positions', 'parameters'}, '局部参数设置不完整')
+        _check(isinstance(override, dict) and {'id', 'rounds', 'positions', 'parameters'} <= set(override) <= {'id', 'name', 'rounds', 'positions', 'parameters', 'point'}, '局部参数设置不完整')
         key = override['id']
         _check(isinstance(key, str) and bool(key.strip()) and key not in rule_ids, '局部设置编号须唯一且非空')
         _check('name' not in override or isinstance(override['name'], str), '局部设置名称须为文字')
+        _check('point' not in override or override['point'] is True and all(isinstance(override.get(axis), dict) and override[axis].get('start') == override[axis].get('end') for axis in ('rounds', 'positions')), 'A point override must refer to one round and one position.')
         rule_ids.add(key)
-        groups.append((key, override['parameters'], override['rounds'], override['positions']))
+        groups.append((key, override['parameters'], override['rounds'], override['positions'], override.get('point', False)))
     occupied, general, active_identities = {}, set(), set()
-    for group_id, parameters, round_scope, position_scope in groups:
+    for group_id, parameters, round_scope, position_scope, point in groups:
         rounds = scope_indices(round_scope, schedule['rounds'])
         positions = scope_indices(position_scope, schedule['positions'])
         active = bool(rounds) and bool(positions)
@@ -171,11 +172,13 @@ def normalize_schedule(cfg, check_references=True):
                         _reference(cfg, identity)
             if group_id is not None and active:
                 for identity in identities:
-                    for previous_rounds, previous_positions in occupied.setdefault(identity, []):
+                    for previous_rounds, previous_positions, previous_point in occupied.setdefault(identity, []):
+                        if previous_point != point:
+                            continue
                         outer = next((number for number in rounds if number in previous_rounds), None)
                         inner = next((number for number in positions if number in previous_positions), None)
                         _check(outer is None or inner is None, f'同一个参数存在重叠的局部设置，请调整适用范围')
-                    occupied[identity].append((rounds, positions))
+                    occupied[identity].append((rounds, positions, point))
         if group_id is None:
             general = targets
     _check(('temperature',) in general and ('pressure',) in general, '一般参数中必须分别设置温度和压力')
@@ -206,7 +209,8 @@ class SchedulePlan:
         self._settings, self._targets = {}, {}
         self._general, self._local = {}, {}
         groups = [(None, self.schedule['parameters'], {'start': 1}, {'start': 1})]
-        groups.extend((row['id'], row['parameters'], row['rounds'], row['positions']) for row in self.schedule['overrides'])
+        # Point edits take precedence; ordinary ranges still cannot overlap.
+        groups.extend((row['id'], row['parameters'], row['rounds'], row['positions']) for row in sorted(self.schedule['overrides'], key=lambda row: not row.get('point', False)))
         for group_id, settings, round_scope, position_scope in groups:
             rounds, positions = scope_indices(round_scope, self.rounds), scope_indices(position_scope, self.positions)
             if not rounds or not positions:

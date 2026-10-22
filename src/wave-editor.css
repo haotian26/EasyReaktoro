@@ -43,3 +43,31 @@
 
 .wave-formula-field[data-help-above=true]>.wave-formula-help{top:auto;bottom:calc(100% + 6px)}
 .wave-formula-help>.wave-formula-error{color:var(--danger);font-weight:600}
+
+/* Field labels and reset actions retain their space in both languages. */
+.wave-local{container-type:inline-size;container-name:wave-local}
+.wave-local>select{width:100%;min-width:0;height:36px;font-size:12px}
+.wave-local-field{display:grid;grid-template-columns:minmax(0,1fr) 146px;align-items:end;gap:8px 16px;margin-top:16px;min-width:0}
+.wave-local .wave-local-field>label{margin:0;min-width:0}
+.wave-local-label{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;line-height:1.6}
+.wave-local-label>span{min-width:0;overflow-wrap:anywhere}
+.wave-local-label>small{color:var(--muted);font-size:11px;white-space:nowrap}
+.wave-local-field[data-state=modified] .wave-local-label>small{color:var(--accent)}
+.wave-local-reset{font-size:12px;line-height:1.5;min-height:36px;padding:6px 0;text-align:right}
+.wave-local h3,.wave-extra-item>label>span{overflow-wrap:anywhere;line-height:1.6}
+.wave-field-error{color:var(--danger);font-size:12px;line-height:1.6;margin:0;overflow-wrap:anywhere}
+.wave-extra-item>label{min-width:0}.wave-extra-item>.sim-icon-btn{align-self:start;margin-top:23px}
+.wave-heading>div,.wave-step>header{min-width:0;flex-wrap:wrap}
+.wave-step>header code{margin-left:auto}
+.wave-species-choices label{max-width:100%;min-width:0;overflow-wrap:anywhere}
+.wave-species-choices input{flex:none}
+.wave-material-local{min-width:0;max-width:100%}
+.wave-material-local>label{min-width:0;flex:1 1 130px}
+.wave-material-local select{width:100%;min-width:0;max-width:100%}
+@container wave-workspace (max-width:850px){
+ .wave-condition{grid-template-columns:88px 28px minmax(0,1fr)}
+}
+@container wave-local (max-width:560px){
+ .wave-local-field{grid-template-columns:minmax(0,1fr)}
+ .wave-local-reset{justify-self:start;text-align:left;min-height:28px;padding:2px 0}
+}

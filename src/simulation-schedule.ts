@@ -1,9 +1,9 @@
 import {t} from './i18n';
 import {evaluateExpression,parseExpression} from './reaction-expression';
 import {atScheduleInput,ScheduleInputError,type ScheduleDiagnostic} from './schedule-diagnostics';
-import {constraintActiveAt,constraintDefinitionsIssue} from './equilibrium-constraints';
+import {constraintActiveAt,constraintDefinitionsDiagnostic} from './equilibrium-constraints';
 import type {Config,Point} from './simulation-types';
-import {activeRouteEntries,stageAt,reactionSourceIssue} from './reaction-stages';
+import {activeRouteEntries,stageAt,reactionSourceDiagnostic} from './reaction-stages';
 import {pointConditions,saturationPressure} from './process-layout';
 import {loopValues,routeId,routeTargetBindings,targetDescription,targetKey,type LoopTarget} from './simulation-loops';
 
@@ -16,7 +16,7 @@ export type ParameterProfile=
  | {mode:'expression';expression:string}
  | {mode:'water_saturation'};
 export type ParameterSetting={id:string;target:LoopTarget;value:ParameterProfile};
-export type ScheduleOverride={id:string;name?:string;rounds:IndexScope;positions:IndexScope;parameters:ParameterSetting[]};
+export type ScheduleOverride={point?:true;id:string;name?:string;rounds:IndexScope;positions:IndexScope;parameters:ParameterSetting[]};
 export type StopRules={first?:string;later?:string;rounds?:string};
 export type Schedule={stop?:StopRules;version:1;positions:number;rounds:number;parameters:ParameterSetting[];overrides:ScheduleOverride[]};
 export type CompiledSchedule={lengths:number[];active:(inner:number,outer:number)=>boolean;runIndex:(inner:number,outer:number)=>number;counts:{inner:number;outer:number;total:number};point:(innerIndex:number,outerIndex:number)=>Point;valueAt:(target:LoopTarget,innerIndex:number,outerIndex:number,fallback?:number)=>number;hasSetting:(target:LoopTarget,innerIndex?:number,outerIndex?:number)=>boolean};
@@ -61,7 +61,7 @@ function profileShape(p:any):p is ParameterProfile{
 export function validateScheduleShape(value:any):value is Schedule{
  const setting=(p:any)=>object(p)&&typeof p.id==='string'&&!!p.id&&targetShape(p.target)&&profileShape(p.value);
  const scope=(s:any)=>object(s)&&num(s.start)&&(s.end===undefined||num(s.end))&&(s.step===undefined||num(s.step));
- return object(value)&&(value.stop===undefined||object(value.stop)&&Object.entries(value.stop).every(([k,v])=>['first','later','rounds'].includes(k)&&typeof v==='string'&&v.length<=2000))&&value.version===1&&num(value.positions)&&num(value.rounds)&&Array.isArray(value.parameters)&&value.parameters.length<=1000&&value.parameters.every(setting)&&Array.isArray(value.overrides)&&value.overrides.length<=10000&&value.overrides.every((o:any)=>object(o)&&typeof o.id==='string'&&!!o.id&&(o.name===undefined||typeof o.name==='string')&&scope(o.rounds)&&scope(o.positions)&&Array.isArray(o.parameters)&&o.parameters.length<=1000&&o.parameters.every(setting));
+ return object(value)&&(value.stop===undefined||object(value.stop)&&Object.entries(value.stop).every(([k,v])=>['first','later','rounds'].includes(k)&&typeof v==='string'&&v.length<=2000))&&value.version===1&&num(value.positions)&&num(value.rounds)&&Array.isArray(value.parameters)&&value.parameters.length<=1000&&value.parameters.every(setting)&&Array.isArray(value.overrides)&&value.overrides.length<=10000&&value.overrides.every((o:any)=>object(o)&&typeof o.id==='string'&&!!o.id&&(o.name===undefined||typeof o.name==='string')&&scope(o.rounds)&&scope(o.positions)&&(o.point===undefined||o.point===true&&o.rounds.start===o.rounds.end&&o.positions.start===o.positions.end)&&Array.isArray(o.parameters)&&o.parameters.length<=1000&&o.parameters.every(setting));
 }
 function atomicTargets(target:LoopTarget):LoopTarget[]{return target.kind==='route_fraction'?routeTargetBindings(target).map(b=>({kind:'route_fraction',...b})):[target];}
 function targetBase(target:LoopTarget,config:Config):number{
@@ -122,13 +122,13 @@ export function migrateSchedule(config:Config):Schedule|null{
  return schedule;
 }
 
-type ScopedSetting={setting:ParameterSetting;path:number[];rounds:number[];pathOrdinal:Map<number,number>;roundOrdinal:Map<number,number>;scopeName:string;overrideId?:string};
+type ScopedSetting={setting:ParameterSetting;path:number[];rounds:number[];pathOrdinal:Map<number,number>;roundOrdinal:Map<number,number>;scopeName:string;overrideId?:string;point:boolean};
 const caches=new WeakMap<Config,WeakMap<Schedule,CompiledSchedule>>();
 export function compileSchedule(config:Config,schedule=config.schedule):CompiledSchedule{
  check(schedule&&validateScheduleShape(schedule),()=>t('反应条件设置不完整，请补全当前编辑。',"Complete the reaction conditions before continuing."));
  const existing=caches.get(config)?.get(schedule);if(existing)return existing;
  const counts=scheduleCounts(schedule);check([counts.inner,counts.outer].every(n=>Number.isInteger(n)&&n>=1&&n<=10000),()=>t('路径位置数和反应轮数须为 1–10,000 的整数。',"Enter a whole number from 1 to 10,000 for path positions and reaction rounds."));check(!!schedule.stop||counts.total<=20000,()=>t('本次计算超过 20,000 个平衡点，请减少位置数或轮数。',"This simulation exceeds 20,000 equilibrium points. Reduce the number of positions or rounds."));
- const constraintIssue=constraintDefinitionsIssue(config);check(!constraintIssue,()=>constraintIssue!);
+ const constraintIssue=constraintDefinitionsDiagnostic(config);if(constraintIssue){if(constraintIssue.location)throw new ScheduleInputError(constraintIssue.message,constraintIssue.location);throw new Error(constraintIssue.message);}
  const stopValue=(expression:string,variable:(name:string)=>number)=>{
   const parsed=parseExpression(expression);check('operator'in parsed.node&&['<','>','<=','>=','=','==','!=','<>'].includes(parsed.node.operator),()=>t('结束条件需要比较，例如 i = 3 或 P < 150。','Use a comparison to end the calculation, for example i = 3 or P < 150.'));
   return evaluateExpression(parsed,variable)!==0;
@@ -140,22 +140,22 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  const lengths:number[]=[];
  const allPath=Array.from({length:counts.inner},(_,i)=>i+1),allRounds=Array.from({length:counts.outer},(_,i)=>i+1);
  const general=new Map<string,ScopedSetting>(),local=new Map<string,ScopedSetting[]>(),targets=new Map<string,LoopTarget>(),ids=new Set<string>();
- const add=(setting:ParameterSetting,path:number[],rounds:number[],scopeName:string,isGeneral:boolean,overrideId?:string)=>atScheduleInput({kind:'parameter',target:setting.target,settingId:setting.id,overrideId,inner:(path[0]??1)-1,outer:(rounds[0]??1)-1},()=>{
+ const add=(setting:ParameterSetting,path:number[],rounds:number[],scopeName:string,isGeneral:boolean,overrideId?:string,point=false)=>atScheduleInput({kind:'parameter',target:setting.target,settingId:setting.id,overrideId,inner:(path[0]??1)-1,outer:(rounds[0]??1)-1},()=>{
   check(!ids.has(setting.id),()=>t(`参数设置编号重复：${setting.id}。`,`Duplicate parameter setting ID: ${setting.id}.`));ids.add(setting.id);
-  const scoped={setting,path,rounds,pathOrdinal:new Map(path.map((v,i)=>[v,i])),roundOrdinal:new Map(rounds.map((v,i)=>[v,i])),scopeName,overrideId};
+  const scoped={setting,path,rounds,pathOrdinal:new Map(path.map((v,i)=>[v,i])),roundOrdinal:new Map(rounds.map((v,i)=>[v,i])),scopeName,overrideId,point};
   const atoms=atomicTargets(setting.target),keys=atoms.map(targetKey);check(new Set(keys).size===keys.length,()=>t('同一参数设置重复引用了物料来源。',"This parameter setting refers to the same material source more than once."));
   if(setting.target.kind==='route_fraction'){const first=routeTargetBindings(setting.target)[0];check(first?.route_id===setting.target.route_id&&first?.field===setting.target.field,()=>t('物料用量设置的主来源与引用不一致。',"The main source of the material amount setting does not match its references."));}
   for(const target of atoms){const key=targetKey(target);targets.set(key,target);
    if(path.length&&rounds.length){const available=target.kind==='temperature'||target.kind==='pressure'||targetDescription(target,config).available;check(available,()=>t(`${scopeName}中的参数已移除，请重新选择或删除该项。`,`A parameter in ${scopeName} has been removed. Choose another parameter or remove the setting.`));}
    if(isGeneral){check(!general.has(key),()=>t('通常设置中同一个参数出现了多次，请保留一项。',"A parameter appears more than once in the general settings. Keep one setting."));general.set(key,scoped);}
-   else {const rows=local.get(key)||[];check(!rows.some(other=>path.some(v=>other.pathOrdinal.has(v))&&rounds.some(v=>other.roundOrdinal.has(v))),()=>t(`${scopeName}与另一处单独设置重复修改同一个参数，请调整范围。`,`${scopeName} overlaps another setting for the same parameter. Adjust the affected positions or rounds.`));rows.push(scoped);local.set(key,rows);}
+   else {const rows=local.get(key)||[];check(!rows.some(other=>other.point===point&&path.some(v=>other.pathOrdinal.has(v))&&rounds.some(v=>other.roundOrdinal.has(v))),()=>t(`${scopeName}与另一处单独设置重复修改同一个参数，请调整范围。`,`${scopeName} overlaps another setting for the same parameter. Adjust the affected positions or rounds.`));rows.push(scoped);local.set(key,rows);}
   }
  });
  schedule.parameters.forEach(p=>add(p,allPath,allRounds,t('通常设置',"General settings"),true));
  check(general.has('temperature')&&general.has('pressure'),()=>t('通常设置中需要温度和压力。',"Temperature and pressure are required in the general settings."));
  const scopedIndices=(o:ScheduleOverride,axis:'positions'|'rounds',count:number)=>{const scope=o[axis],field=!Number.isInteger(scope.start)||scope.start<1||scope.start>10000?'start':scope.end!==undefined&&(!Number.isInteger(scope.end)||scope.end<scope.start||scope.end>10000)?'end':'step';return atScheduleInput({kind:'scope',overrideId:o.id,axis,field},()=>scheduleScopeIndices(scope,count));};
- const groupIds=new Set<string>();for(const [index,o] of schedule.overrides.entries()){check(!groupIds.has(o.id),()=>t('单独设置的编号重复。',"Duplicate individual setting ID."));groupIds.add(o.id);const path=scopedIndices(o,'positions',counts.inner),rounds=scopedIndices(o,'rounds',counts.outer);o.parameters.forEach(p=>add(p,path,rounds,o.name||t(`第 ${index+1} 处单独设置`,`Individual setting ${index+1}`),false,o.id));}
- const at=(key:string,ii:number,oi:number)=>local.get(key)?.find(s=>s.pathOrdinal.has(ii+1)&&s.roundOrdinal.has(oi+1))||general.get(key);
+ const groupIds=new Set<string>();for(const [index,o] of schedule.overrides.entries()){check(!groupIds.has(o.id),()=>t('单独设置的编号重复。',"Duplicate individual setting ID."));groupIds.add(o.id);const path=scopedIndices(o,'positions',counts.inner),rounds=scopedIndices(o,'rounds',counts.outer);o.parameters.forEach(p=>add(p,path,rounds,o.name||t(`第 ${index+1} 处单独设置`,`Individual setting ${index+1}`),false,o.id,o.point===true));}
+ const at=(key:string,ii:number,oi:number)=>{const matches=(s:ScopedSetting)=>s.pathOrdinal.has(ii+1)&&s.roundOrdinal.has(oi+1),rows=local.get(key);return rows?.find(s=>s.point&&matches(s))||rows?.find(matches)||general.get(key);};
  const tables=new Map<string,Float64Array>(),pressureModes=new Set<string>();
  const scalars=new Map<string,number>(),evaluating=new Set<string>();
  const scalar=(target:LoopTarget,ii:number,oi:number):number=>{
@@ -246,12 +246,12 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
   if(fraction===0)continue;
   const sourceInner=r.source==='previous_cycle'?ii:r.source==='output'?config.points.findIndex(p=>p.id===r.point_id):-1;
   const sourceOuter=r.source==='previous_cycle'?oi-1:r.source==='output'?oi-(r.lag??0):-1;
-  if(sourceInner>=0&&sourceOuter>=0)atScheduleInput({kind:'source',routeId:routeId(r,e.index),inner:ii,outer:oi},()=>check(active(sourceInner,sourceOuter),()=>t(`第 ${oi+1} 轮位置 ${ii+1} 的物料来源在该位置之前已结束。`,`Round ${oi+1}, position ${ii+1}: the source round ended before the selected source position.`)));
+  if(sourceInner>=0&&sourceOuter>=0)atScheduleInput({kind:'source',routeId:routeId(r,e.index),field:r.source==='output'?'position':'source',inner:ii,outer:oi},()=>check(active(sourceInner,sourceOuter),()=>t(`第 ${oi+1} 轮位置 ${ii+1} 的物料来源在该位置之前已结束。`,`Round ${oi+1}, position ${ii+1}: the source round ended before the selected source position.`)));
  }
  let cache=caches.get(config);if(!cache){cache=new WeakMap();caches.set(config,cache);}cache.set(schedule,compiled);return compiled;
 }
 export function scheduleDiagnostic(config:Config,schedule=config.schedule):ScheduleDiagnostic|undefined{
- try{const plan=compileSchedule(config,schedule),message=reactionSourceIssue(config,plan.counts);return message?{message}:undefined;}
+ try{const plan=compileSchedule(config,schedule);return reactionSourceDiagnostic(config,plan.counts);}
  catch(e){return {message:e instanceof Error?e.message:t('请补全反应条件。',"Complete the reaction conditions."),...(e instanceof ScheduleInputError?{location:e.location}:{})};}
 }
 export function scheduleIssue(config:Config,schedule=config.schedule):string|undefined{return scheduleDiagnostic(config,schedule)?.message;}

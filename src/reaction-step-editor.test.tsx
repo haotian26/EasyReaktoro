@@ -158,3 +158,50 @@ it('shows the actual error beside the focused field and places help above a low 
   expect(field.parentElement?.querySelector('.wave-formula-error')?.textContent).toBe('Unknown variable: unknown.');
  }finally{rect.mockRestore();}
 });
+
+it('opens local conditions without changing the schedule, then restores a live stage formula',()=>{
+ render(<Editor/>);fireEvent.change(screen.getByLabelText('first_following 温度'),{target:{value:'T-20'}});
+ fireEvent.change(screen.getByLabelText('预览路径位置'),{target:{value:'2'}});
+ const before=structuredClone(latest.schedule);fireEvent.click(screen.getByRole('button',{name:'单独调整此处'}));expect(latest.schedule).toEqual(before);
+ const local=screen.getByLabelText('此点单独设置');expect(within(local).getAllByText('沿用规则')).toHaveLength(2);
+ fireEvent.change(screen.getByLabelText('温度 本点数值或公式'),{target:{value:'100'}});
+ expect(within(local).getByText('本点修改')).toBeTruthy();expect(compileSchedule(latest).point(2,0).temperature_c).toBe(80);
+ fireEvent.change(screen.getByLabelText('first_following 温度'),{target:{value:'T-10'}});
+ fireEvent.click(within(local).getByRole('button',{name:'恢复沿用 · 温度'}));
+ expect(compileSchedule(latest).point(1,0).temperature_c).toBe(240);
+ expect((screen.getByLabelText('温度 本点数值或公式') as HTMLInputElement).value).toBe('T-10');
+ expect(within(local).queryByText('本点修改')).toBeNull();
+});
+it('locates missing pH and fugacity inputs and clears the matching error after repair',()=>{
+ render(<Editor/>);fireEvent.change(screen.getByLabelText('添加指定条件'),{target:{value:'ph'}});
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);expect(document.activeElement).toBe(screen.getByLabelText('pH 调节物质'));
+ fireEvent.change(screen.getByLabelText('pH 调节物质'),{target:{value:'HCl'}});expect(screen.getByLabelText('pH 调节物质').getAttribute('aria-invalid')).toBeNull();
+ fireEvent.change(screen.getByLabelText('添加指定条件'),{target:{value:'fugacity'}});
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);expect(document.activeElement).toBe(screen.getByLabelText('逸度目标气体'));
+ expect(screen.getByLabelText('pH 调节物质').getAttribute('aria-invalid')).toBeNull();
+});
+it('opens a collapsed constraint range and focuses its invalid bound without altering it',()=>{
+ const c=base();c.equilibrium_constraints=[{id:'acid',kind:'ph',value:7,titrant:'HCl',exchange:'add_only',rounds:{start:2,end:1}}];render(<Editor initial={c}/>);
+ const field=screen.getByLabelText('适用轮次 终点'),details=field.closest('details')!;expect(details.open).toBe(false);
+ const before=structuredClone(latest);fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);
+ expect(details.open).toBe(true);expect(document.activeElement).toBe(field);expect(latest).toEqual(before);
+ fireEvent.change(field,{target:{value:'3'}});expect(field.getAttribute('aria-invalid')).toBeNull();
+});
+it('takes overlapping targets to the second target range rather than an unrelated value',()=>{
+ const c=base();c.equilibrium_constraints=[{id:'a',kind:'ph',value:7,titrant:'HCl',exchange:'add_only'},{id:'b',kind:'ph',value:6,titrant:'CO2',exchange:'add_only'}];render(<Editor initial={c}/>);
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);
+ expect(document.activeElement).toBe(screen.getAllByLabelText('适用轮次')[1]);expect(document.activeElement?.closest('details')?.open).toBe(true);
+});
+it('locates an unavailable material result at the source control',()=>{
+ const c=base();c.reaction_stages={first_start:[{...c.routes[0],id:'bad-source',source:'previous_point',when:'always'}],first_following:[],later_start:[],later_following:[]};render(<Editor initial={c}/>);
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);expect(document.activeElement).toBe(screen.getByLabelText('first_start 物料 1 来源'));
+});
+it('locates the specific source position rather than the source-type selector',()=>{
+ const c=base();c.reaction_stages={first_start:[{...c.routes[0],id:'first',when:'always'}],first_following:[{...c.routes[0],id:'bad-position',source:'output',point_id:'loop-99',lag:0,when:'always'}],later_start:[],later_following:[]};render(<Editor initial={c}/>);
+ fireEvent.click(screen.getAllByRole('button',{name:'定位到输入'})[0]);expect(document.activeElement).toBe(screen.getByLabelText('first_following 物料 1 来源位置'));
+});
+it('uses singular English counts for one step, round and equilibrium',()=>{
+ setLanguage('en');const c=base();c.schedule!.positions=1;c.schedule!.rounds=1;render(<Editor initial={c}/>);
+ expect(screen.getByText('1 step')).toBeTruthy();expect(screen.getByText('1 round · 1 equilibrium')).toBeTruthy();
+ expect(document.body.textContent).not.toMatch(/\b1 (steps|rounds|equilibria)\b/);
+});

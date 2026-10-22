@@ -6,12 +6,13 @@ import type {ReactionStageKey} from './simulation-types';
 import type {ScheduleDiagnostic,ScheduleIssueLocation} from './schedule-diagnostics';
 
 export const FormulaDiagnosticContext=createContext<ScheduleDiagnostic|undefined>(undefined);
-export type FormulaReference={target?:LoopTarget;settingIds?:string[];stage?:ReactionStageKey;overrideId?:string;stop?:'first'|'later'|'rounds';scope?:{overrideId:string;axis:'positions'|'rounds';field:'start'|'end'|'step'};routeId?:string};
+export type FormulaReference={target?:LoopTarget;settingIds?:string[];stage?:ReactionStageKey;overrideId?:string;stop?:'first'|'later'|'rounds';scope?:{overrideId:string;axis:'positions'|'rounds';field:'start'|'end'|'step'};routeId?:string;routeField?:'source'|'position'|'round';constraint?:{id:string;field:'titrant'|'species'|'rounds'|'positions';bound?:'start'|'end'|'step'}};
 export function matchesFormulaInput(field:FormulaReference,location?:ScheduleIssueLocation):boolean{
  if(!location)return false;
  if(location.kind==='stop')return field.stop===location.rule;
  if(location.kind==='scope')return !!field.scope&&field.scope.overrideId===location.overrideId&&field.scope.axis===location.axis&&field.scope.field===location.field;
- if(location.kind==='source')return field.routeId===location.routeId;
+ if(location.kind==='source')return field.routeId===location.routeId&&(field.routeField??'source')===(location.field??'source');
+ if(location.kind==='constraint')return field.constraint?.id===location.constraintId&&field.constraint.field===location.field&&field.constraint.bound===location.bound;
  if(!field.target||targetKey(field.target)!==targetKey(location.target))return false;
  if(field.stage&&field.stage!==stageAt(location.inner,location.outer))return false;
  if(field.overrideId&&field.overrideId!==location.overrideId)return false;
@@ -22,6 +23,10 @@ export function formulaField(root:HTMLElement|null,location?:ScheduleIssueLocati
  return Array.from(root.querySelectorAll<HTMLElement>('[data-formula-reference]')).find(el=>{
   try{return matchesFormulaInput(JSON.parse(el.dataset.formulaReference!),location);}catch{return false;}
  });
+}
+export function revealInput(field:HTMLElement){
+ for(let parent=field.parentElement;parent;parent=parent.parentElement)if(parent instanceof HTMLDetailsElement)parent.open=true;
+ field.scrollIntoView?.({block:'center'});field.focus({preventScroll:true});
 }
 export type FormulaContext={kind:'temperature'|'pressure'|'amount'|'value'|'stop'|'completion';stage?:ReactionStageKey};
 export function formulaHelp({kind,stage}:FormulaContext):string[]{

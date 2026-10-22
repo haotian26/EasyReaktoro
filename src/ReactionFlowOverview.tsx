@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {t as tr,useLanguage} from './i18n';
+import {t as tr,useLanguage,englishCount} from './i18n';
 import type {DiagramMaterialStages,DiagramStage} from './LoopDiagram';
 import type {FlowCoordinate} from './reaction-flow-model';
 import {flowOverview,flowStage,type FlowOverviewStage,type FlowOverviewInput,type FlowPoint,type FlowRange,type FlowAnnotation} from './reaction-flow-overview';
@@ -45,14 +45,14 @@ export function ReactionFlowOverview({positions,rounds,materials,point,active,se
  const laterLengths=model.lengths.slice(1),minLength=Math.min(...laterLengths),maxLength=Math.max(...laterLengths);
  const partialInputs=Object.values(stage).flatMap(group=>group.inputs.filter(input=>input.count<group.count));
  return <div className="flow-overview" aria-label={tr('重复流程概览','Repeated flow overview')}>
-  <div className="flow-overview__intro"><strong>{tr('流程概览','Flow overview')}</strong><span>{tr(`${positions.toLocaleString()} 个路径位置 · ${rounds.toLocaleString()} 轮`,`${positions.toLocaleString()} path positions · ${rounds.toLocaleString()} rounds`)}</span></div>
+  <div className="flow-overview__intro"><strong>{tr('流程概览','Flow overview')}</strong><span>{tr(`${positions.toLocaleString()} 个路径位置 · ${rounds.toLocaleString()} 轮`,`${englishCount(positions,'path position')} · ${englishCount(rounds,'round')}`)}</span></div>
   <div className="flow-overview__scroll"><div className={`flow-overview__diagram${!hasPath?' flow-overview__diagram--single-path':''}`}>
-   <div className="flow-overview__round" style={{gridRow:1}}><strong>{tr('第 1 轮','Round 1')}</strong><small>{tr(`${model.lengths[0]} 步`,`${model.lengths[0]} steps`)}</small></div>
+   <div className="flow-overview__round" style={{gridRow:1}}><strong>{tr('第 1 轮','Round 1')}</strong><small>{tr(`${model.lengths[0]} 步`,englishCount(model.lengths[0],'step'))}</small></div>
    <div className="flow-overview__cell" style={{gridRow:1,gridColumn:2}}>{card('first_start')}</div>
    {hasPath&&<><div style={{gridRow:1,gridColumn:3}}>{connection('first_following','left')}</div><div className="flow-overview__cell" style={{gridRow:1,gridColumn:4}}>{card('first_following')}</div></>}
    {hasRounds&&<>
     <div style={{gridRow:2,gridColumn:2}}>{connection('later_start','above')}</div>{hasPath&&<div style={{gridRow:2,gridColumn:4}}>{connection('later_following','above')}</div>}
-    <div className="flow-overview__round" style={{gridRow:3}}><strong>{rounds===2?tr('第 2 轮','Round 2'):tr(`第 2–${rounds} 轮`,`Rounds 2–${rounds}`)}</strong><small>{tr(`依次执行 ${rounds-1} 轮`,`${rounds-1} rounds`)}</small><small>{minLength===maxLength?tr(`每轮 ${minLength} 步`,`${minLength} steps per round`):tr(`每轮 ${minLength}–${maxLength} 步`,`${minLength}–${maxLength} steps per round`)}</small></div>
+    <div className="flow-overview__round" style={{gridRow:3}}><strong>{rounds===2?tr('第 2 轮','Round 2'):tr(`第 2–${rounds} 轮`,`Rounds 2–${rounds}`)}</strong><small>{tr(`依次执行 ${rounds-1} 轮`,englishCount(rounds-1,'round'))}</small><small>{minLength===maxLength?tr(`每轮 ${minLength} 步`,`${englishCount(minLength,'step')} per round`):tr(`每轮 ${minLength}–${maxLength} 步`,`${minLength}–${maxLength} steps per round`)}</small></div>
     <div className="flow-overview__cell" style={{gridRow:3,gridColumn:2}}>{card('later_start')}</div>{hasPath&&<><div style={{gridRow:3,gridColumn:3}}>{connection('later_following','left')}</div><div className="flow-overview__cell" style={{gridRow:3,gridColumn:4}}>{card('later_following')}</div></>}
    </>}
   </div></div>

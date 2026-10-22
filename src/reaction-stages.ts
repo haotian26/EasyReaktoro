@@ -1,4 +1,5 @@
 import {t} from './i18n';
+import type {ScheduleDiagnostic} from './schedule-diagnostics';
 import type {Config,ReactionStageKey,ReactionStages,Route} from './simulation-types';
 import type {Loop,LoopTarget,RouteBinding} from './simulation-loops';
 import {mapScheduleTargets,remapRouteTarget} from './schedule-references';
@@ -15,19 +16,22 @@ export function activeRouteEntries(config:Config):{stage?:ReactionStageKey;route
   return config.reaction_stages?stageKeys.flatMap(stage=>config.reaction_stages![stage].map((route,index)=>({stage,route,index}))):config.routes.map((route,index)=>({route,index}));
 }
 /** Only material dependencies: shared by the current schedule and legacy axes. */
-export function reactionSourceIssue(config:Config,counts:{inner:number;outer:number}):string|undefined{
+export function reactionSourceDiagnostic(config:Config,counts:{inner:number;outer:number}):ScheduleDiagnostic|undefined{
  for(const {route,index,stage} of activeRouteEntries(config)){
   if(stage&&(stage.endsWith('_following')&&counts.inner===1||stage.startsWith('later_')&&counts.outer===1))continue;
   const location=stage?t(`${stageInfo[stage].title}的第 ${index+1} 项物料`,`${stageInfo[stage].title} · input ${index+1}`):t(`来源 ${index+1}`,`Source ${index+1}`);
-  if(stage&&route.source==='previous_point'&&stage.endsWith('_start'))return t(`${location}没有前一步结果，请改选实际加入的 composition 或有效来源。`,`${location} has no previous reaction. Choose a composition or an available result.`);
-  if(stage&&stage.startsWith('first_')&&(route.source==='previous_cycle'||route.source==='output'&&route.lag===1))return t(`${location}没有上一轮结果，请改选实际加入的 composition 或有效来源。`,`${location} has no previous round. Choose a composition or an available result.`);
+  const issue=(message:string,field:'source'|'position'|'round'='source'):ScheduleDiagnostic=>({message,location:{kind:'source',routeId:route.id||`route-${index+1}`,field,inner:stage?.endsWith('_following')?1:0,outer:stage?.startsWith('later_')?1:0}});
+  if(route.source==='material'&&!config.materials.some(m=>m.id===route.material_id))return issue(t(`${location}的 Composition 已不存在，请重新选择。`,`${location} uses a composition that no longer exists. Choose a composition again.`));
+  if(stage&&route.source==='previous_point'&&stage.endsWith('_start'))return issue(t(`${location}没有前一步结果，请改选实际加入的 composition 或有效来源。`,`${location} has no previous reaction. Choose a composition or an available result.`));
+  if(stage&&stage.startsWith('first_')&&(route.source==='previous_cycle'||route.source==='output'&&route.lag===1))return issue(t(`${location}没有上一轮结果，请改选实际加入的 composition 或有效来源。`,`${location} has no previous round. Choose a composition or an available result.`),route.source==='output'?'round':'source');
   if(route.source!=='output')continue;
-  if(!/^loop-([1-9][0-9]*)$/.test(route.point_id||''))return t(`${location}的来源不属于当前反应路径，请重新选择来源位置。`,`${location} refers to a source outside this reaction path. Choose a source position again.`);
+  if(!/^loop-([1-9][0-9]*)$/.test(route.point_id||''))return issue(t(`${location}的来源不属于当前反应路径，请重新选择来源位置。`,`${location} refers to a source outside this reaction path. Choose a source position again.`),'position');
   const source=Number(route.point_id!.slice(5));
-  if(source>counts.inner)return t(`${location}指向的位置已超出反应路径范围，请调整来源。`,`${location} refers to a position outside the reaction path. Adjust the source.`);
-  if(stage&&route.lag===0&&(stage.endsWith('_start')||source>=2))return t(`${location}引用的本轮结果尚未完成，请选择已完成的位置。`,`${location} refers to a result that has not yet been calculated in this round. Choose an earlier position.`);
+  if(source>counts.inner)return issue(t(`${location}指向的位置已超出反应路径范围，请调整来源。`,`${location} refers to a position outside the reaction path. Adjust the source.`),'position');
+  if(stage&&route.lag===0&&(stage.endsWith('_start')||source>=2))return issue(t(`${location}引用的本轮结果尚未完成，请选择已完成的位置。`,`${location} refers to a result that has not yet been calculated in this round. Choose an earlier position.`),stage.endsWith('_start')?'round':'position');
  }
 }
+export function reactionSourceIssue(config:Config,counts:{inner:number;outer:number}):string|undefined{return reactionSourceDiagnostic(config,counts)?.message;}
 /** Keep imported identities stable across the UI and Python runtime; never reassign explicit IDs. */
 export function normalizeStageRoutes(config:Config):Config{
   const stages=config.reaction_stages;if(!stages)return config;
