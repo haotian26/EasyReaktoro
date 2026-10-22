@@ -12,8 +12,11 @@ def reaction_stage(cycle, index):
     return ('first_start' if index == 0 else 'first_following') if cycle == 0 else ('later_start' if index == 0 else 'later_following')
 
 
-def active_reaction_stages(inner_count, outer_count):
-    return tuple(key for key in STAGE_KEYS if not (key.endswith("following") and inner_count == 1 or key.startswith("later") and outer_count == 1))
+def active_reaction_stages(inner_count, outer_count, lengths=None):
+    lengths = [inner_count]*outer_count if lengths is None else lengths
+    used = {reaction_stage(outer, inner) for outer, count in enumerate(lengths)
+            for inner in range(min(count, 2))}
+    return tuple(key for key in STAGE_KEYS if key in used)
 
 
 def normalize_reaction_stages(cfg):

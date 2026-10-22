@@ -3,7 +3,7 @@ import {evaluateExpression,parseExpression} from './reaction-expression';
 import {atScheduleInput,ScheduleInputError,type ScheduleDiagnostic} from './schedule-diagnostics';
 import {constraintActiveAt,constraintDefinitionsDiagnostic,constraintStructureDiagnostic} from './equilibrium-constraints';
 import type {Config,Point} from './simulation-types';
-import {activeRouteEntries,stageAt,reactionSourceDiagnostic} from './reaction-stages';
+import {activeRouteEntries,stageAt,firstStagePoint,reactionSourceDiagnostic} from './reaction-stages';
 import {pointConditions,saturationPressure} from './process-layout';
 import {loopValues,routeId,routeTargetBindings,targetDescription,targetKey,type LoopTarget} from './simulation-loops';
 
@@ -210,9 +210,11 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  const active=(ii:number,oi:number)=>oi>=0&&oi<lengths.length&&ii>=0&&ii<lengths[oi];
  const activeConstraintIssue=constraintDefinitionsDiagnostic(config,lengths);if(activeConstraintIssue){if(activeConstraintIssue.location)throw new ScheduleInputError(activeConstraintIssue.message,activeConstraintIssue.location);throw new Error(activeConstraintIssue.message);}
  let offset=0;const offsets=lengths.map(length=>{const start=offset;offset+=length;return start;});
+ const unusedRoutes=new Set(routeEntries.filter(e=>e.stage&&!firstStagePoint(e.stage,counts,lengths)).map(e=>routeId(e.route,e.index)));
  const table=(target:LoopTarget):Float64Array=>{
   const key=targetKey(target),old=tables.get(key);if(old)return old;
   const values=new Float64Array(counts.inner*counts.outer).fill(NaN);
+  if(target.kind==='route_fraction'&&unusedRoutes.has(target.route_id)){tables.set(key,values);return values;}
   // Traverse in reaction order so recurrence depth stays bounded for long paths.
   for(let oi=0;oi<counts.outer;oi++)for(let ii=0;ii<counts.inner;ii++){
    if(!active(ii,oi))continue;
@@ -254,7 +256,7 @@ export function compileSchedule(config:Config,schedule=config.schedule):Compiled
  let cache=caches.get(config);if(!cache){cache=new WeakMap();caches.set(config,cache);}cache.set(schedule,compiled);return compiled;
 }
 export function scheduleDiagnostic(config:Config,schedule=config.schedule):ScheduleDiagnostic|undefined{
- try{const plan=compileSchedule(config,schedule);return reactionSourceDiagnostic(config,plan.counts);}
+ try{const plan=compileSchedule(config,schedule);return reactionSourceDiagnostic(config,plan.counts,plan.lengths);}
  catch(e){return {message:e instanceof Error?e.message:t('请补全反应条件。',"Complete the reaction conditions."),...(e instanceof ScheduleInputError?{location:e.location}:{})};}
 }
 export function scheduleIssue(config:Config,schedule=config.schedule):string|undefined{return scheduleDiagnostic(config,schedule)?.message;}

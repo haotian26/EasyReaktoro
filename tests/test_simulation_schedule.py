@@ -235,6 +235,29 @@ class ScheduleExecutionTests(unittest.TestCase):
         self.assertTrue(all(abs(balance['error_mol']) < 1e-9 for balance in metadata['process_balance']))
         return rows, metadata
 
+    def test_unequal_rounds_ignore_unused_stage_drafts_and_revalidate_when_extended(self):
+        for first, later, unused in [(1, 3, 'first_following'), (3, 1, 'later_following')]:
+            with self.subTest(first=first, later=later):
+                cfg = scheduled()
+                cfg['schedule']['stop'] = {'first': f'i = {first-1}', 'later': f'i = {later-1}', 'rounds': 'N = 1'}
+                cfg['reaction_stages'] = fresh_stages()
+                cfg['reaction_stages'][unused] = []
+                rows, _ = self.run_plan(copy.deepcopy(cfg))
+                self.assertEqual([(r['summary']['pass'], r['summary']['step']) for r in rows],
+                                 [(c+1, i+1) for c, count in enumerate([first, later]) for i in range(count)])
+                cfg['reaction_stages'][unused] = [route(id='unused', material_id='missing', fraction={'easyreaktoro_empty_number': True})]
+                cfg['schedule']['parameters'].append(setting('unused-dose', 'route_fraction', {'mode':'relative', 'along':'path', 'start':{'easyreaktoro_empty_number':True}, 'step':{'easyreaktoro_empty_number':True}, 'other_step':0}, route_id='unused', field='fraction'))
+                before = copy.deepcopy(cfg)
+                prepared, document, _ = prepare_program(cfg)
+                parsed = parse_code(document, prepared)
+                self.assertTrue(parsed['valid'], parsed.get('errors'))
+                self.assertEqual(parsed['config']['reaction_stages'][unused][0]['material_id'], 'missing')
+                rows, _ = self.run_plan(copy.deepcopy(cfg))
+                self.assertEqual(len(rows), first+later)
+                cfg['schedule']['stop'].update(first='i = 2', later='i = 2')
+                with self.assertRaises(BridgeError): self.run_plan(cfg)
+                self.assertEqual(before['reaction_stages'][unused][0]['material_id'], 'missing')
+
     def test_point_edits_and_restore_drive_real_equilibrium_conditions(self):
         cfg = scheduled(3)
         cfg['schedule']['parameters'][0]['value'] = fixed(150)

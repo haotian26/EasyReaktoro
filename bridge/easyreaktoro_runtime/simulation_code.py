@@ -323,7 +323,12 @@ def check_parameter(name, value, context=None):
             from .simulation_reactions import active_reaction_stages, STAGE_KEYS
             from .simulation_loops import execution_shape
             try:
-                active = active_reaction_stages(*execution_shape(context or {}))
+                if (context or {}).get('schedule'):
+                    from .simulation_schedule import SchedulePlan
+                    plan = SchedulePlan(copy.deepcopy(context), check_references=False)
+                    active = active_reaction_stages(plan.positions, plan.rounds, plan.lengths)
+                else:
+                    active = active_reaction_stages(*execution_shape(context or {}))
             except (BridgeError, KeyError, TypeError, ValueError):
                 active = STAGE_KEYS
             for stage, rows in value.items():

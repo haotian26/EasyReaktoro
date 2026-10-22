@@ -2,6 +2,8 @@ import './i18n-simulation-labels';
 import {registerMessages,registerMessagePatterns,translateMessage} from './i18n';
 // Only application diagnostics are localized; numerical values and scientific names remain intact.
 registerMessages({
+'结果点编号无效。':'Invalid result point ID.',
+'保存的结果中未找到此书签点。':'The bookmarked point is not present in the saved results.',
 '所引用的轮次在此位置之前已结束，该位置不存在。请为新增位置填写条件或用量。':'The referenced round ended before this position. Specify conditions or amounts for the new position.',
 '模拟设置必须是对象':'Simulation settings must be an object.',
 '请选择水相活度模型':'Choose an aqueous activity model.',

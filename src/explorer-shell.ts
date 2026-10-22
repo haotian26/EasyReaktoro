@@ -16,9 +16,41 @@ let resultDefaults={x_direction:'asc',layout:'stack',playback_ms:600,inspector:'
 const originalInitialState=initialState;initialState=()=>({...originalInitialState(),xDirection:resultDefaults.x_direction,layout:resultDefaults.layout==='grid'?'two':'stack',speed:resultDefaults.playback_ms});
 let latestRevision=-1,datasetKey='',installingHost=false,externalMode=false,focusPanels=null,deferredLoad=null;
 let runKey='',savedReference=null,referenceWasVisible=false;
-const savedBookmarks=new Set();
+const savedBookmarks=new Set(),savedPointDetails=new Map();
 const pointIdentity=p=>p && p.run_index!==undefined?String(p.run_index):null;
+function rememberRunBookmarks(){
+ if(!runKey||externalMode||!model||!state)return;
+ for(const point of model.points){const key=pointIdentity(point);if(key!==null)savedBookmarks.delete(key);}
+ for(const index of state.bookmarks){const point=model.points[index],key=pointIdentity(point);if(key!==null){savedBookmarks.add(key);savedPointDetails.set(key,{round:point.pass??point.outer_index,position:point.step??point.inner_index});}}
+ for(const key of savedPointDetails.keys())if(!savedBookmarks.has(key))savedPointDetails.delete(key);
+}
+const originalRenderBookmarks=renderBookmarks;
+renderBookmarks=()=>{
+ originalRenderBookmarks();
+ if(!runKey||externalMode||installingHost||!model)return;
+ rememberRunBookmarks();
+ const visible=new Set(model.points.map(pointIdentity));
+ for(const key of savedBookmarks){
+  if(visible.has(key))continue;
+  const detail=savedPointDetails.get(key),row=document.createElement('div'),jump=document.createElement('button'),remove=document.createElement('button');
+  row.className='bookmark';jump.className='jump';jump.dataset.runBookmark=key;
+  jump.textContent=detail?.round!=null&&detail?.position!=null?L('第 '+detail.round+' 轮 · 位置 '+detail.position,'Round '+detail.round+' · position '+detail.position):L('计算点 '+(Number(key)+1),'Calculation point '+(Number(key)+1));
+  jump.title=L('载入对应轮次和点段并定位到此点','Load the corresponding round and point range, then go to this point');
+  remove.className='quiet small';remove.dataset.removeRunBookmark=key;remove.textContent='×';remove.setAttribute('aria-label',L('删除书签','Delete bookmark'));
+  row.append(jump,remove);$('bookmarks').querySelector('.note')?.remove();$('bookmarks').append(row);
+ }
+ $('bookmark-count').textContent=savedBookmarks.size;
+ notifyHost({type:'annotations',runKey,revision:latestRevision,offscreenBookmarks:[...savedBookmarks].filter(key=>!visible.has(key)).length,offscreenReference:savedReference!==null&&!visible.has(savedReference)});
+};
+document.addEventListener('click',event=>{
+ const jump=event.target.closest('[data-run-bookmark]'),remove=event.target.closest('[data-remove-run-bookmark]');
+ if(!runKey||externalMode||(!jump&&!remove))return;
+ event.preventDefault();event.stopImmediatePropagation();
+ if(remove){savedBookmarks.delete(remove.dataset.removeRunBookmark);savedPointDetails.delete(remove.dataset.removeRunBookmark);renderBookmarks();return;}
+ stop();notifyHost({type:'locate-point',runKey,runIndex:jump.dataset.runBookmark});
+},true);
 function preservedRunView(payload,sameSlice=false){
+ rememberRunBookmarks();
  const view=copy(state),oldKeys=model.points.map(pointIdentity);
  for(const key of oldKeys)if(key!==null)savedBookmarks.delete(key);
  for(const index of state.bookmarks){const key=oldKeys[index];if(key!=null)savedBookmarks.add(key);}
@@ -192,11 +224,12 @@ async function receiveHostMessage(event){
  }
  if(message.type==='save-workspace'){requestWorkspaceSave();return;}
  if(message.type==='download-result'){const pending=pendingDownloads.get(message.id);if(pending){pendingDownloads.delete(message.id);message.error?pending.reject(new Error(message.error)):pending.resolve(message.ok);}return;}
- if(!['load','clear'].includes(message.type) || !Number.isFinite(message.revision) || message.revision<latestRevision)return;
+ if(!['load','clear','cancel-load'].includes(message.type) || !Number.isFinite(message.revision) || message.revision<latestRevision)return;
  if(message.type==='load' && externalMode)return;
  latestRevision=message.revision;
+ if(message.type==='cancel-load'){deferredLoad=null;return;}
  if(message.type==='clear'){
-  workspaceSerial++;nativeResultFiles=[];externalMode=false;deferredLoad=null;homeVisible=true;homeViewport=null;stop();cancelPointer();model=null;state=null;rawPayload=null;datasetKey='';runKey='';savedBookmarks.clear();savedReference=null;referenceWasVisible=false;slice=[];plotSpecs=[];hovering=null;buildShell();return;
+  workspaceSerial++;nativeResultFiles=[];externalMode=false;deferredLoad=null;homeVisible=true;homeViewport=null;stop();cancelPointer();model=null;state=null;rawPayload=null;datasetKey='';runKey='';savedBookmarks.clear();savedPointDetails.clear();savedReference=null;referenceWasVisible=false;slice=[];plotSpecs=[];hovering=null;buildShell();return;
  }
  try{
   if(document.querySelector('dialog[open]')){deferredLoad=message;notifyHost({type:'deferred',revision:message.revision});return;}
@@ -208,10 +241,12 @@ async function receiveHostMessage(event){
   if(Number.isSafeInteger(message.sourcePointCount)&&Array.isArray(payload.summary?.rows)&&message.sourcePointCount>=payload.summary.rows.length){payload.metadata={...(object(payload.metadata)?payload.metadata:{}),workspace_scope:{version:1,loaded_points:payload.summary.rows.length,source_points:message.sourcePointCount}};}
   const cursorKey=model&&runKey===nextRun&&datasetKey===message.datasetKey?pointIdentity(model.points[slice[state.index]]):null;
   if(model && runKey===nextRun)payload.view=preservedRunView(payload,datasetKey===message.datasetKey);
-  else{savedBookmarks.clear();savedReference=null;referenceWasVisible=false;}
+  else{savedBookmarks.clear();savedPointDetails.clear();savedReference=null;referenceWasVisible=false;}
   installingHost=true;try{install(payload);}finally{installingHost=false;}
   if(cursorKey!==null){const index=slice.findIndex(id=>pointIdentity(model.points[id])===cursorKey);if(index>=0){state.index=index;updatePoint();}}
   runKey=nextRun;datasetKey=message.datasetKey;referenceWasVisible=state.reference!==null;
+  if(message.focusRunIndex!==undefined){const index=model.points.findIndex(point=>pointIdentity(point)===String(message.focusRunIndex));if(index<0)throw new Error(L('保存的结果中未找到此书签点。','The bookmarked point is not present in the saved results.'));jumpTo(index);homeVisible=false;syncHome();}
+  renderBookmarks();
   $('loading').classList.add('hide');notifyHost({type:'loaded',revision:message.revision,offscreenBookmarks:Math.max(0,savedBookmarks.size-state.bookmarks.length),offscreenReference:savedReference!==null && !referenceWasVisible});
  }catch(e){if(message.revision===latestRevision)notifyHost({type:'error',message:e.message,revision:message.revision});}
 }

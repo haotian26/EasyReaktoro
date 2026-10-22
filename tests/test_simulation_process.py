@@ -167,6 +167,28 @@ class ProcessTests(unittest.TestCase):
                 with self.assertRaises(BridgeError):manager.explorer(job_id,1,4)
             self.assertEqual(len(list(records(root))),3);manager.close()
 
+    def test_bookmark_lookup_uses_committed_ids_and_opens_the_matching_page_without_writes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manager=Jobs();self.addCleanup(manager.close)
+            job=manager.start(self.handle,self.plan(3,2),directory);job_id=job['job_id'];root=Path(job['output_path'])
+            deadline=time.monotonic()+20
+            while manager.status(job_id)['status']=='running' and time.monotonic()<deadline:time.sleep(.03)
+            self.assertEqual(manager.status(job_id)['status'],'completed')
+            before=(root/'points.ndjson').read_bytes()
+            with patch('bridge.easyreaktoro_runtime.simulation_jobs.PREVIEW_SPECIES_ROWS',7):
+                self.assertEqual(manager.locate_point(job_id,0),{'cycle':1,'page':1,'run_index':0})
+                point=manager.locate_point(job_id,4)
+                self.assertEqual(point,{'cycle':2,'page':2,'run_index':4})
+                import gzip,base64
+                payload=json.loads(gzip.decompress(base64.b64decode(manager.explorer(job_id,point['cycle'],point['page'])['data'])))
+                self.assertEqual(payload['summary']['rows'][0][payload['summary']['columns'].index('run_index')],4)
+                for invalid in (-1,True,'4',999):
+                    with self.subTest(invalid=invalid),self.assertRaises(BridgeError):manager.locate_point(job_id,invalid)
+                sparse=[{'summary':{'pass':1,'run_index':10}},{'summary':{'pass':3,'run_index':42}},{'summary':{'pass':3,'run_index':87}}]
+                with patch.object(manager,'records',return_value=iter(sparse)):
+                    self.assertEqual(manager.locate_point(job_id,87),{'cycle':3,'page':2,'run_index':87})
+            self.assertEqual((root/'points.ndjson').read_bytes(),before)
+
     def test_running_preview_reports_new_rounds_in_every_response_without_losing_selected_round(self):
         with tempfile.TemporaryDirectory() as directory:
             manager=Jobs();self.addCleanup(manager.close)

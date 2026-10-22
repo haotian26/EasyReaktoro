@@ -3,7 +3,7 @@ import {useState} from 'react';
 import {Check,Copy,Plus,Trash2} from 'lucide-react';
 import {Config,fmt,makeRoute,newId,numeric,ReactionStageKey,Route,SimSpecies} from './simulation-types';
 import {controlledBy,LoopTarget,loopCounts,loopValues,routeId} from './simulation-loops';
-import {stageKeys,stageInfo,stageAt} from './reaction-stages';
+import {stageKeys,stageInfo,stageAt,firstStagePoint} from './reaction-stages';
 import {compileSchedule,type CompiledSchedule} from './simulation-schedule';
 import {copyRouteParameterReferences,hasParameterReference,parameterControl,removeParameterReferences,type ParameterEditLocation} from './schedule-references';
 import {HelpTip} from './HelpTip';
@@ -51,13 +51,13 @@ type Props={embedded?:boolean;config:Config;items:SimSpecies[];selected:Reaction
 export function ReactionStageEditor({config,items,selected,coordinate,onSelect,onChange,onMaterials,onEditParameter,embedded=false}:Props){
  useLanguage();
  const stages=config.reaction_stages!,counts=loopCounts(config),routes=stages[selected],info=stageInfo[selected];
- const actualCoordinate=coordinate&&stageAt(...coordinate)===selected?coordinate:stageCoordinates(selected);
  let compiled:CompiledSchedule|undefined;try{if(config.schedule)compiled=compileSchedule(config);}catch{}
+ const actualCoordinate=coordinate&&stageAt(...coordinate)===selected?coordinate:firstStagePoint(selected,counts,compiled?.lengths)??stageCoordinates(selected);
  const isBoundHere=(target:LoopTarget)=>config.schedule?(compiled?compiled.hasSetting(target,...actualCoordinate):hasParameterReference(config,target)):!!(config.loops&&controlledBy(config.loops,target));
  const [search,setSearch]=useState<Record<string,string>>({});
  const [pendingSource,setPendingSource]=useState<Record<string,string>>({});
  const [notice,setNotice]=useState('');
- const enabled=(key:ReactionStageKey)=>(!key.endsWith('following')||counts.inner>1)&&(!key.startsWith('later')||counts.outer>1);
+ const enabled=(key:ReactionStageKey)=>!!firstStagePoint(key,counts,compiled?.lengths);
  const changeRoutes=(rows:Route[])=>{
   const removed=new Set(routes.filter(r=>!rows.some(next=>next.id===r.id)).map(r=>r.id));
   onChange({reaction_stages:{...stages,[selected]:rows},...(removed.size?removeParameterReferences(config,target=>target.kind==='route_fraction'&&removed.has(target.route_id)): {})});

@@ -3,7 +3,7 @@ import {loopCounts,loopIssue} from './simulation-loops';
 import {pointConditions} from './process-layout';
 import {materialBaseUsage} from './material-base-usage';
 import {Config,DatabaseSummary,SimSpecies} from './simulation-types';
-import {stageKeys,stageInfo,stageAt,toStageConfig} from './reaction-stages';
+import {stageKeys,stageInfo,stageAt,firstStagePoint,toStageConfig} from './reaction-stages';
 import {compileSchedule,scheduleIssue,type CompiledSchedule} from './simulation-schedule';
 import {evaluatedRecipeInputs,recipeInputs} from './ReactionStageEditor';
 
@@ -35,7 +35,7 @@ export function setupSteps(config:Config,items:SimSpecies[],summary:DatabaseSumm
   if(plan&&effective.reaction_stages){
    const candidates=Object.fromEntries(stageKeys.map(key=>[key,effective.reaction_stages![key].filter(route=>route.source==='material'&&(route.fraction>0||plan!.hasSetting({kind:'route_fraction',route_id:route.id!,field:'fraction'}))&&recipeInputs(effective,route,items).some(row=>row.amount>0||plan!.hasSetting({kind:'material_amount',material_id:route.material_id,species:row.species})))]));
    const possible=new Set(Object.values(candidates).flat().map(route=>route.material_id)),used=new Set<string>();
-   for(let oi=0;oi<counts.outer&&used.size<possible.size;oi++)for(let ii=0;ii<counts.inner&&used.size<possible.size;ii++){const key=stageAt(ii,oi);for(const route of candidates[key])if(!used.has(route.material_id)&&evaluatedRecipeInputs(effective,route,key,items,[ii,oi],plan).some(row=>Number.isFinite(row.amount)&&row.amount>0))used.add(route.material_id);}
+   for(let oi=0;oi<counts.outer&&used.size<possible.size;oi++)for(let ii=0;ii<plan.lengths[oi]&&used.size<possible.size;ii++){const key=stageAt(ii,oi);for(const route of candidates[key])if(!used.has(route.material_id)&&evaluatedRecipeInputs(effective,route,key,items,[ii,oi],plan).some(row=>Number.isFinite(row.amount)&&row.amount>0))used.add(route.material_id);}
    filled=config.materials.filter(material=>used.has(material.id));
   }
   let invalidInput='';
@@ -45,7 +45,7 @@ export function setupSteps(config:Config,items:SimSpecies[],summary:DatabaseSumm
    if(Number.isNaN(row.amount)&&usage.known&&!usage.baseRequired)continue;
    invalidInput=t(`${material.name} · ${row.species} 的投料数量${usage.firstBase?`在第 ${usage.firstBase[1]+1} 轮 · 位置 ${usage.firstBase[0]+1}`:''}尚未有效填写`,`Enter a valid input amount for ${material.name} · ${row.species}${usage.firstBase?` at round ${usage.firstBase[1]+1} · position ${usage.firstBase[0]+1}`:''}`);break invalidInputs;
   }
-  const emptyStage=effective.reaction_stages&&stageKeys.find(key=>!(key.endsWith('following')&&counts.inner===1||key.startsWith('later')&&counts.outer===1)&&!effective.reaction_stages![key].length);
+  const emptyStage=effective.reaction_stages&&stageKeys.find(key=>firstStagePoint(key,counts,plan?.lengths)&&!effective.reaction_stages![key].length);
   const conditionIssue=config.schedule?scheduleIssue(effective):config.loops?loopIssue(config):undefined;
   const validPoints=config.schedule||config.loops?!conditionIssue:config.points.length>0 && Number.isInteger(config.cycles) && config.cycles>=1 && total<=20000 && config.points.every(p=>{
     const overrides=(p.round_conditions||[]).filter(r=>r.round>=1&&r.round<=config.cycles),defined=new Set(overrides.map(r=>r.round));

@@ -1546,7 +1546,7 @@
     "已保存至 ": "Saved to ",
     "结果较大，按轮次与点段载入。此处另存的工作区和图表只包含当前载入部分；计算目录中的 CSV 和结果页面保留全部完成点。": "Large results are loaded by round and point range. Workspaces and charts saved here contain only the loaded part. The calculation folder retains all completed points in its CSV files and result page.",
     "参考点在其他轮次或点段中，当前不显示相对该点的差值。": "The reference point is in another round or point range, so differences from it are not shown here. ",
-    "切回相应轮次或点段后可继续使用。": "Load the corresponding round or point range to use them again.",
+    "点击采样点面板中的书签，可直接载入并跳转。": "Click a bookmark in the point inspector to load it and go to that point.",
     "数据库：": "Database: ",
     "最大逐点误差 ": "Maximum point balance error ",
     "本次运行使用自定义求解代码；此处展示代码输出的守恒记录，请核对修改后的约束与计算逻辑。": "This run uses custom solver code. These are the balance records produced by that code; check them against your modified constraints and calculation logic.",
@@ -1661,6 +1661,7 @@
     "已选": "Selected",
     "正在更新投料…": "Updating inputs…",
     "添加一项": "Add a term",
+    "本次不经过此阶段，设置保留。": "This stage is not used in this run; its settings are retained.",
     "选择本次反应所需的物料": "Choose material for this reaction",
     "未指定；保存时选择位置。": "Not set; choose a location when saving.",
     "查找元素": "Find elements",
@@ -2585,8 +2586,8 @@
         " 个书签在其他轮次或点段中。"
       ],
       "en": [
-        "",
-        " bookmarks are in other rounds or point ranges. "
+        "Bookmarks in other rounds or point ranges: ",
+        ". "
       ],
       "order": [
         0

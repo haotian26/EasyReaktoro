@@ -332,6 +332,21 @@ class Jobs:
         return {'encoding': 'gzip-base64', 'cycles': cycles, 'data': packed_payload(payload), 'point_count': len(payload['summary']['rows']), 'status': status,
                 'page_count': pages, 'points_per_page': per_page, 'cycle_points': point_count}
 
+    def locate_point(self, job_id, run_index):
+        """Find a stable result ID in committed records, never infer it from a grid."""
+        require(type(run_index) is int and run_index >= 0, 'SIMULATION_INPUT', 'error.simulationInput', 'Invalid result point ID.')
+        job = self.job(job_id)
+        per_page = max(1, PREVIEW_SPECIES_ROWS // len(job['config']['species']))
+        counts = {}
+        for record in self.records(job):
+            row = record['summary']
+            cycle = row['pass']
+            offset = counts.get(cycle, 0)
+            if row['run_index'] == run_index:
+                return {'cycle': cycle, 'page': offset // per_page + 1, 'run_index': run_index}
+            counts[cycle] = offset + 1
+        require(False, 'SIMULATION_INPUT', 'error.simulationInput', 'The bookmarked point is not present in the saved results.')
+
     def export(self, job_id, directory):
         job = self.job(job_id)
         status = self.status(job_id)
@@ -367,6 +382,7 @@ class Jobs:
             return parse_code(args.get('document'), args['config'], parameters_only=args.get('parameters_only') is True)
         if action == 'status': return self.status(args['job_id'])
         if action == 'result': return self.result(args['job_id'], args.get('run_index'), args.get('species'))
+        if action == 'locate_point': return self.locate_point(args['job_id'], args.get('run_index'))
         if action == 'explorer': return self.explorer(args['job_id'], args.get('cycle'), args.get('page'))
         if action == 'open_run': return self.open_run(args['path'])
         if action == 'cancel': return self.cancel(args['job_id'])

@@ -545,3 +545,20 @@ describe('English results without changing saved scientific data',()=>{
   w.document.getElementById('rename-confirm').click();expect(qa.state().charts[0].title).toBe('pH 与方解石');
  });
 });
+
+
+it('navigates off-page bookmarks by stable IDs, preserves chart choices and removes them without reappearing',async()=>{
+ const {w,qa,parent,send}=setup();w.Blob=Blob;w.Response=Response;w.DecompressionStream=DecompressionStream;
+ const page=(ids:number[],round:number)=>({format:'result-explorer-1',name:'Unequal rounds',key_columns:['run_index'],summary:{columns:['run_index','pass','step','pH'],rows:ids.map((id,i)=>[id,round,i+1,7+id/100])},species_tables:[]});
+ let revision=0;
+ const load=async(key:string,data:any,focusRunIndex?:string,runKey='run-a')=>{const current=++revision;send({type:'load',runKey,datasetKey:key,revision:current,data:gzipSync(JSON.stringify(data)).toString('base64'),...(focusRunIndex!==undefined?{focusRunIndex}:{})});await vi.waitFor(()=>expect(parent.postMessage.mock.calls.some(([m]:any)=>m.type==='loaded'&&m.revision===current)).toBe(true));};
+ await load('round-2',page([10,12],2));qa.state().bookmarks=[1];qa.state().charts[0].selectedStates=['state:pH'];qa.state().charts[0].title='Keep my plot';
+ await load('round-4',page([20,21],4));
+ const bookmark=w.document.querySelector('[data-run-bookmark="12"]');expect(bookmark.textContent).toBe('第 2 轮 · 位置 2');expect(w.document.getElementById('bookmark-count').textContent).toBe('1');
+ bookmark.click();expect(parent.postMessage).toHaveBeenLastCalledWith({channel:'shell-test',type:'locate-point',runKey:'run-a',runIndex:'12'},'*');
+ await load('round-2',page([10,12],2),'12');expect(qa.state().index).toBe(1);expect(qa.state().bookmarks).toEqual([1]);expect(qa.state().charts[0].title).toBe('Keep my plot');expect(qa.state().charts[0].selectedStates).toEqual(['state:pH']);
+ await load('round-4',page([20,21],4));send({type:'appearance',language:'en',theme:'light'});expect(w.document.querySelector('[data-run-bookmark="12"]').textContent).toBe('Round 2 · position 2');
+ w.document.querySelector('[data-remove-run-bookmark="12"]').click();expect(w.document.getElementById('bookmark-count').textContent).toBe('0');
+ await load('round-2',page([10,12],2));expect(qa.state().bookmarks).toEqual([]);
+ qa.state().bookmarks=[0];await load('other-run',page([10,12],2),undefined,'run-b');expect(qa.state().bookmarks).toEqual([]);expect(w.document.querySelector('[data-run-bookmark]')).toBeNull();
+});

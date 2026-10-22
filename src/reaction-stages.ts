@@ -12,15 +12,20 @@ export const stageInfo:Record<ReactionStageKey,{title:string;row:string;column:s
   later_following:{get title(){return t('后续轮其余位置',"Following positions in later rounds");},get row(){return t('第 2 轮起',"Round 2 onward");},get column(){return t('其余位置',"Following positions");}},
 };
 export function stageAt(ii:number,oi:number):ReactionStageKey{return oi===0?(ii===0?'first_start':'first_following'):(ii===0?'later_start':'later_following');}
+/** The first point actually reached in a stage, including unequal round lengths. */
+export function firstStagePoint(stage:ReactionStageKey,counts:{inner:number;outer:number},lengths?:readonly number[]):[number,number]|undefined{
+ const inner=stage.endsWith('_following')?1:0,start=stage.startsWith('later_')?1:0,end=start?counts.outer:Math.min(1,counts.outer);
+ for(let outer=start;outer<end;outer++)if((lengths?lengths[outer]??0:counts.inner)>inner)return [inner,outer];
+}
 export function activeRouteEntries(config:Config):{stage?:ReactionStageKey;route:Route;index:number}[]{
   return config.reaction_stages?stageKeys.flatMap(stage=>config.reaction_stages![stage].map((route,index)=>({stage,route,index}))):config.routes.map((route,index)=>({route,index}));
 }
 /** Only material dependencies: shared by the current schedule and legacy axes. */
-export function reactionSourceDiagnostic(config:Config,counts:{inner:number;outer:number}):ScheduleDiagnostic|undefined{
+export function reactionSourceDiagnostic(config:Config,counts:{inner:number;outer:number},lengths?:readonly number[]):ScheduleDiagnostic|undefined{
  for(const {route,index,stage} of activeRouteEntries(config)){
-  if(stage&&(stage.endsWith('_following')&&counts.inner===1||stage.startsWith('later_')&&counts.outer===1))continue;
+  const point=stage?firstStagePoint(stage,counts,lengths):[0,0];if(!point)continue;
   const location=stage?t(`${stageInfo[stage].title}的第 ${index+1} 项物料`,`${stageInfo[stage].title} · input ${index+1}`):t(`来源 ${index+1}`,`Source ${index+1}`);
-  const issue=(message:string,field:'source'|'position'|'round'='source'):ScheduleDiagnostic=>({message,location:{kind:'source',routeId:route.id||`route-${index+1}`,field,inner:stage?.endsWith('_following')?1:0,outer:stage?.startsWith('later_')?1:0}});
+  const issue=(message:string,field:'source'|'position'|'round'='source'):ScheduleDiagnostic=>({message,location:{kind:'source',routeId:route.id||`route-${index+1}`,field,inner:point[0],outer:point[1]}});
   if(route.source==='material'&&!config.materials.some(m=>m.id===route.material_id))return issue(t(`${location}的 Composition 已不存在，请重新选择。`,`${location} uses a composition that no longer exists. Choose a composition again.`));
   if(stage&&route.source==='previous_point'&&stage.endsWith('_start'))return issue(t(`${location}没有前一步结果，请改选实际加入的 composition 或有效来源。`,`${location} has no previous reaction. Choose a composition or an available result.`));
   if(stage&&stage.startsWith('first_')&&(route.source==='previous_cycle'||route.source==='output'&&route.lag===1))return issue(t(`${location}没有上一轮结果，请改选实际加入的 composition 或有效来源。`,`${location} has no previous round. Choose a composition or an available result.`),route.source==='output'?'round':'source');

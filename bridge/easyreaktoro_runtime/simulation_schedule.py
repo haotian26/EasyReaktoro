@@ -30,6 +30,8 @@ def missing_amount(value):
 def _arithmetic(start, *terms):
     # JSON parameters are decimal numbers. This avoids a nominal zero becoming
     # a negative dose after e.g. 0.3 + 3 * -0.1, without clipping small values.
+    if any(missing_amount(value) for value in (start, *(step for _, step in terms))):
+        return float('nan')
     values = [(Decimal(str(start)), 1), *((Decimal(str(step)), index) for index, step in terms)]
     if any(not value.is_finite() for value, _ in values):
         # The per-point validator supplies the parameter location and message.
@@ -252,10 +254,18 @@ class SchedulePlan:
         self.total = sum(self.lengths)
         _check(self.positions*self.rounds <= 20000, 'The path and round grid exceeds 20,000 positions. Reduce its extent.')
         self.values = {'inner': list(range(1, self.positions+1)), 'outer': list(range(1, self.rounds+1))}
+        from .simulation_reactions import active_reaction_stages
+        stages = cfg.get('reaction_stages')
+        unused_routes = {route['id'] for stage, routes in (stages or {}).items()
+                         if stage not in active_reaction_stages(self.positions, self.rounds, self.lengths)
+                         for route in routes}
         for identity in sorted(self._targets, key=lambda key: (key[0] == 'pressure', key)):
             reference = self._references[identity]
             values = array('d')
             self._arrays[identity] = values
+            if identity[0] == 'route_fraction' and identity[1] in unused_routes:
+                values.extend([float('nan')] * (self.positions*self.rounds))
+                continue
             for outer in range(self.rounds):
                 for inner in range(self.positions):
                     index = outer*self.positions+inner

@@ -123,7 +123,7 @@ def validate_process(cfg, groups):
     require(cfg.get('reaction_stages') is not None or isinstance(cfg.get('routes'), list), 'SIMULATION_INPUT', 'error.simulationInput', '请设置物料来源')
     all_names = set(cfg['species'])
     stages = cfg.get('reaction_stages')
-    containers = [(STAGE_LABELS[key], stages[key]) for key in active_reaction_stages(len(points), cfg["cycles"])] if stages is not None else [(f'第 {i+1} 点', point.get('routes', cfg['routes'])) for i, point in enumerate(points)]
+    containers = [(STAGE_LABELS[key], stages[key]) for key in active_reaction_stages(len(points), cfg["cycles"], getattr(loops, "lengths", None))] if stages is not None else [(f'第 {i+1} 点', point.get('routes', cfg['routes'])) for i, point in enumerate(points)]
     for label, routes in containers:
         require(isinstance(routes, list) and (0 if stages is not None else 1) <= len(routes) <= 30, 'SIMULATION_INPUT', 'error.simulationInput', f'{label}的物料来源数量无效，最多 30 条')
         for route in routes:

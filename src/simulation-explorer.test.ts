@@ -21,14 +21,14 @@ describe('result explorer integration',()=>{
   it('rejects obsolete decompressions and clears old results before a new run',async()=>{
     const html=embeddedExplorer('test'),adapter=html.slice(html.indexOf('const hostChannel'),html.indexOf('\n</script>',html.indexOf('const hostChannel')));
     const parent={postMessage:vi.fn()},handlers:any[]=[];const pending:((text:string)=>void)[]=[];
-    const node={textContent:'',style:{setProperty:vi.fn()},classList:{add:vi.fn()},setAttribute:vi.fn(),append:vi.fn()};
+    const node={textContent:'',style:{setProperty:vi.fn()},classList:{add:vi.fn()},querySelector:()=>null,setAttribute:vi.fn(),append:vi.fn()};
     const context:any=vm.createContext({parent,window:{addEventListener:(_name:string,fn:any)=>handlers.push(fn)},
       document:{addEventListener:vi.fn(),createElement:()=>node,querySelector:(query:string)=>query==='dialog[open]'?null:node,querySelectorAll:()=>[],body:{setAttribute:vi.fn(),removeAttribute:vi.fn(),classList:{contains:()=>false}}},
-      renderPlots:vi.fn(),updatePoint:vi.fn(),$:()=>node,L:(zh:string)=>zh,buildShell:vi.fn(),download:vi.fn(),stop:vi.fn(),cancelPointer:vi.fn(),
+      renderPlots:vi.fn(),renderBookmarks:vi.fn(),updatePoint:vi.fn(),$:()=>node,L:(zh:string)=>zh,buildShell:vi.fn(),download:vi.fn(),stop:vi.fn(),cancelPointer:vi.fn(),
       restoreView:vi.fn(),language:'zh',initialState:()=>({}),boot:async()=>{},model:null,state:null,rawPayload:null,slice:[],plotSpecs:[],hovering:null,
       Uint8Array,atob,Blob:class{stream(){return {pipeThrough:()=>null};}},DecompressionStream:class{},
       Response:class{text(){return new Promise<string>(resolve=>pending.push(resolve));}},copy:structuredClone});
-    const installMock=vi.fn((payload:any)=>{context.model=payload;context.state={index:0};});context.install=installMock;
+    const installMock=vi.fn((payload:any)=>{context.model={...payload,points:[]};context.state={index:0,bookmarks:[]};});context.install=installMock;
     vm.runInContext(adapter,context);context.buildShell=vi.fn();
     const send=(data:any)=>handlers[0]({source:parent,data:{channel:'test',data:'AA==',...data}});
     const old=send({type:'load',revision:1,datasetKey:'old'}),current=send({type:'load',revision:2,datasetKey:'new'});
@@ -116,4 +116,53 @@ it('labels every round in overlays, including the current round',()=>{
  const context:any=vm.createContext({shownPaths:()=>groups,allPaths:groups,slice:groups[1].indices,state:{plotScope:'all'},matchingPins:()=>[],fixedKeys:()=>['pass'],same:(a:any,b:any)=>a===b,pathName:(f:any)=>'Round '+f.pass,L:(_z:string,en:string)=>en,dashes:['','4 2','2 2']});
  vm.runInContext(source+';globalThis.paths=seriesPaths;',context);const paths=context.paths([{id:'Calcite',dash:''}]);expect(paths.map((p:any)=>p.pathLabel)).toEqual(['Round 1','Current · Round 2','Round 3']);expect(paths.every((p:any)=>p.showPathLabel)).toBe(true);expect(new Set(paths.map((p:any)=>p.curveId)).size).toBe(3);
  context.shownPaths=()=>[groups[1]];expect(context.paths([{id:'Calcite',dash:''}])[0].showPathLabel).toBe(false);
+});
+
+
+it('resolves a bookmark to its round and page before focusing its stable result ID',async()=>{
+ const call=vi.mocked(simulationCall);call.mockReset();call.mockImplementation(async(action)=>action==='locate_point'?{cycle:3,page:2,run_index:17}:{cycles:[1,2,3],point_count:2,data:'AA==',page_count:3,points_per_page:2,cycle_points:6});
+ const props={job:{job_id:'bookmark-run',status:'completed',completed:18,total:18,elapsed_seconds:1} as any,visible:true,onError:vi.fn(),onNotice:vi.fn()};const view=render(createElement(SimulationResults,props));
+ try{
+  const frame=view.getByTitle('结果') as HTMLIFrameElement,channel=JSON.parse(frame.srcdoc.match(/const hostChannel = ("[^";]+");/)![1]),posted=vi.spyOn(frame.contentWindow!,'postMessage');
+  const send=(message:any)=>act(()=>{window.dispatchEvent(new MessageEvent('message',{source:frame.contentWindow,data:{channel,...message}}));});
+  send({type:'ready'});await waitFor(()=>expect(posted).toHaveBeenCalledWith(expect.objectContaining({type:'load'}),'*'));
+  send({type:'locate-point',runKey:'bookmark-run',runIndex:'17'});
+  await waitFor(()=>expect(posted).toHaveBeenCalledWith(expect.objectContaining({type:'load',focusRunIndex:'17',datasetKey:'bookmark-run:3:2'}),'*'));
+  expect(call).toHaveBeenCalledWith('locate_point',{job_id:'bookmark-run',run_index:17});expect((view.getByLabelText('结果预览轮次') as HTMLSelectElement).value).toBe('3');expect((view.getByLabelText('结果预览点段') as HTMLSelectElement).value).toBe('2');expect(props.onError).not.toHaveBeenCalled();
+ }finally{cleanup();}
+});
+
+it('ignores earlier bookmark lookups after another bookmark, manual navigation or a different result',async()=>{
+ const call=vi.mocked(simulationCall);call.mockReset();const lookups=new Map<number,(value:any)=>void>();
+ call.mockImplementation((action,args:any)=>action==='locate_point'?new Promise(resolve=>lookups.set(args.run_index,resolve)):Promise.resolve({cycles:[1,2,3],point_count:1,data:'AA==',page_count:3,points_per_page:1,cycle_points:3}));
+ const props={job:{job_id:'run-a',status:'completed',completed:9,total:9,elapsed_seconds:1} as any,visible:true,onError:vi.fn(),onNotice:vi.fn()};const view=render(createElement(SimulationResults,props));
+ try{
+  const frame=view.getByTitle('结果') as HTMLIFrameElement,channel=JSON.parse(frame.srcdoc.match(/const hostChannel = ("[^";]+");/)![1]),posted=vi.spyOn(frame.contentWindow!,'postMessage');
+  const send=(message:any)=>act(()=>{window.dispatchEvent(new MessageEvent('message',{source:frame.contentWindow,data:{channel,...message}}));});
+  send({type:'ready'});await waitFor(()=>expect(posted).toHaveBeenCalledWith(expect.objectContaining({type:'load'}),'*'));
+  send({type:'locate-point',runKey:'run-a',runIndex:'1'});send({type:'locate-point',runKey:'run-a',runIndex:'8'});
+  await act(async()=>lookups.get(8)!({cycle:3,page:3,run_index:8}));await waitFor(()=>expect(posted).toHaveBeenCalledWith(expect.objectContaining({type:'load',focusRunIndex:'8'}),'*'));
+  await act(async()=>lookups.get(1)!({cycle:1,page:2,run_index:1}));expect(posted.mock.calls.some(([m]:any)=>m.focusRunIndex==='1')).toBe(false);
+  send({type:'locate-point',runKey:'run-a',runIndex:'4'});
+  const round=view.getByLabelText('结果预览轮次') as HTMLSelectElement;act(()=>{round.value='2';round.dispatchEvent(new Event('change',{bubbles:true}));});
+  await act(async()=>lookups.get(4)!({cycle:2,page:2,run_index:4}));expect(posted.mock.calls.some(([m]:any)=>m.focusRunIndex==='4')).toBe(false);
+  send({type:'locate-point',runKey:'run-a',runIndex:'7'});view.rerender(createElement(SimulationResults,{...props,job:{...props.job,job_id:'run-b'}}));
+  await act(async()=>lookups.get(7)!({cycle:3,page:2,run_index:7}));await waitFor(()=>expect(posted).toHaveBeenCalledWith(expect.objectContaining({type:'load',runKey:'run-b'}),'*'));expect(posted.mock.calls.some(([m]:any)=>m.focusRunIndex==='7')).toBe(false);
+  send({type:'locate-point',runKey:'run-a',runIndex:'5'});expect(lookups.has(5)).toBe(false);
+ }finally{cleanup();}
+});
+
+
+it('keeps the current plot after a missing bookmark and ignores errors after closing results',async()=>{
+ const call=vi.mocked(simulationCall);call.mockReset();let rejectLookup:(error:Error)=>void=()=>{};
+ call.mockImplementation(action=>action==='locate_point'?new Promise((_resolve,reject)=>{rejectLookup=reject;}):Promise.resolve({point_count:1,data:'AA=='}));
+ const props={job:{job_id:'run-a',status:'completed',completed:1,total:1,elapsed_seconds:1} as any,visible:true,onError:vi.fn(),onNotice:vi.fn()};const view=render(createElement(SimulationResults,props));
+ try{
+  const frame=view.getByTitle('结果') as HTMLIFrameElement,channel=JSON.parse(frame.srcdoc.match(/const hostChannel = ("[^";]+");/)![1]),posted=vi.spyOn(frame.contentWindow!,'postMessage');
+  const send=(message:any)=>act(()=>{window.dispatchEvent(new MessageEvent('message',{source:frame.contentWindow,data:{channel,...message}}));});
+  send({type:'ready'});await waitFor(()=>expect(posted).toHaveBeenCalledWith(expect.objectContaining({type:'load'}),'*'));posted.mockClear();
+  send({type:'locate-point',runKey:'run-a',runIndex:'3'});await act(async()=>rejectLookup(new Error('The bookmarked point is not present in the saved results.')));
+  expect(props.onError).toHaveBeenCalledTimes(1);expect(posted.mock.calls.some(([m]:any)=>m.type==='clear'||m.type==='load')).toBe(false);expect((view.getByRole('button',{name:'刷新结果预览'}) as HTMLButtonElement).disabled).toBe(false);
+  send({type:'locate-point',runKey:'run-a',runIndex:'4'});view.unmount();await act(async()=>rejectLookup(new Error('Late lookup failure')));expect(props.onError).toHaveBeenCalledTimes(1);
+ }finally{cleanup();}
 });

@@ -240,3 +240,12 @@ it('exports the actual stop-driven grid while keeping a blank local condition ou
  localStorage.setItem(key,JSON.stringify(encodeDraft(c)));await openCode();
  const sent=readConfig(calls('code_render').at(-1).config,{allowDraft:true});expect(compileSchedule(sent).lengths).toEqual([4,2]);expect(Number.isNaN((sent.schedule!.overrides.find(o=>o.id==='retained-hole')!.parameters[0].value as {value:number}).value)).toBe(true);
 });
+
+
+it('keeps an unfinished unused stage through code switching in unequal rounds',async()=>{
+ const c:Config={...structuredClone(cfg),schedule:{...defaultSchedule(),stop:{first:'i = 0',later:'i = 2',rounds:'N = 1'}},reaction_stages:{first_start:[],first_following:[],later_start:[],later_following:[]}};
+ c.reaction_stages!.first_following=[{...c.routes[0],id:'retained-unused',fraction:NaN}];
+ c.schedule!.parameters.push({id:'unused-amount',target:{kind:'route_fraction',route_id:'retained-unused',field:'fraction'},value:{mode:'relative',along:'path',start:NaN,step:NaN,other_step:0}});
+ localStorage.setItem(key,JSON.stringify(encodeDraft(c)));await openCode();
+ const sent=readConfig(calls('code_render').at(-1).config,{allowDraft:true});expect(compileSchedule(sent).lengths).toEqual([1,3]);expect(Number.isNaN(sent.reaction_stages!.first_following[0].fraction)).toBe(true);
+});
